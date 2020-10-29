@@ -30,7 +30,9 @@ except ImportError:
 # import models and training functions
 from lib.utils.flops_table import FlopsEst
 from lib.core.train import train_epoch, validate
-from lib.models.structures.supernet import _gen_supernet
+from lib.models.structures.supernet import gen_supernet
+from lib.models.PrioritizedBoard import PrioritizedBoard
+from lib.models.MetaMatchingNetwork import MetaMatchingNetwork
 from lib.config import DEFAULT_CROP_PCT, IMAGENET_DEFAULT_STD, IMAGENET_DEFAULT_MEAN
 from lib.utils.util import parse_config_args, get_logger, \
     create_optimizer_supernet, create_supernet_scheduler
@@ -40,9 +42,9 @@ def main():
     args, cfg = parse_config_args('super net training')
 
     # resolve logging
-    output_dir = os.path.join(cfg.SAVE_PATH, "{}-{}".format(
-        datetime.date.today().strftime('%m%d%H%M%S'),
-        cfg.JOB_NAME))
+    output_dir = os.path.join(cfg.SAVE_PATH,
+                              "{}-{}".format(datetime.date.today().strftime('%m%d'),
+                                             cfg.MODEL))
 
     if args.local_rank == 0:
         logger = get_logger(os.path.join(output_dir, "train.log"))
@@ -65,25 +67,31 @@ def main():
     torch.backends.cudnn.benchmark = False
 
     # generate supernet
-    model, sta_num, size_factor = _gen_supernet(
+    model, sta_num, resolution = gen_supernet(
         flops_minimum=cfg.SUPERNET.FLOPS_MINIMUM,
         flops_maximum=cfg.SUPERNET.FLOPS_MAXIMUM,
         num_classes=cfg.DATASET.NUM_CLASSES,
-        drop_rate=cfg.MODEL.DROPOUT_RATE,
-        global_pool=cfg.MODEL.GP,
+        drop_rate=cfg.NET.DROPOUT_RATE,
+        global_pool=cfg.NET.GP,
         resunit=cfg.SUPERNET.RESUNIT,
         dil_conv=cfg.SUPERNET.DIL_CONV,
         slice=cfg.SUPERNET.SLICE,
         verbose=cfg.VERBOSE,
         logger=logger)
 
+    # initialize meta matching networks
+    MetaMN = MetaMatchingNetwork(cfg)
+
     # number of choice blocks in supernet
-    choice_num = len(model.blocks[0])
+    choice_num = len(model.blocks[1][0])
     if args.local_rank == 0:
         logger.info('Supernet created, param count: %d', (
             sum([m.numel() for m in model.parameters()])))
-        logger.info('resolution: %d', (size_factor * 32))
+        logger.info('resolution: %d', (resolution))
         logger.info('choice number: %d', (choice_num))
+
+    #initialize prioritized board
+    prioritized_board = PrioritizedBoard(cfg, CHOICE_NUM=choice_num, sta_num=sta_num)
 
     # initialize flops look-up table
     model_est = FlopsEst(model)
@@ -96,7 +104,7 @@ def main():
             model, cfg.RESUME_PATH)
 
     # create optimizer and resume from checkpoint
-    optimizer = create_optimizer_supernet(args, model, USE_APEX)
+    optimizer = create_optimizer_supernet(cfg, model, USE_APEX)
     if optimizer_state is not None:
         optimizer.load_state_dict(optimizer_state['optimizer'])
     model = model.cuda()
@@ -138,19 +146,20 @@ def main():
     if not os.path.exists(train_dir):
         logger.info('Training folder does not exist at: %s', train_dir)
         sys.exit()
+
     dataset_train = Dataset(train_dir)
     loader_train = create_loader(
         dataset_train,
         input_size=(3, cfg.DATASET.IMAGE_SIZE, cfg.DATASET.IMAGE_SIZE),
         batch_size=cfg.DATASET.BATCH_SIZE,
         is_training=True,
-        use_prefetcher=None,
+        use_prefetcher=True,
         re_prob=cfg.AUGMENTATION.RE_PROB,
         re_mode=cfg.AUGMENTATION.RE_MODE,
         color_jitter=cfg.AUGMENTATION.COLOR_JITTER,
         interpolation='random',
         num_workers=cfg.WORKERS,
-        distributed=distributed,
+        distributed=True,
         collate_fn=None,
         crop_pct=DEFAULT_CROP_PCT,
         mean=IMAGENET_DEFAULT_MEAN,
@@ -168,13 +177,13 @@ def main():
         input_size=(3, cfg.DATASET.IMAGE_SIZE, cfg.DATASET.IMAGE_SIZE),
         batch_size=4 * cfg.DATASET.BATCH_SIZE,
         is_training=False,
-        use_prefetcher=None,
+        use_prefetcher=True,
         num_workers=cfg.WORKERS,
-        distributed=distributed,
+        distributed=True,
         crop_pct=DEFAULT_CROP_PCT,
         mean=IMAGENET_DEFAULT_MEAN,
         std=IMAGENET_DEFAULT_STD,
-        interpolation='bicubic'
+        interpolation=cfg.DATASET.INTERPOLATION
     )
 
     # whether to use label smoothing
@@ -198,21 +207,18 @@ def main():
     # training scheme
     try:
         for epoch in range(start_epoch, num_epochs):
-            if distributed:
-                loader_train.sampler.set_epoch(epoch)
+            loader_train.sampler.set_epoch(epoch)
 
             # train one epoch
-            train_metrics, best_children_pool = train_epoch(
-                epoch, model, loader_train, optimizer,
-                train_loss_fn, cfg, args,
-                CHOICE_NUM=choice_num, lr_scheduler=lr_scheduler,
-                saver=saver, output_dir=output_dir, logger=logger,
-                val_loader=loader_eval, best_children_pool=best_children_pool,
-                est=model_est, sta_num=sta_num, local_rank=args.local_rank)
+            train_metrics = train_epoch(epoch, model, loader_train, optimizer,
+                                        train_loss_fn, prioritized_board, MetaMN, cfg,
+                                        lr_scheduler=lr_scheduler, saver=saver,
+                                        output_dir=output_dir, logger=logger,
+                                        est=model_est, local_rank=args.local_rank)
 
             # evaluate one epoch
-            eval_metrics = validate(model, loader_eval, validate_loss_fn, cfg,
-                                    CHOICE_NUM=choice_num, sta_num=sta_num,
+            eval_metrics = validate(model, loader_eval, validate_loss_fn,
+                                    prioritized_board, MetaMN, cfg,
                                     local_rank=args.local_rank, logger=logger)
 
             update_summary(epoch, train_metrics, eval_metrics, os.path.join(
@@ -222,7 +228,7 @@ def main():
                 # save proper checkpoint with eval metric
                 save_metric = eval_metrics[eval_metric]
                 best_metric, best_epoch = saver.save_checkpoint(
-                    model, optimizer, args,
+                    model, optimizer, cfg,
                     epoch=epoch, metric=save_metric)
 
     except KeyboardInterrupt:

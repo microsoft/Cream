@@ -10,16 +10,7 @@ from collections import OrderedDict
 from lib.utils.util import AverageMeter, accuracy, reduce_tensor
 
 
-def validate(
-        epoch,
-        model,
-        loader,
-        loss_fn,
-        cfg,
-        log_suffix='',
-        logger=None,
-        writer=None,
-        local_rank=0):
+def validate(epoch, model, loader, loss_fn, cfg, log_suffix='', logger=None, writer=None, local_rank=0):
     batch_time_m = AverageMeter()
     losses_m = AverageMeter()
     prec1_m = AverageMeter()
@@ -32,8 +23,6 @@ def validate(
     with torch.no_grad():
         for batch_idx, (input, target) in enumerate(loader):
             last_batch = batch_idx == last_idx
-            input = input.cuda()
-            target = target.cuda()
 
             output = model(input)
             if isinstance(output, (tuple, list)):
@@ -53,9 +42,9 @@ def validate(
             prec1, prec5 = accuracy(output, target, topk=(1, 5))
 
             if cfg.NUM_GPU > 1:
-                reduced_loss = reduce_tensor(loss.data, cfg.NUM_GPUS)
-                prec1 = reduce_tensor(prec1, cfg.NUM_GPUS)
-                prec5 = reduce_tensor(prec5, cfg.NUM_GPUS)
+                reduced_loss = reduce_tensor(loss.data, cfg.NUM_GPU)
+                prec1 = reduce_tensor(prec1, cfg.NUM_GPU)
+                prec5 = reduce_tensor(prec5, cfg.NUM_GPU)
             else:
                 reduced_loss = loss.data
 
@@ -67,9 +56,7 @@ def validate(
 
             batch_time_m.update(time.time() - end)
             end = time.time()
-            if local_rank == 0 and (
-                    last_batch or batch_idx %
-                    cfg.LOG_INTERVAL == 0):
+            if local_rank == 0 and (last_batch or batch_idx % cfg.LOG_INTERVAL == 0):
                 log_name = 'Test' + log_suffix
                 logger.info(
                     '{0}: [{1:>4d}/{2}]  '

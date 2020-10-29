@@ -20,7 +20,7 @@ cfg = __C
 
 __C.AUTO_RESUME = True
 __C.DATA_DIR = './data/imagenet'
-__C.JOB_NAME = 'cream'
+__C.MODEL = 'cream'
 __C.RESUME_PATH = './experiments/ckps/resume.pth.tar'
 __C.SAVE_PATH = './experiments/ckps/'
 __C.SEED = 42
@@ -32,7 +32,7 @@ __C.SAVE_IMAGES = False
 __C.AMP = False
 __C.OUTPUT = 'output/path/'
 __C.EVAL_METRICS = 'prec1'
-__C.TTA = 0  # Test/inference time augmentation
+__C.TTA = 0  # Test or inference time augmentation
 __C.LOCAL_RANK = 0
 __C.VERBOSE = False
 
@@ -48,32 +48,43 @@ __C.DATASET.VAL_BATCH_MUL = 4
 
 
 # model configs
-__C.MODEL = CN()
-__C.MODEL.SELECTION = 14
-__C.MODEL.GP = 'avg'  # type of global pool ["avg", "max", "avgmax", "avgmaxc"]
-__C.MODEL.DROPOUT_RATE = 0.0  # dropout rate
+__C.NET = CN()
+__C.NET.SELECTION = 14
+__C.NET.GP = 'avg'  # type of global pool ["avg", "max", "avgmax", "avgmaxc"]
+__C.NET.DROPOUT_RATE = 0.0  # dropout rate
 
 # model ema parameters
-__C.MODEL.EMA = CN()
-__C.MODEL.EMA.USE = True
-__C.MODEL.EMA.FORCE_CPU = False  # force model ema to be tracked on CPU
-__C.MODEL.EMA.DECAY = 0.9998
+__C.NET.EMA = CN()
+__C.NET.EMA.USE = True
+__C.NET.EMA.FORCE_CPU = False  # force model ema to be tracked on CPU
+__C.NET.EMA.DECAY = 0.9998
 
 # optimizer configs
+__C.OPT = 'sgd'
+__C.OPT_EPS = 1e-2
+__C.MOMENTUM = 0.9
+__C.WEIGHT_DECAY = 1e-4
 __C.OPTIMIZER = CN()
 __C.OPTIMIZER.NAME = 'sgd'
 __C.OPTIMIZER.MOMENTUM = 0.9
 __C.OPTIMIZER.WEIGHT_DECAY = 1e-3
 
 # scheduler configs
-__C.SCHEDULER = CN()
-__C.SCHEDULER.NAME = 'step'
-__C.SCHEDULER.LR = 1e-2
-__C.SCHEDULER.WARMUP_LR = 1e-4
-__C.SCHEDULER.MIN_LR = 1e-5
-__C.SCHEDULER.EPOCHS = 200
-__C.SCHEDULER.WARMUP_EPOCHS = 3
-__C.SCHEDULER.DECAY_RATE = 0.1
+__C.SCHED = 'sgd'
+__C.LR_NOISE = None
+__C.LR_NOISE_PCT = 0.67
+__C.LR_NOISE_STD = 1.0
+__C.WARMUP_LR = 1e-4
+__C.MIN_LR = 1e-5
+__C.EPOCHS = 200
+__C.START_EPOCH = None
+__C.DECAY_EPOCHS = 30.0
+__C.WARMUP_EPOCHS = 3
+__C.COOLDOWN_EPOCHS = 10
+__C.PATIENCE_EPOCHS = 10
+__C.DECAY_RATE = 0.1
+__C.LR = 1e-2
+__C.META_LR = 1e-4
 
 # data augmentation parameters
 __C.AUGMENTATION = CN()
@@ -100,13 +111,10 @@ __C.SUPERNET.SLICE = 4
 __C.SUPERNET.POOL_SIZE = 10
 __C.SUPERNET.RESUNIT = False
 __C.SUPERNET.DIL_CONV = False
-__C.SUPERNET.TINY = False
 __C.SUPERNET.UPDATE_2ND = True
 __C.SUPERNET.FLOPS_MAXIMUM = 600
 __C.SUPERNET.FLOPS_MINIMUM = 0
 __C.SUPERNET.PICK_METHOD = 'meta'  # pick teacher method
-__C.SUPERNET.META_LR = 1e-4
 __C.SUPERNET.META_STA_EPOCH = 20  # start using meta picking method
 __C.SUPERNET.HOW_TO_PROB = 'pre_prob'  # sample method
-__C.SUPERNET.PRE_PROB = (0.05, 0.2, 0.05, 0.5, 0.05,
-                         0.15)  # sample prob in 'pre_prob'
+__C.SUPERNET.PRE_PROB = (0.05, 0.2, 0.05, 0.5, 0.05, 0.15)  # sample prob in 'pre_prob'

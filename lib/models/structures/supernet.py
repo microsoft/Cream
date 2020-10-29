@@ -3,9 +3,10 @@
 # Written by Hao Du and Houwen Peng
 # email: haodu8-c@my.cityu.edu.hk and houwen.peng@microsoft.com
 
-from lib.utils.builders import *
-from lib.utils.build_supernet import *
+from lib.utils.builder_util import *
+from lib.utils.search_structure_supernet import *
 from lib.models.builders.build_supernet import *
+from lib.utils.op_by_layer_dict import flops_op_dict
 
 from timm.models.layers import SelectAdaptivePool2d
 from timm.models.layers.activations import hard_sigmoid
@@ -102,7 +103,6 @@ class SuperNet(nn.Module):
             num_classes) if self.num_classes else None
 
     def forward_features(self, x, architecture):
-        # architecture = [[0], [], [], [], [], [0]]
         x = self.conv_stem(x)
         x = self.bn1(x)
         x = self.act1(x)
@@ -153,7 +153,7 @@ class Classifier(nn.Module):
         return self.classifier(x)
 
 
-def _gen_supernet(flops_minimum=0, flops_maximum=600, **kwargs):
+def gen_supernet(flops_minimum=0, flops_maximum=600, **kwargs):
     choices = {'kernel_size': [3, 5, 7], 'exp_ratio': [4, 6]}
 
     num_features = 1280
@@ -182,10 +182,9 @@ def _gen_supernet(flops_minimum=0, flops_maximum=600, **kwargs):
         ['cn_r1_k1_s1_c320_se0.25'],
     ]
 
-    sta_num, arch_def, size_factor = search_for_layer(
-        flops_op_dict, arch_def, flops_minimum, flops_maximum)
+    sta_num, arch_def, resolution = search_for_layer(flops_op_dict, arch_def, flops_minimum, flops_maximum)
 
-    if sta_num is None or arch_def is None or size_factor is None:
+    if sta_num is None or arch_def is None or resolution is None:
         raise ValueError('Invalid FLOPs Settings')
 
     model_kwargs = dict(
@@ -193,7 +192,6 @@ def _gen_supernet(flops_minimum=0, flops_maximum=600, **kwargs):
         choices=choices,
         num_features=num_features,
         stem_size=16,
-        # channel_multiplier=channel_multiplier,
         norm_kwargs=resolve_bn_args(kwargs),
         act_layer=act_layer,
         se_kwargs=dict(
@@ -204,4 +202,4 @@ def _gen_supernet(flops_minimum=0, flops_maximum=600, **kwargs):
         **kwargs,
     )
     model = SuperNet(**model_kwargs)
-    return model, sta_num, size_factor
+    return model, sta_num, resolution

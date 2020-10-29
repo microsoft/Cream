@@ -9,7 +9,7 @@ from ptflops import get_model_complexity_info
 
 
 class FlopsEst(object):
-    def __init__(self, model, input_shape=(1, 3, 224, 224), device='cpu'):
+    def __init__(self, model, input_shape=(2, 3, 224, 224), device='cpu'):
         self.block_num = len(model.blocks)
         self.choice_num = len(model.blocks[0])
         self.flops_dict = {}
@@ -23,7 +23,7 @@ class FlopsEst(object):
         self.params_fixed = 0
         self.flops_fixed = 0
 
-        input = torch.randn((2, 3, 224, 224))
+        input = torch.randn(input_shape)
 
         flops, params = get_model_complexity_info(
             model.conv_stem, (3, 224, 224), as_strings=False, print_per_layer_stat=False)
@@ -41,9 +41,9 @@ class FlopsEst(object):
                 for choice_id, choice in enumerate(module):
                     flops, params = get_model_complexity_info(choice, tuple(
                         input.shape[1:]), as_strings=False, print_per_layer_stat=False)
-                    # M
+                    # Flops(M)
                     self.flops_dict[block_id][module_id][choice_id] = flops / 1e6
-                    # M
+                    # Params(M)
                     self.params_dict[block_id][module_id][choice_id] = params / 1e6
 
                 input = choice(input)
