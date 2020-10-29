@@ -1,6 +1,9 @@
 # Cream of the Crop: Distilling Prioritized Paths For One-Shot Neural Architecture Search 
 This is an official implementation for our Cream NAS work presented in NeurIPS'20.
 
+Hiring research interns for neural architecture search projects: houwen.peng@microsoft.com
+
+
 **[[Paper]]() [[Models-Google Drive]]()[[Models-Baidu Disk]]() [[Results]]() [[Slides]]() [[BibTex]]()**  <br/>
 
 In this work, we present a simple yet effective architecture distillation method. The central idea is that subnetworks can learn collaboratively and teach each other throughout the training process, aiming to boost the convergence of individual models. We introduce the concept of prioritized path, which refers to the architecture candidates exhibiting superior performance during training. Distilling knowledge from the prioritized paths is able to boost the training of subnetworks. Since the prioritized paths are changed on the fly depending on their performance and complexity, the final obtained paths are the cream of the crop.
