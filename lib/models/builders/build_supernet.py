@@ -1,7 +1,7 @@
 from copy import deepcopy
 
-from lib.models.blocks import get_Bottleneck
-from lib.utils.builders import modify_block_args
+from lib.utils.builder_util import modify_block_args
+from lib.models.blocks import get_Bottleneck, InvertedResidual
 
 from timm.models.efficientnet_blocks import *
 

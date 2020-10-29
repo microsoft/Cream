@@ -17,14 +17,16 @@ parser.add_argument('mode', type=str, default='train',
                     help='Mode in ["train", "retrain", "test"]')
 parser.add_argument('cfg', type=str,
                     default='../experiments/configs/baseline.yaml',
-                    help='configuration of training supernet')
+                    help='configuration of creamt')
 args = parser.parse_args()
 cfg.merge_from_file(args.cfg)
 
 
 def main():
-    date = datetime.date.today().strftime('%m%d%H%M%S')
-    save_path = os.path.join(cfg.SAVE_PATH, "{}-{}".format(date, cfg.JOB_NAME))
+    date = datetime.date.today().strftime('%m%d')
+    save_path = os.path.join(cfg.SAVE_PATH, "{}-{}".format(date, cfg.MODEL))
+    if not os.path.exists(save_path):
+        os.mkdir(save_path)
 
     os.system("cp {} {}".format(args.cfg, os.path.join(save_path, 'config.yaml')))
 

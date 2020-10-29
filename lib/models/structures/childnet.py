@@ -1,4 +1,4 @@
-from lib.utils.builders import *
+from lib.utils.builder_util import *
 from lib.models.builders.build_childnet import *
 
 from timm.models.layers import SelectAdaptivePool2d
@@ -98,7 +98,7 @@ class ChildNet(nn.Module):
         return x
 
 
-def _gen_childnet(arch_list, arch_def, **kwargs):
+def gen_childnet(arch_list, arch_def, **kwargs):
     # arch_list = [[0], [], [], [], [], [0]]
     choices = {'kernel_size': [3, 5, 7], 'exp_ratio': [4, 6]}
     choices_list = [[x, y] for x in choices['kernel_size']
@@ -132,7 +132,6 @@ def _gen_childnet(arch_list, arch_def, **kwargs):
         block_args=decode_arch_def(new_arch),
         num_features=num_features,
         stem_size=16,
-        # channel_multiplier=channel_multiplier,
         norm_kwargs=resolve_bn_args(kwargs),
         act_layer=act_layer,
         se_kwargs=dict(

@@ -8,7 +8,7 @@ from collections import OrderedDict
 from lib.utils.util import AverageMeter, accuracy, reduce_tensor
 
 def train_epoch(
-        epoch, model, loader, optimizer, loss_fn, cfg, args,
+        epoch, model, loader, optimizer, loss_fn, cfg,
         lr_scheduler=None, saver=None, output_dir='', use_amp=False,
         model_ema=None, logger=None, writer=None, local_rank=0):
     batch_time_m = AverageMeter()
@@ -18,8 +18,6 @@ def train_epoch(
     prec5_m = AverageMeter()
 
     model.train()
-
-    maxup_cnt = 0
 
     end = time.time()
     last_idx = len(loader) - 1
@@ -117,7 +115,7 @@ def train_epoch(
             saver.save_recovery(
                 model,
                 optimizer,
-                args,
+                cfg,
                 epoch,
                 model_ema=model_ema,
                 use_amp=use_amp,
