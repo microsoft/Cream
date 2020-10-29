@@ -1,8 +1,7 @@
-# Cream of the Crop: Distilling Prioritized Paths For One-Shot Neural Architecture Search 
-This is an official implementation for our Cream NAS work presented in NeurIPS'20.
-
 Hiring research interns for neural architecture search projects: houwen.peng@microsoft.com
 
+# Cream of the Crop: Distilling Prioritized Paths For One-Shot Neural Architecture Search 
+This is an official implementation for our Cream NAS work presented in NeurIPS'20.
 
 **[[Paper]]() [[Models-Google Drive]]()[[Models-Baidu Disk]]() [[Results]]() [[Slides]]() [[BibTex]]()**  <br/>
 
