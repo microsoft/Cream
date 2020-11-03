@@ -121,6 +121,14 @@ The top-1 accuracy on ImageNet. Our method achieves very competitive performance
 </div>
 
 ## BibTex
+```
+@article{Cream,
+  title={Cream of the Crop: Distilling Prioritized Paths For One-Shot Neural Architecture Search},
+  author={Peng, Houwen and Du, Hao and Yu, Hongyuan and Li, Qi and Liao, Jing and Fu, Jianlong},
+  journal={NeurIPS},
+  year={2020}
+}
+```
 
 ## License
 License under an MIT license.
