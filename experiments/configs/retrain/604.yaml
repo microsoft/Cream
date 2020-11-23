@@ -1,6 +1,6 @@
 AUTO_RESUME: False
 DATA_DIR: './data/imagenet'
-MODEL: '600m_retrain'
+MODEL: '604m_retrain'
 RESUME_PATH: './experiments/workspace/retrain/resume.pth.tar'
 SAVE_PATH: './experiments/workspace/retrain'
 SEED: 42
@@ -25,7 +25,7 @@ DATASET:
 NET:
   GP: 'avg'
   DROPOUT_RATE: 0.2
-  SELECTION: 470
+  SELECTION: 604
 
   EMA:
     USE: True
