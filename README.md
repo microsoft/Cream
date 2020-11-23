@@ -59,17 +59,17 @@ python ./tools/main.py train ./experiments/configs/train/train.yaml
 ```
 
 ### II. Retrain 
-We also give the architecture we searched. To train those architectures, you need to configure the parameter `MODEL_SELECTION` to specify the model Flops. To specify which model to train, you should add `MODEL_SELECTION` in `./experiments/configs/retrain/retrain.yaml`. You can select one from [14,42,112,285,470,600], which stands for different Flops(MB).
+We also give the architecture we searched. To train those architectures, you need to configure the parameter `MODEL_SELECTION` to specify the model Flops. To specify which model to train, you should add `MODEL_SELECTION` in `./experiments/configs/retrain/retrain.yaml`. You can select one from [14,42,112,287,481,604], which stands for different Flops(MB).
 ```buildoutcfg
 MODEL_SELECTION: 42 # Retrain 42m model
-MODEL_SELECTION: 470 # Retrain 470m model
+MODEL_SELECTION: 481 # Retrain 481m model
 ......
 ```
 
 After specifying the Flops, you need to choose the config settings in `./experiments/configs/retrain/retrain.yaml`. The config files are in `./expperiments/configs/retrain`
 ```buildoutcfg
 ./experiments/configs/retrain/42.yaml
-./experiments/configs/retrain/470.yaml
+./experiments/configs/retrain/481.yaml
 ......
 ```
 
@@ -84,14 +84,14 @@ The trained model and log file will be saved in `./experiments/workspace/retrain
 To test our trained of models, you need to use `MODEL_SELECTION` in `./experiments/configs/test/test.yaml` to specify which model to test.
 ```buildoutcfg
 MODEL_SELECTION: 42 # test 42m model
-MODEL_SELECTION: 470 # test 470m model
+MODEL_SELECTION: 481 # test 481m model
 ......
 ```
 
 After specifying the Flops of the model, you need to write the path to the resume model in `./experiments/configs/test/test.yaml`.
 ```buildoutcfg
 RESUME_PATH: './experiments/workspace/ckps/42.pth.tar'
-RESUME_PATH: './experiments/workspace/ckps/470.pth.tar'
+RESUME_PATH: './experiments/workspace/ckps/481.pth.tar'
 ......
 ```
 
