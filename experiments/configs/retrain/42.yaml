@@ -1,6 +1,6 @@
 AUTO_RESUME: False
 DATA_DIR: './data/imagenet'
-MODEL: '42m_retrain'
+MODEL: '43m_retrain'
 RESUME_PATH: './experiments/workspace/retrain/resume.pth.tar'
 SAVE_PATH: './experiments/workspace/retrain'
 SEED: 42
