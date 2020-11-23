@@ -41,7 +41,19 @@ For quick test, we have stored the checkpoints of our models in [Google Drive](h
 
 Just download the checkpoints from [Google Drive](https://drive.google.com/drive/folders/1NLGAbBF9bA1IUAxKlk2VjgRXhr6RHvRW?usp=sharing) (or [Baidu Disk](https://pan.baidu.com/s/1TqQNm2s14oEdyNPimw3T9g)) and put the checkpoints in `./experiments/workspace/ckps/`.
 
-Then you can do the test right now(as described in the following *Quick Start, III. Test*).
+Then you can do the test right now (as described in the following *Quick Start, III. Test*).
+
+Model download links:
+Model | FLOPs | Top-1 Acc. | Top-5 Acc. | Link 
+--- |:---:|:---:|:---:|:---:
+Cream_14 | 14M | 59.6 | 77.3 | [Google](https://drive.google.com/file/d/19knbGCUlU9DYJp9En8mzQ3o390Q0gJeB/view?usp=sharing) / [Baidu](https://pan.baidu.com/s/1ZvJ3gk_FVOVHmvmy87cr_w) / [Log](https://drive.google.com/file/d/1Ra2XC-Zjfpx6YG91ZRY_8qI_XnDe_Txu/view?usp=sharing)
+Cream_42 | 42M | 66.5 | 86.7 | [Google](https://drive.google.com/file/d/1QBYTLITOJG5dSjU35YewE9efSCH_VGg2/view?usp=sharing) / [Baidu](https://pan.baidu.com/s/1ZvJ3gk_FVOVHmvmy87cr_w) / [Log](https://drive.google.com/file/d/1Ra2XC-Zjfpx6YG91ZRY_8qI_XnDe_Txu/view?usp=sharing)
+Cream_114 | 114M | 72.8 | 90.8 | [Google](https://drive.google.com/file/d/1QBYTLITOJG5dSjU35YewE9efSCH_VGg2/view?usp=sharing) / [Baidu](https://pan.baidu.com/s/1ZvJ3gk_FVOVHmvmy87cr_w) / [Log](https://drive.google.com/file/d/1Ra2XC-Zjfpx6YG91ZRY_8qI_XnDe_Txu/view?usp=sharing)
+Cream_287 | 287M | 77.6 | 93.3 | [Google](https://drive.google.com/file/d/1QBYTLITOJG5dSjU35YewE9efSCH_VGg2/view?usp=sharing) / [Baidu](https://pan.baidu.com/s/1ZvJ3gk_FVOVHmvmy87cr_w) / [Log](https://drive.google.com/file/d/1Ra2XC-Zjfpx6YG91ZRY_8qI_XnDe_Txu/view?usp=sharing)
+Cream_481 | 481M | 79.2 | 94.2 | [Google](https://drive.google.com/file/d/1QBYTLITOJG5dSjU35YewE9efSCH_VGg2/view?usp=sharing) / [Baidu](https://pan.baidu.com/s/1ZvJ3gk_FVOVHmvmy87cr_w) / [Log](https://drive.google.com/file/d/1Ra2XC-Zjfpx6YG91ZRY_8qI_XnDe_Txu/view?usp=sharing)
+Cream_604 | 604M | 80.0 | 94.7 | [Google](https://drive.google.com/file/d/1QBYTLITOJG5dSjU35YewE9efSCH_VGg2/view?usp=sharing) / [Baidu](https://pan.baidu.com/s/1ZvJ3gk_FVOVHmvmy87cr_w) / [Log](https://drive.google.com/file/d/1Ra2XC-Zjfpx6YG91ZRY_8qI_XnDe_Txu/view?usp=sharing)
+
+
 
 ## Quick Start
 We provide *search*, *retrain* and *test* code of our Cream NAS algorithm as follows.
