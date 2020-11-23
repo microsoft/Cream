@@ -47,7 +47,7 @@ Model download links:
 Model | FLOPs | Top-1 Acc. % | Top-5 Acc. % | Link 
 --- |:---:|:---:|:---:|:---:
 Cream_14 | 14M | 53.7 | 77.2 | [Google](https://drive.google.com/file/d/19knbGCUlU9DYJp9En8mzQ3o390Q0gJeB/view?usp=sharing) / [Baidu (password: wqw6)](https://pan.baidu.com/s/1TqQNm2s14oEdyNPimw3T9g) 
-Cream_42 | 42M | 66.5 | 86.7 | [Google](https://drive.google.com/file/d/1ILTXIuIqkN_WMfBd3lc6r-dNeADULYna/view?usp=sharing) / [Baidu (password: wqw6)](https://pan.baidu.com/s/1TqQNm2s14oEdyNPimw3T9g)
+Cream_43 | 43M | 66.5 | 86.7 | [Google](https://drive.google.com/file/d/1ILTXIuIqkN_WMfBd3lc6r-dNeADULYna/view?usp=sharing) / [Baidu (password: wqw6)](https://pan.baidu.com/s/1TqQNm2s14oEdyNPimw3T9g)
 Cream_114 | 114M | 72.8 | 90.8 | [Google](https://drive.google.com/file/d/1DPoCEF0CufRsGyY5_iyCmeb0gT21knQG/view?usp=sharing) / [Baidu (password: wqw6)](https://pan.baidu.com/s/1TqQNm2s14oEdyNPimw3T9g)
 Cream_287 | 287M | 77.6 | 93.3 | [Google](https://drive.google.com/file/d/1F3cbpmr91vwzlcoGZauqieRm5Ca0glZ_/view?usp=sharing) / [Baidu (password: wqw6)](https://pan.baidu.com/s/1TqQNm2s14oEdyNPimw3T9g)
 Cream_481 | 481M | 79.2 | 94.2 | [Google](https://drive.google.com/file/d/1RzJBr7wc1XolNtw8TvMDRPeFzyRypuS9/view?usp=sharing) / [Baidu (password: wqw6)](https://pan.baidu.com/s/1TqQNm2s14oEdyNPimw3T9g)
@@ -71,16 +71,16 @@ python ./tools/main.py train ./experiments/configs/train/train.yaml
 ```
 
 ### II. Retrain 
-We also give the architecture we searched. To train those architectures, you need to configure the parameter `MODEL_SELECTION` to specify the model Flops. To specify which model to train, you should add `MODEL_SELECTION` in `./experiments/configs/retrain/retrain.yaml`. You can select one from [14,42,112,287,481,604], which stands for different Flops(MB).
+We also give the architecture we searched. To train those architectures, you need to configure the parameter `MODEL_SELECTION` to specify the model Flops. To specify which model to train, you should add `MODEL_SELECTION` in `./experiments/configs/retrain/retrain.yaml`. You can select one from [14,43,112,287,481,604], which stands for different Flops(MB).
 ```buildoutcfg
-MODEL_SELECTION: 42 # Retrain 42m model
+MODEL_SELECTION: 43 # Retrain 43m model
 MODEL_SELECTION: 481 # Retrain 481m model
 ......
 ```
 
 After specifying the Flops, you need to choose the config settings in `./experiments/configs/retrain/retrain.yaml`. The config files are in `./expperiments/configs/retrain`
 ```buildoutcfg
-./experiments/configs/retrain/42.yaml
+./experiments/configs/retrain/43.yaml
 ./experiments/configs/retrain/481.yaml
 ......
 ```
@@ -95,14 +95,14 @@ The trained model and log file will be saved in `./experiments/workspace/retrain
 ### III. Test
 To test our trained of models, you need to use `MODEL_SELECTION` in `./experiments/configs/test/test.yaml` to specify which model to test.
 ```buildoutcfg
-MODEL_SELECTION: 42 # test 42m model
+MODEL_SELECTION: 43 # test 43m model
 MODEL_SELECTION: 481 # test 481m model
 ......
 ```
 
 After specifying the Flops of the model, you need to write the path to the resume model in `./experiments/configs/test/test.yaml`.
 ```buildoutcfg
-RESUME_PATH: './experiments/workspace/ckps/42.pth.tar'
+RESUME_PATH: './experiments/workspace/ckps/43.pth.tar'
 RESUME_PATH: './experiments/workspace/ckps/481.pth.tar'
 ......
 ```
