@@ -3,7 +3,7 @@ Hiring research interns for neural architecture search projects: houwen.peng@mic
 # Cream of the Crop: Distilling Prioritized Paths For One-Shot Neural Architecture Search 
 This is an official implementation for our Cream NAS work presented in NeurIPS'20.
 
-**[[Paper]](https://arxiv.org/pdf/2010.15821.pdf) [[Models-Google Drive]](https://drive.google.com/drive/folders/1NLGAbBF9bA1IUAxKlk2VjgRXhr6RHvRW?usp=sharing)[[Models-Baidu Disk]](https://pan.baidu.com/s/4hymmwni) [[Results]]() [[Slides]]() [[BibTex]]()**  <br/>
+**[[Paper]](https://papers.nips.cc/paper/2020/file/d072677d210ac4c03ba046120f0802ec-Paper.pdf) [[Models-Google Drive]](https://drive.google.com/drive/folders/1NLGAbBF9bA1IUAxKlk2VjgRXhr6RHvRW?usp=sharing)[[Models-Baidu Disk]](https://pan.baidu.com/s/4hymmwni) [[Slides]]() [[BibTex]](https://scholar.googleusercontent.com/scholar.bib?q=info:ICWVXc_SsKAJ:scholar.google.com/&output=citation&scisdr=CgUmooXfEMfTi0cV5aU:AAGBfm0AAAAAX7sQ_aXoamdKRaBI12tAVN8REq1VKNwM&scisig=AAGBfm0AAAAAX7sQ_RdYtp6BSro3zgbXVJU2MCgsG730&scisf=4&ct=citation&cd=-1&hl=ja)**  <br/>
 
 In this work, we present a simple yet effective architecture distillation method. The central idea is that subnetworks can learn collaboratively and teach each other throughout the training process, aiming to boost the convergence of individual models. We introduce the concept of prioritized path, which refers to the architecture candidates exhibiting superior performance during training. Distilling knowledge from the prioritized paths is able to boost the training of subnetworks. Since the prioritized paths are changed on the fly depending on their performance and complexity, the final obtained paths are the cream of the crop.
 <div >
@@ -125,7 +125,8 @@ The top-1 accuracy on ImageNet. Our method achieves very competitive performance
 @article{Cream,
   title={Cream of the Crop: Distilling Prioritized Paths For One-Shot Neural Architecture Search},
   author={Peng, Houwen and Du, Hao and Yu, Hongyuan and Li, Qi and Liao, Jing and Fu, Jianlong},
-  journal={NeurIPS},
+  journal={Advances in Neural Information Processing Systems},
+  volume={33},
   year={2020}
 }
 ```
