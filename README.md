@@ -47,10 +47,10 @@ Model download links:
 Model | FLOPs | Top-1 Acc. % | Top-5 Acc. % | Link 
 --- |:---:|:---:|:---:|:---:
 Cream_14 | 14M | 59.6 | 77.3 | [Google](https://drive.google.com/file/d/19knbGCUlU9DYJp9En8mzQ3o390Q0gJeB/view?usp=sharing) / [Baidu](https://pan.baidu.com/s/1ZvJ3gk_FVOVHmvmy87cr_w) / [Log](https://drive.google.com/file/d/1Wv_cwUvliHqBT5U36kHWTuy6H2BpTYxc/view?usp=sharing)
-Cream_42 | 42M | 66.5 | 86.7 | [Google](https://drive.google.com/file/d/1ILTXIuIqkN_WMfBd3lc6r-dNeADULYna/view?usp=sharing) / [Baidu](https://pan.baidu.com/s/1ZvJ3gk_FVOVHmvmy87cr_w) / [Log](https://drive.google.com/file/d/1ILTXIuIqkN_WMfBd3lc6r-dNeADULYna/view?usp=sharing)
+Cream_42 | 42M | 66.5 | 86.7 | [Google](https://drive.google.com/file/d/1ILTXIuIqkN_WMfBd3lc6r-dNeADULYna/view?usp=sharing) / [Baidu](https://pan.baidu.com/s/1ZvJ3gk_FVOVHmvmy87cr_w) / [Log](https://drive.google.com/file/d/1gQ9HwjeWhqT2hdVspFGyNUeSnG5AR0Lg/view?usp=sharing)
 Cream_114 | 114M | 72.8 | 90.8 | [Google](https://drive.google.com/file/d/1DPoCEF0CufRsGyY5_iyCmeb0gT21knQG/view?usp=sharing) / [Baidu](https://pan.baidu.com/s/1ZvJ3gk_FVOVHmvmy87cr_w) / [Log](https://drive.google.com/file/d/1SSN3Vzzh3FEJ-9szolwXVMMFepFTR9IF/view?usp=sharing)
-Cream_287 | 287M | 77.6 | 93.3 | [Google](https://drive.google.com/file/d/1OPhQd5edS6nBamgv3-ynZDVZERfylv_H/view?usp=sharing) / [Baidu](https://pan.baidu.com/s/1ZvJ3gk_FVOVHmvmy87cr_w) / [Log](https://drive.google.com/file/d/1OPhQd5edS6nBamgv3-ynZDVZERfylv_H/view?usp=sharing)
-Cream_481 | 481M | 79.2 | 94.2 | [Google](https://drive.google.com/file/d/1QBYTLITOJG5dSjU35YewE9efSCH_VGg2/view?usp=sharing) / [Baidu](https://pan.baidu.com/s/1ZvJ3gk_FVOVHmvmy87cr_w) / [Log](https://drive.google.com/file/d/1OPhQd5edS6nBamgv3-ynZDVZERfylv_H/view?usp=sharing)
+Cream_287 | 287M | 77.6 | 93.3 | [Google](https://drive.google.com/file/d/1F3cbpmr91vwzlcoGZauqieRm5Ca0glZ_/view?usp=sharing) / [Baidu](https://pan.baidu.com/s/1ZvJ3gk_FVOVHmvmy87cr_w) / [Log](https://drive.google.com/file/d/123xqULaK-Jy0wvvaQZSZtJPvgmpQcefx/view?usp=sharing)
+Cream_481 | 481M | 79.2 | 94.2 | [Google](https://drive.google.com/file/d/1RzJBr7wc1XolNtw8TvMDRPeFzyRypuS9/view?usp=sharing) / [Baidu](https://pan.baidu.com/s/1ZvJ3gk_FVOVHmvmy87cr_w) / [Log](https://drive.google.com/file/d/1OPhQd5edS6nBamgv3-ynZDVZERfylv_H/view?usp=sharing)
 Cream_604 | 604M | 80.0 | 94.7 | [Google](https://drive.google.com/file/d/18ZUkgxIGqQ0DaW1oTAVsL0JT1l0YAX1K/view?usp=sharing) / [Baidu](https://pan.baidu.com/s/1ZvJ3gk_FVOVHmvmy87cr_w) / [Log](https://drive.google.com/file/d/1QCh6_ROdeyZA3nyraal1DyKzccAJjijp/view?usp=sharing)
 
 
