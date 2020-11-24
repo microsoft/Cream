@@ -71,7 +71,7 @@ python ./tools/main.py train ./experiments/configs/train/train.yaml
 ```
 
 ### II. Retrain 
-We also give the architecture we searched. To train those architectures, you need to configure the parameter `MODEL_SELECTION` to specify the model Flops. To specify which model to train, you should add `MODEL_SELECTION` in `./experiments/configs/retrain/retrain.yaml`. You can select one from [14,43,112,287,481,604], which stands for different Flops(MB).
+We also give the architecture we searched. To train those architectures, you need to configure the parameter `MODEL_SELECTION` to specify the model Flops. To specify which model to train, you should add `MODEL_SELECTION` in `./experiments/configs/retrain/retrain.yaml`. You can select one from [14,43,114,287,481,604], which stands for different Flops(MB).
 ```buildoutcfg
 MODEL_SELECTION: 43 # Retrain 43m model
 MODEL_SELECTION: 481 # Retrain 481m model
