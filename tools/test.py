@@ -140,6 +140,7 @@ def main():
         is_training=False,
         num_workers=cfg.WORKERS,
         distributed=True,
+        interpolation='bicubic',
         pin_memory=cfg.DATASET.PIN_MEM,
         crop_pct=DEFAULT_CROP_PCT,
         mean=IMAGENET_DEFAULT_MEAN,
