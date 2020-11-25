@@ -20,7 +20,7 @@ conda create -n Cream python=3.6
 conda activate Cream
 pip install -r requirements
 
-# (optional) install apex to accelerate the training, a little bit faster than pytorch DistributedDataParallel
+# (required) install apex to accelerate the training, a little bit faster than pytorch DistributedDataParallel
 cd lib
 git clone https://github.com/NVIDIA/apex.git
 python ./apex/setup.py install --cpp_ext --cuda_ext
