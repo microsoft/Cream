@@ -94,7 +94,7 @@ def main():
                          'ir_r1_k5_s2_e4_c40_se0.25',
                          'ir_r1_k3_s2_e6_c80_se0.25',
                          'ir_r1_k3_s1_e6_c96_se0.25',
-                         'ir_r1_k3_s2_e6_c192_se0.25']
+                         'ir_r1_k5_s2_e6_c192_se0.25']
     arch_def = [[stem[0]]] + [[choice_block_pool[idx]
                                for repeat_times in range(len(arch_list[idx + 1]))]
                               for idx in range(len(choice_block_pool))] + [[stem[1]]]
@@ -281,7 +281,8 @@ def main():
                     cfg,
                     log_suffix='_EMA',
                     logger=logger,
-                    writer=writer)
+                    writer=writer,
+                    local_rank=args.local_rank)
                 eval_metrics = ema_eval_metrics
 
             if lr_scheduler is not None:
