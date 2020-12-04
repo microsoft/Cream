@@ -215,7 +215,7 @@ def main():
         input_size=(3, cfg.DATASET.IMAGE_SIZE, cfg.DATASET.IMAGE_SIZE),
         batch_size=cfg.DATASET.VAL_BATCH_MUL * cfg.DATASET.BATCH_SIZE,
         is_training=False,
-        interpolation=cfg.DATASET.INTERPOLATION,
+        interpolation='bicubic',
         crop_pct=DEFAULT_CROP_PCT,
         mean=IMAGENET_DEFAULT_MEAN,
         std=IMAGENET_DEFAULT_STD,
