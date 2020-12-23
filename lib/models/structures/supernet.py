@@ -11,7 +11,7 @@ from lib.utils.op_by_layer_dict import flops_op_dict
 from timm.models.layers import SelectAdaptivePool2d
 from timm.models.layers.activations import hard_sigmoid
 
-
+# Supernet Structures
 class SuperNet(nn.Module):
 
     def __init__(

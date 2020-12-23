@@ -3,6 +3,8 @@
 # Written by Hao Du and Houwen Peng
 # email: haodu8-c@my.cityu.edu.hk and houwen.peng@microsoft.com
 
+# This file is to demonstrate how to generate subImagenet.
+
 import os
 data_path = './data'
 ImageNet_train_path = os.path.join(data_path, 'imagenet/train')
