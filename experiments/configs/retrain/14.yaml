@@ -36,7 +36,7 @@ NET:
 LR: 0.064
 EPOCHS: 500
 OPT_EPS: 1e-3
-SCHED: 'cosine'
+SCHED: 'step'
 OPT: 'rmsproptf'
 WARMUP_LR: 1e-6
 DECAY_EPOCHS: 2.4
