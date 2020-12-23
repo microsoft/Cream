@@ -18,7 +18,7 @@ from timm.loss import LabelSmoothingCrossEntropy
 from timm.data import Dataset, create_loader
 from timm.models import resume_checkpoint
 
-# import apex as distributed package
+# import apex as distributed package otherwise we use torch.nn.parallel.distributed as distributed package
 try:
     from apex.parallel import DistributedDataParallel as DDP
     from apex.parallel import convert_syncbn_model

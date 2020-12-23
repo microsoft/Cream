@@ -5,7 +5,7 @@ from lib.models.blocks import get_Bottleneck, InvertedResidual
 
 from timm.models.efficientnet_blocks import *
 
-
+# SuperNet Builder definition.
 class SuperNetBuilder:
     """ Build Trunk Blocks
     """

@@ -1,4 +1,5 @@
 # This file is downloaded from https://github.com/rwightman/pytorch-image-models
+# This file is to define the inverted residual block which is the base operation in our search space.
 
 import torch.nn as nn
 

@@ -2,7 +2,7 @@ from lib.utils.util import *
 
 from timm.models.efficientnet_blocks import *
 
-
+# ChildNet Builder definition.
 class ChildNetBuilder:
     def __init__(
             self,
