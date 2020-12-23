@@ -9,7 +9,7 @@ import torch.nn.functional as F
 
 from lib.utils.util import *
 
-
+# supernet train function
 def train_epoch(epoch, model, loader, optimizer, loss_fn, prioritized_board, MetaMN, cfg,
                 est=None, logger=None, lr_scheduler=None, saver=None,
                 output_dir='', model_ema=None, local_rank=0):

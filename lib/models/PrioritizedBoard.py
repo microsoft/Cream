@@ -9,7 +9,7 @@ import torch.nn.functional as F
 
 from copy import deepcopy
 
-
+# Prioritized Path Board
 class PrioritizedBoard():
     def __init__(self, cfg, CHOICE_NUM=6, sta_num=(4, 4, 4, 4, 4), acc_gap=5):
         self.cfg = cfg

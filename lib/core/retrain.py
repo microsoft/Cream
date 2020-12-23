@@ -7,6 +7,7 @@ from collections import OrderedDict
 
 from lib.utils.util import AverageMeter, accuracy, reduce_tensor
 
+# retrain function
 def train_epoch(
         epoch, model, loader, optimizer, loss_fn, cfg,
         lr_scheduler=None, saver=None, output_dir='', use_amp=False,

@@ -22,7 +22,7 @@ from timm.data import Dataset, create_loader
 from timm.utils import ModelEma, update_summary
 from timm.loss import LabelSmoothingCrossEntropy
 
-# import apex as distributed package
+# import apex as distributed package otherwise we use torch.nn.parallel.distributed as distributed package
 try:
     from apex import amp
     from apex.parallel import DistributedDataParallel as DDP
