@@ -4,7 +4,7 @@ from lib.models.builders.build_childnet import *
 from timm.models.layers import SelectAdaptivePool2d
 from timm.models.layers.activations import hard_sigmoid
 
-
+# ChildNet Structures
 class ChildNet(nn.Module):
 
     def __init__(

@@ -3,6 +3,8 @@
 # Written by Hao Du and Houwen Peng
 # email: haodu8-c@my.cityu.edu.hk and houwen.peng@microsoft.com
 
+# This file is to define the architecture of the residual block.
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

@@ -9,7 +9,7 @@ import torch
 from collections import OrderedDict
 from lib.utils.util import AverageMeter, accuracy, reduce_tensor
 
-
+# validate function
 def validate(epoch, model, loader, loss_fn, cfg, log_suffix='', logger=None, writer=None, local_rank=0):
     batch_time_m = AverageMeter()
     losses_m = AverageMeter()
