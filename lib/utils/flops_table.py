@@ -48,7 +48,7 @@ class FlopsEst(object):
 
                 input = choice(input)
 
-        # conv_last
+        # conv_last conv
         flops, params = get_model_complexity_info(model.global_pool, tuple(
             input.shape[1:]), as_strings=False, print_per_layer_stat=False)
         self.params_fixed += params / 1e6

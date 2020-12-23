@@ -42,7 +42,7 @@ class ChildNet(nn.Module):
         self.act1 = act_layer(inplace=True)
         self._in_chs = stem_size
 
-        # Middle stages (IR/ER/DS Blocks)
+        # Middle stage (IR/ER/DS Blocks)
         builder = ChildNetBuilder(
             channel_multiplier, 8, None, 32, pad_type, act_layer, se_kwargs,
             norm_layer, norm_kwargs, drop_path_rate, verbose=verbose)

@@ -17,7 +17,7 @@ LOCAL_RANK: 0
 
 DATASET:
   NUM_CLASSES: 1000
-  IMAGE_SIZE: 224 # image patch size
+  IMAGE_SIZE: 224 # image patch sizes
   INTERPOLATION: 'bilinear' # Image resize interpolation type
   BATCH_SIZE: 128 # batch size
 

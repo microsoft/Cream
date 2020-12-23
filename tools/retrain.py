@@ -182,6 +182,7 @@ def main():
     if not os.path.exists(train_dir) and args.local_rank == 0:
         logger.error('Training folder does not exist at: {}'.format(train_dir))
         exit(1)
+
     dataset_train = Dataset(train_dir)
     loader_train = create_loader(
         dataset_train,

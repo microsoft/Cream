@@ -17,7 +17,7 @@ from timm.utils import ModelEma
 from timm.models import resume_checkpoint
 from timm.data import Dataset, create_loader
 
-# import apex as distributed package
+# import apex as distributed packages
 try:
     from apex.parallel import convert_syncbn_model
     from apex.parallel import DistributedDataParallel as DDP

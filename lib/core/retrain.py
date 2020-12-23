@@ -127,7 +127,7 @@ def train_epoch(
                 metric=losses_m.avg)
 
         end = time.time()
-        # end for
+        # end for loop
 
     if hasattr(optimizer, 'sync_lookahead'):
         optimizer.sync_lookahead()

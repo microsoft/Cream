@@ -73,7 +73,7 @@ class SuperNet(nn.Module):
         self.blocks = builder(self._in_chs, block_args)
         self._in_chs = builder.in_chs
 
-        # Head + Pooling
+        # Head + Poolings
         self.global_pool = SelectAdaptivePool2d(pool_type=global_pool)
         self.conv_head = create_conv2d(
             self._in_chs,

@@ -9,7 +9,7 @@ ImageNet_train_path = os.path.join(data_path, 'imagenet/train')
 subImageNet_name = 'subImageNet'
 class_idx_txt_path = os.path.join(data_path, subImageNet_name)
 
-# train
+# train scheme
 classes = sorted(os.listdir(ImageNet_train_path))
 if not os.path.exists(os.path.join(data_path, subImageNet_name)):
     os.mkdir(os.path.join(data_path, subImageNet_name))

@@ -5,7 +5,7 @@
 
 # This dictionary is generated from calculating each operation of each layer to quickly search for layers.
 # flops_op_dict[which_stage][which_operation] =
-# (flops_of_operation_with_stride1, flops_of_operation_with_stride2)
+# (flops_of_operation_with_stride2, flops_of_operation_with_stride1)
 
 flops_op_dict = {}
 for i in range(5):

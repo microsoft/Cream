@@ -14,7 +14,7 @@ class MetaMatchingNetwork():
     def __init__(self, cfg):
         self.cfg = cfg
 
-    # only update student network weights
+    # only update student network weight
     def update_student_weights_only(self, random_cand, grad_1, optimizer, model):
         for weight, grad_item in zip(model.module.rand_parameters(random_cand), grad_1):
             weight.grad = grad_item

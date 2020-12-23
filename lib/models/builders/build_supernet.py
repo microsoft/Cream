@@ -80,7 +80,7 @@ class SuperNetBuilder:
         ba['norm_layer'] = self.norm_layer
         ba['norm_kwargs'] = self.norm_kwargs
         ba['pad_type'] = self.pad_type
-        # block act fn overrides the model default
+        # block act fn override the model default
         ba['act_layer'] = ba['act_layer'] if ba['act_layer'] is not None else self.act_layer
         assert ba['act_layer'] is not None
         if bt == 'ir':

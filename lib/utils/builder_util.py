@@ -58,7 +58,7 @@ def decode_block_str(block_str):
     Gets a list of block arg (dicts) through a string notation of arguments.
     E.g. ir_r2_k3_s2_e1_i32_o16_se0.25_noskip
     All args can exist in any order with the exception of the leading string which
-    is assumed to indicate the block type.
+    is assumed to indicate the block types.
     leading string - block type (
       ir = InvertedResidual, ds = DepthwiseSep, dsa = DeptwhiseSep with pw act, cn = ConvBnAct)
     r - number of repeat blocks,

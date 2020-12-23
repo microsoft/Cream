@@ -42,7 +42,6 @@ def search_for_layer(flops_op_dict, arch_def, flops_minimum, flops_maximum):
             break
 
     arch_def = [item[:i] for i, item in zip([1] + sta_num + [1], arch_def)]
-    # print(arch_def)
 
     return sta_num, arch_def, size_factor * 32
 

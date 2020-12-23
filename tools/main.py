@@ -17,7 +17,7 @@ parser.add_argument('mode', type=str, default='train',
                     help='Mode in ["train", "retrain", "test"]')
 parser.add_argument('cfg', type=str,
                     default='../experiments/configs/baseline.yaml',
-                    help='configuration of creamt')
+                    help='configuration of cream')
 args = parser.parse_args()
 cfg.merge_from_file(args.cfg)
 

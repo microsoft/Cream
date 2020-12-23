@@ -20,6 +20,8 @@ def validate(epoch, model, loader, loss_fn, cfg, log_suffix='', logger=None, wri
 
     end = time.time()
     last_idx = len(loader) - 1
+
+    # start testing
     with torch.no_grad():
         for batch_idx, (input, target) in enumerate(loader):
             last_batch = batch_idx == last_idx

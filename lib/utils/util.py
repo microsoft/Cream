@@ -30,7 +30,7 @@ def get_path_acc(model, path, val_loader, args, val_iters=50):
             if isinstance(output, (tuple, list)):
                 output = output[0]
 
-            # augmentation reduction
+            # augmentation reductions
             reduce_factor = args.tta
             if reduce_factor > 1:
                 output = output.unfold(

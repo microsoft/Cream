@@ -32,7 +32,7 @@ __C.SAVE_IMAGES = False
 __C.AMP = False
 __C.OUTPUT = 'output/path/'
 __C.EVAL_METRICS = 'prec1'
-__C.TTA = 0  # Test or inference time augmentation
+__C.TTA = 0  # Test or inference time augmentations
 __C.LOCAL_RANK = 0
 __C.VERBOSE = False
 

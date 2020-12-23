@@ -19,7 +19,7 @@ class PrioritizedBoard():
         self.acc_gap = acc_gap
 
 
-    # select teacher from prioritized board
+    # select teacher arch from prioritized board
     def select_teacher(self, model, random_cand):
         if self.cfg.SUPERNET.PICK_METHOD == 'top1':
             meta_value, teacher_cand = 0.5, sorted(

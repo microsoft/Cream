@@ -25,6 +25,7 @@ def train_epoch(epoch, model, loader, optimizer, loss_fn, prioritized_board, Met
     end = time.time()
     last_idx = len(loader) - 1
 
+    # start training
     for batch_idx, (input, target) in enumerate(loader):
         last_batch = batch_idx == last_idx
         data_time_m.update(time.time() - end)

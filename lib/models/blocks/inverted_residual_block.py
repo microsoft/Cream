@@ -7,7 +7,7 @@ from timm.models.efficientnet_blocks import make_divisible, resolve_se_args, \
     SqueezeExcite, drop_path
 
 class InvertedResidual(nn.Module):
-    """ Inverted residual block w/ optional SE and CondConv routing"""
+    """ Inverted residual block w/ optional SE and CondConv routings"""
 
     def __init__(self, in_chs, out_chs, dw_kernel_size=3,
                  stride=1, dilation=1, pad_type='', act_layer=nn.ReLU, noskip=False,
