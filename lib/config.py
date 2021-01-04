@@ -71,7 +71,6 @@ __C.OPTIMIZER.WEIGHT_DECAY = 1e-3
 
 # scheduler configs
 __C.SCHED = 'sgd'
-__C.LR_NOISE = None
 __C.LR_NOISE_PCT = 0.67
 __C.LR_NOISE_STD = 1.0
 __C.WARMUP_LR = 1e-4
