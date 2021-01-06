@@ -218,7 +218,7 @@ def main():
 
             # evaluate one epoch
             eval_metrics = validate(model, loader_eval, validate_loss_fn,
-                                    prioritized_board, MetaMN, cfg,
+                                    prioritized_board, cfg,
                                     local_rank=args.local_rank, logger=logger)
 
             update_summary(epoch, train_metrics, eval_metrics, os.path.join(
