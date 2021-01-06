@@ -83,6 +83,7 @@ __C.COOLDOWN_EPOCHS = 10
 __C.PATIENCE_EPOCHS = 10
 __C.DECAY_RATE = 0.1
 __C.LR = 1e-2
+__C.LR_NOISE = None
 __C.META_LR = 1e-4
 
 # data augmentation parameters
