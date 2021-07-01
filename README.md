@@ -1,10 +1,11 @@
 # AutoML
 
-***This a collection of AutoML works at MSRA MSM***
-
-> [**Cream**](https://github.com/microsoft/AutoML/tree/main/Cream) (```@NeurIPS'20```): **Cream of the Crop: Distilling Prioritized Paths For One-Shot Neural Architecture Search**
+***This a collection of AutoML works***
 
 > [**AutoFormer**](https://github.com/microsoft/AutoML/tree/main/AutoFormer)(```NEW```): **AutoFormer: Searching Transformers for Visual Recognition**
+
+
+> [**Cream**](https://github.com/microsoft/AutoML/tree/main/Cream) (```@NeurIPS'20```): **Cream of the Crop: Distilling Prioritized Paths For One-Shot Neural Architecture Search**
 
 
 ## News
