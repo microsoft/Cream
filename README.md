@@ -1,8 +1,10 @@
+Hiring research interns for neural architecture search projects: houwen.peng@microsoft.com
+
 # AutoML
 
-***This a collection of AutoML works***
+***This a collection of our AutoML works***
 
-> [**AutoFormer**](https://github.com/microsoft/AutoML/tree/main/AutoFormer)(```NEW```): **AutoFormer: Searching Transformers for Visual Recognition**
+> [**AutoFormer**](https://github.com/microsoft/AutoML/tree/main/AutoFormer) (```NEW```): **AutoFormer: Searching Transformers for Visual Recognition**
 
 
 > [**Cream**](https://github.com/microsoft/AutoML/tree/main/Cream) (```@NeurIPS'20```): **Cream of the Crop: Distilling Prioritized Paths For One-Shot Neural Architecture Search**
