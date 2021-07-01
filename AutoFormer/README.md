@@ -17,7 +17,7 @@ AutoFormer is a simple yet effective method to train a once-for-all vision trans
 
 - Competive performance
 
-AutoFormer is consistently outperform DeiTs.
+AutoFormers consistently outperform DeiTs.
 
 ## Performance
 
