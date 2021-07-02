@@ -1,8 +1,8 @@
 Hiring research interns for neural architecture search projects: houwen.peng@microsoft.com
 
-# AutoML
+# AutoML - Neural Architecture Search
 
-***This a collection of our AutoML works***
+***This a collection of our AutoML-NAS works***
 
 > [**AutoFormer**](https://github.com/microsoft/AutoML/tree/main/AutoFormer) (```NEW```): **AutoFormer: Searching Transformers for Visual Recognition**
 
