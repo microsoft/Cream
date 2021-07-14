@@ -42,7 +42,7 @@ class MetaMatchingNetwork():
 
     # simulate sgd updating
     def simulate_sgd_update(self, w, g, optimizer):
-        return g * optimizer.param_groups[-1]['lr'] + w
+        return -g * optimizer.param_groups[-1]['lr'] + w
 
     # split training images into several slices
     def get_minibatch_input(self, input):
