@@ -17,7 +17,7 @@ Hiring research interns for neural architecture search projects: houwen.peng@mic
 
 ## Works
 
-### AutoFormer
+### [AutoFormer](https://github.com/microsoft/AutoML/tree/main/AutoFormer)
 
 ***Coming soon!!!***
 
@@ -29,7 +29,7 @@ Benefiting from the strategy, the trained supernet allows thousands of subnets t
 </div>
 
 
-### Cream
+### [Cream](https://github.com/microsoft/AutoML/tree/main/Cream)
 **[[Paper]](https://papers.nips.cc/paper/2020/file/d072677d210ac4c03ba046120f0802ec-Paper.pdf) [[Models-Google Drive]](https://drive.google.com/drive/folders/1NLGAbBF9bA1IUAxKlk2VjgRXhr6RHvRW?usp=sharing)[[Models-Baidu Disk (password: wqw6)]](https://pan.baidu.com/s/1TqQNm2s14oEdyNPimw3T9g) [[Slides]]() [[BibTex]](https://scholar.googleusercontent.com/scholar.bib?q=info:ICWVXc_SsKAJ:scholar.google.com/&output=citation&scisdr=CgUmooXfEMfTi0cV5aU:AAGBfm0AAAAAX7sQ_aXoamdKRaBI12tAVN8REq1VKNwM&scisig=AAGBfm0AAAAAX7sQ_RdYtp6BSro3zgbXVJU2MCgsG730&scisf=4&ct=citation&cd=-1&hl=ja)**  <br/>
 
 In this work, we present a simple yet effective architecture distillation method. The central idea is that subnetworks can learn collaboratively and teach each other throughout the training process, aiming to boost the convergence of individual models. We introduce the concept of prioritized path, which refers to the architecture candidates exhibiting superior performance during training. Distilling knowledge from the prioritized paths is able to boost the training of subnetworks. Since the prioritized paths are changed on the fly depending on their performance and complexity, the final obtained paths are the cream of the crop.
@@ -38,7 +38,24 @@ In this work, we present a simple yet effective architecture distillation method
 </div>
 
 
+## Bibtex
+```
+@article{chen2021autoformer,
+  title={AutoFormer: Searching Transformers for Visual Recognition},
+  author={Chen, Minghao and Peng, Houwen and Fu, Jianlong and Ling, Haibin},
+  journal={arXiv preprint arXiv:2107.00651},
+  year={2021}
+}
 
+@article{Cream,
+  title={Cream of the Crop: Distilling Prioritized Paths For One-Shot Neural Architecture Search},
+  author={Peng, Houwen and Du, Hao and Yu, Hongyuan and Li, Qi and Liao, Jing and Fu, Jianlong},
+  journal={Advances in Neural Information Processing Systems},
+  volume={33},
+  year={2020}
+}
+
+```
 
 ## License
 License under an MIT license.
