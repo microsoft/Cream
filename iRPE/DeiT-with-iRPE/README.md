@@ -2,6 +2,8 @@ Hiring research interns for neural architecture search projects: houwen.peng@mic
 
 # Rethinking and Improving Relative Position Encoding for Vision Transformer
 
+[[paper]](https://houwenpeng.com/publications/iRPE.pdf)
+
 Image Classification: DeiT with iRPE
 
 # Model Zoo
