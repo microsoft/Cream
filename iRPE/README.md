@@ -5,6 +5,9 @@ Image RPE (iRPE for short) methods are new relative position encoding methods de
 
 We provide the implementation of image RPE (iRPE) for image classficiation and object detection.
 
+## How to equip iRPE ?
+The detail is shown in [Tutorial](./HOW_TO_EQUIP_iRPE.md).
+
 ## Image Classification
 
 [[Code]](./DeiT-with-iRPE)
@@ -36,12 +39,15 @@ ResNet-50 |  9 x 9   | 150   | 0.410 | 0.615  | 0.434  | 0.192 | 0.445 | 0.608 |
 We will release the DETR-ResNet-50 with iRPE for 300 epochs and logs as soon as possible.
 
 
-## How to equip iRPE ?
-The detail is shown in [Tutorial](./HOW_TO_EQUIP_iRPE.md).
 
 # Citing iRPE
 If this project is helpful for you, please cite it. Thank you! : )
 
 ```bibtex
-TO BE FILLED
+@article{iRPE,
+  title={Rethinking and Improving Relative Position Encoding for Vision Transformer},
+  author={Kan Wu and Peng Houwen and Chen Minghao and Fu Jianlong and Chao Hongyang},
+  journal={Proceedings of the IEEE/CVF International Conference on Computer Vision},
+  year={2021}
+}
 ```
