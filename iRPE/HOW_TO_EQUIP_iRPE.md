@@ -25,7 +25,7 @@ rpe_config = get_rpe_config(
 )
 ```
 
-The meaning of arguments could be seen in `help(get_rpe_config)`.
+The meaning of arguments could be seen in [`help(get_rpe_config)`](./DeiT-with-iRPE/irpe.py#L823-L855).
 
 - Step. 3 - Build the instance of RPE modules
 
