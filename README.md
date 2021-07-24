@@ -4,6 +4,9 @@ Hiring research interns for neural architecture search projects: houwen.peng@mic
 
 ***This is a collection of our AutoML-NAS work***
 
+> [**iRPE**](./iRPE) (```NEW```): **Rethinking and Improving Relative Position Encoding for Vision Transformer**
+
+
 > [**AutoFormer**](https://github.com/microsoft/AutoML/tree/main/AutoFormer) (```NEW```): **AutoFormer: Searching Transformers for Visual Recognition**
 
 
@@ -11,12 +14,17 @@ Hiring research interns for neural architecture search projects: houwen.peng@mic
 
 
 ## News
+- :boom: July, 2021: [**iRPE**](./iRPE) is now released [[pdf]](https://houwenpeng.com/publications/iRPE.pdf).
+- :boom: July, 2021: [**iRPE**](https://houwenpeng.com/publications/iRPE.pdf) was accepted by ICCV'21.
 - :boom: July, 2021: [**AutoFormer**](https://arxiv.org/abs/2107.00651) was accepted by ICCV'21.
 - :boom: July, 2021: [**AutoFormer**](https://github.com/microsoft/AutoML/tree/main/AutoFormer) is now available on [arXiv](https://arxiv.org/abs/2107.00651).
 - :boom: Oct, 2020: Code for [**Cream**](https://github.com/microsoft/AutoML/tree/main/Cream) is now released.
 - :boom: Oct, 2020: [**Cream**](https://github.com/microsoft/AutoML/tree/main/Cream) was accepted to NeurIPS'20
 
 ## Works
+
+### iRPE
+Image RPE (iRPE for short) methods are new relative position encoding methods dedicated to 2D images, considering directional relative distance modeling as well as the interactions between queries and relative position embeddings in self-attention mechanism. The proposed iRPE methods are simple and lightweight, being easily plugged into transformer blocks. Experiments demonstrate that solely due to the proposed encoding methods, DeiT and DETR obtain up to 1.5% (top-1 Acc) and 1.3% (mAP) stable improvements over their original versions on ImageNet and COCO respectively, without tuning any extra hyperparamters such as earning rate and weight decay. Our ablation and analysis also yield interesting findings, some of with run counter to previous understanding.
 
 ### [AutoFormer](https://github.com/microsoft/AutoML/tree/main/AutoFormer)
 
