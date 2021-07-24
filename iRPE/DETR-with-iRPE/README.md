@@ -8,6 +8,10 @@ Object Detection: DETR with iRPE
 
 We equip DETR models with contextual product shared-head RPE, and report their mAP on MSCOCO dataset.
 
+- Absolute Position Encoding: Sinusoid
+
+- Relative Position Encoding: iRPE (contextual product shared-head RPE)
+
 Backbone  | #Buckets | epoch | AP    | AP\_50 | AP\_75 | AP\_S | AP\_M | AP\_L | Link | Log
 --------- | -------- | ----- | ----- | ------ | ------ | ----- | ----- | ----- | ---- | ---
 ResNet-50 |  7 x 7   | 150   | 0.409 | 0.614  | 0.429  | 0.195 | 0.443 | 0.605 | [link](https://github.com/wkcn/iRPE-model-zoo/releases/download/1.0/rpe-1.9-product-ctx-1-k.pth)| [log](https://github.com/wkcn/iRPE-model-zoo/releases/download/1.0/log_rpe-1.9-product-ctx-1-k.txt), [detail (188 MB)](https://github.com/wkcn/iRPE-model-zoo/releases/download/1.0/detail_rpe-1.9-product-ctx-1-k.log)

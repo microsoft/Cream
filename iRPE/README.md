@@ -31,8 +31,9 @@ base | | ✔ | | 86.61 | 17684 | 82.3 | 95.9 | [link](https://github.com/wkcn/iR
 
 We equip DETR models with contextual product shared-head RPE, and report their mAP on MS COCO Validation set.
 
-Absolute Position Encoding: Sinusoid
-Relative Position Encoding: iRPE (contextual product shared-head RPE)
+- Absolute Position Encoding: Sinusoid
+
+- Relative Position Encoding: iRPE (contextual product shared-head RPE)
 
 Backbone  | #Buckets | epoch | AP    | AP\_50 | AP\_75 | AP\_S | AP\_M | AP\_L | Link | Log
 --------- | -------- | ----- | ----- | ------ | ------ | ----- | ----- | ----- | ---- | ---
