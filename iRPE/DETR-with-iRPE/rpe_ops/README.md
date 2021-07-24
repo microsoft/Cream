@@ -8,11 +8,10 @@ python setup.py install --user
 ```
 
 ## rpe\_index
-The function `rpe_index` is equal to
+The function [`rpe_index`](./rpe_index.py#L5) is equal to
 ```python
 def rpe_index(input, index):
-    '''
-    Y[b, h, i, j] = input[b, h, i, index[i, j]]
+    '''Y[b, h, i, j] = input[b, h, i, index[i, j]]
 
     Parameters
     ----------
