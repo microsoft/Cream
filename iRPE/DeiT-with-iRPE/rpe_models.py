@@ -5,12 +5,12 @@ from models import deit_tiny_patch16_224,\
     deit_small_patch16_224,\
     deit_base_patch16_224
 
-# DeiT-Tiny with image relative position encoding
 
+##### DeiT-Tiny with image relative position encoding
 
 @register_model
 def deit_tiny_patch16_224_ctx_product_50_shared_k(pretrained=False, **kwargs):
-    # DeiT-Tiny with relative position encoding (Contextual Product method)
+    # DeiT-Tiny with relative position encoding on keys (Contextual Product method)
     rpe_config = get_rpe_config(
         ratio=1.9,
         method="product",
@@ -23,12 +23,12 @@ def deit_tiny_patch16_224_ctx_product_50_shared_k(pretrained=False, **kwargs):
                                  rpe_config=rpe_config,
                                  **kwargs)
 
-# DeiT-Small with image relative position encoding
 
+##### DeiT-Small with image relative position encoding
 
 @register_model
 def deit_small_patch16_224_ctx_euc_20_shared_k(pretrained=False, **kwargs):
-    # DeiT-Small with relative position encoding (Contextual Euclidean method)
+    # DeiT-Small with relative position encoding on keys (Contextual Euclidean method)
     rpe_config = get_rpe_config(
         ratio=20,
         method="euc",
@@ -44,7 +44,7 @@ def deit_small_patch16_224_ctx_euc_20_shared_k(pretrained=False, **kwargs):
 
 @register_model
 def deit_small_patch16_224_ctx_quant_51_shared_k(pretrained=False, **kwargs):
-    # DeiT-Small with relative position encoding (Contextual Quantization method)
+    # DeiT-Small with relative position encoding on keys (Contextual Quantization method)
     rpe_config = get_rpe_config(
         ratio=33,
         method="quant",
@@ -60,7 +60,7 @@ def deit_small_patch16_224_ctx_quant_51_shared_k(pretrained=False, **kwargs):
 
 @register_model
 def deit_small_patch16_224_ctx_cross_56_shared_k(pretrained=False, **kwargs):
-    # DeiT-Small with relative position encoding (Contextual Cross method)
+    # DeiT-Small with relative position encoding on keys (Contextual Cross method)
     rpe_config = get_rpe_config(
         ratio=20,
         method="cross",
@@ -76,7 +76,7 @@ def deit_small_patch16_224_ctx_cross_56_shared_k(pretrained=False, **kwargs):
 
 @register_model
 def deit_small_patch16_224_ctx_product_50_shared_k(pretrained=False, **kwargs):
-    # DeiT-Small with relative position encoding (Contextual Product method)
+    # DeiT-Small with relative position encoding on keys (Contextual Product method)
     rpe_config = get_rpe_config(
         ratio=1.9,
         method="product",
@@ -92,7 +92,7 @@ def deit_small_patch16_224_ctx_product_50_shared_k(pretrained=False, **kwargs):
 
 @register_model
 def deit_small_patch16_224_ctx_product_50_shared_qk(pretrained=False, **kwargs):
-    # DeiT-Small with relative position encoding (Contextual Product method)
+    # DeiT-Small with relative position encoding on queries and keys (Contextual Product method)
     rpe_config = get_rpe_config(
         ratio=1.9,
         method="product",
@@ -108,7 +108,7 @@ def deit_small_patch16_224_ctx_product_50_shared_qk(pretrained=False, **kwargs):
 
 @register_model
 def deit_small_patch16_224_ctx_product_50_shared_qkv(pretrained=False, **kwargs):
-    # DeiT-Small with relative position encoding (Contextual Product method)
+    # DeiT-Small with relative position encoding on queries, keys and values (Contextual Product method)
     rpe_config = get_rpe_config(
         ratio=1.9,
         method="product",
@@ -121,12 +121,12 @@ def deit_small_patch16_224_ctx_product_50_shared_qkv(pretrained=False, **kwargs)
                                   rpe_config=rpe_config,
                                   **kwargs)
 
-# DeiT-Base with image relative position encoding
 
+##### DeiT-Base with image relative position encoding
 
 @register_model
 def deit_base_patch16_224_ctx_product_50_shared_k(pretrained=False, **kwargs):
-    # DeiT-Base with relative position encoding (Contextual Product method)
+    # DeiT-Base with relative position encoding on keys (Contextual Product method)
     rpe_config = get_rpe_config(
         ratio=1.9,
         method="product",
@@ -134,6 +134,22 @@ def deit_base_patch16_224_ctx_product_50_shared_k(pretrained=False, **kwargs):
         shared_head=True,
         skip=1,
         rpe_on='k',
+    )
+    return deit_base_patch16_224(pretrained=pretrained,
+                                 rpe_config=rpe_config,
+                                 **kwargs)
+
+
+@register_model
+def deit_base_patch16_224_ctx_product_50_shared_qkv(pretrained=False, **kwargs):
+    # DeiT-Base with relative position encoding on queries, keys and values (Contextual Product method)
+    rpe_config = get_rpe_config(
+        ratio=1.9,
+        method="product",
+        mode='ctx',
+        shared_head=True,
+        skip=1,
+        rpe_on='qkv',
     )
     return deit_base_patch16_224(pretrained=pretrained,
                                  rpe_config=rpe_config,
