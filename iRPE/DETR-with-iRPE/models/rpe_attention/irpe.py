@@ -614,23 +614,23 @@ class iRPE(nn.Module):
         """
 
         B = len(x)  # batch_size
-        L_query, L_mem = rp_bucket.shape
+        L_query, L_key = rp_bucket.shape
         if self.mode == 'bias':
             return self.lookup_table_bias[:, rp_bucket.flatten()].\
-                view(1, self.num_heads, L_query, L_mem)
+                view(1, self.num_heads, L_query, L_key)
 
         elif self.mode == 'contextual':
             """
             ret[b, h, i, j] = lookup_table_weight[b, h, i, rp_bucket[i, j]]
 
-            ret[b, h, i * L_mem + j] = \
+            ret[b, h, i * L_key + j] = \
                lookup_table[b, h, i * num_buckets + rp_buckets[i, j]]
 
             computational cost
             ------------------
             matmul: B * H * L_query * head_dim * num_buckets
-            index: L_query + L_query * L_mem + B * H * L_query * L_mem
-            total: O(B * H * L_query * (head_dim * num_buckets + L_mem))
+            index: L_query + L_query * L_key + B * H * L_query * L_key
+            total: O(B * H * L_query * (head_dim * num_buckets + L_key))
             """
             lookup_table = torch.matmul(
                 x.transpose(0, 1).reshape(-1, B * L_query, self.head_dim),
@@ -640,7 +640,7 @@ class iRPE(nn.Module):
                 return RPEIndexFunction.apply(lookup_table, rp_bucket)
             else:
                 return lookup_table.flatten(2)[:, :, self._ctx_rp_bucket_flatten].\
-                    view(B, -1, L_query, L_mem)
+                    view(B, -1, L_query, L_key)
 
     def forward_rpe_no_transpose(self, x, rp_bucket):
         """Forward function for iRPE (non-transposed version)
@@ -673,12 +673,12 @@ class iRPE(nn.Module):
         """
 
         B = len(x)  # batch_size
-        L_query, L_mem = rp_bucket.shape
+        L_query, L_key = rp_bucket.shape
         assert self.mode == 'contextual', "Only support contextual \
 version in non-transposed version"
         weight = self.lookup_table_weight[:, rp_bucket.flatten()].\
-            view(self.num_heads, L_query, L_mem, self.head_dim)
-        # (H, L_query, B, L_mem) @ (H, L_query, L_mem, D) = (H, L_query, B, D)
+            view(self.num_heads, L_query, L_key, self.head_dim)
+        # (H, L_query, B, L_key) @ (H, L_query, L_key, D) = (H, L_query, B, D)
         # -> (B, H, L_query, D)
         return torch.matmul(x.permute(1, 2, 0, 3), weight).permute(2, 0, 1, 3)
 

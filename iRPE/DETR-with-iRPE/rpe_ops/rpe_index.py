@@ -2,6 +2,12 @@ import torch
 import rpe_index_cpp
 
 
+EXPECTED_VERSION = "1.2.0"
+assert rpe_index_cpp.version() == EXPECTED_VERSION, \
+        f"""Unmatched `rpe_index_cpp` version: {rpe_index_cpp.version()}, expected version: {EXPECTED_VERSION}
+Please re-build the package `rpe_ops`."""
+
+
 class RPEIndexFunction(torch.autograd.Function):
     '''Y[b, h, i, j] = input[b, h, i, index[i, j]]'''
     @staticmethod
