@@ -43,6 +43,8 @@ enc\_rpe2d              | Backbone  | #Buckets | epoch | AP    | AP\_50 | AP\_75
 rpe-1.9-product-ctx-1-k | ResNet-50 |  7 x 7   | 150   | 0.409 | 0.614  | 0.429  | 0.195 | 0.443 | 0.605 | [link](https://github.com/wkcn/iRPE-model-zoo/releases/download/1.0/rpe-1.9-product-ctx-1-k.pth)| [log](https://github.com/wkcn/iRPE-model-zoo/releases/download/1.0/log_rpe-1.9-product-ctx-1-k.txt), [detail (188 MB)](https://github.com/wkcn/iRPE-model-zoo/releases/download/1.0/detail_rpe-1.9-product-ctx-1-k.log)
 rpe-2.0-product-ctx-1-k | ResNet-50 |  9 x 9   | 150   | 0.410 | 0.615  | 0.434  | 0.192 | 0.445 | 0.608 | [link](https://github.com/wkcn/iRPE-model-zoo/releases/download/1.0/rpe-2.0-product-ctx-1-k.pth)| [log](https://github.com/wkcn/iRPE-model-zoo/releases/download/1.0/log_rpe-2.0-product-ctx-1-k.txt), [detail (188 MB)](https://github.com/wkcn/iRPE-model-zoo/releases/download/1.0/detail_rpe-2.0-product-ctx-1-k.log)
 
+`--enc_rpe2d` is an argument to represent the attributions of relative position encoding. [[detail]](./DETR-with-iRPE/README.md)
+
 We will release the DETR-ResNet-50 with iRPE for 300 epochs and logs as soon as possible.
 
 
