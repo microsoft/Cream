@@ -2,15 +2,32 @@ import torch
 import rpe_index_cpp
 
 
+EXPECTED_VERSION = "1.2.0"
+assert rpe_index_cpp.version() == EXPECTED_VERSION, \
+        f"""Unmatched `rpe_index_cpp` version: {rpe_index_cpp.version()}, expected version: {EXPECTED_VERSION}
+Please re-build the package `rpe_ops`."""
+
+
 class RPEIndexFunction(torch.autograd.Function):
+    '''Y[b, h, i, j] = input[b, h, i, index[i, j]]'''
     @staticmethod
     def forward(ctx, input, index):
         '''
-          - Inputs
-              input: float32 (B, H, L_query, num_buckets)
-              index: int64 (L_query, L_key) 
-          - Outputs
-              Y: float32 (B, H, L_query, L_key)
+        Y[b, h, i, j] = input[b, h, i, index[i, j]]
+
+        Parameters
+        ----------
+        input: torch.Tensor, float32
+            The shape is (B, H, L_query, num_buckets)
+        index: torch.Tensor, int32
+            The shape is (L_query, L_key)
+
+        where B is the batch size, and H is the number of attention heads.
+
+        Returns
+        -------
+        Y: torch.Tensor, float32
+            The shape is (B, H, L_query, L_key)
         '''
 
         num_buckets = input.size(-1)
@@ -62,9 +79,11 @@ if __name__ == '__main__':
         x2.requires_grad = True
 
         y = RPEIndexFunction.apply(x1, index)
-        gt_y = x2.flatten(2)[:, :, (index + offset).flatten()].view(B, H, L_query, L_key)
+        gt_y = x2.flatten(2)[:, :, (index + offset).flatten()
+                             ].view(B, H, L_query, L_key)
 
-        np.testing.assert_almost_equal(gt_y.detach().cpu().numpy(), y.detach().cpu().numpy())
+        np.testing.assert_almost_equal(
+            gt_y.detach().cpu().numpy(), y.detach().cpu().numpy())
 
         mask = torch.randn(gt_y.shape, device=x.device)
         (gt_y * mask).sum().backward()
@@ -72,7 +91,8 @@ if __name__ == '__main__':
 
         print("X1:", x1.grad.cpu().numpy().flatten().sum())
         print("X2:", x2.grad.cpu().numpy().flatten().sum())
-        np.testing.assert_almost_equal(x1.grad.cpu().numpy(), x2.grad.cpu().numpy(), decimal=5)
+        np.testing.assert_almost_equal(
+            x1.grad.cpu().numpy(), x2.grad.cpu().numpy(), decimal=5)
         print("Test over", x.device)
         print("Cost:", time.time() - tic)
     test(x, index, offset)
