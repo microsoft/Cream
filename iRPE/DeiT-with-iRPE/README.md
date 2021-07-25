@@ -2,6 +2,8 @@ Hiring research interns for neural architecture search projects: houwen.peng@mic
 
 # Rethinking and Improving Relative Position Encoding for Vision Transformer
 
+[[Paper]](https://houwenpeng.com/publications/iRPE.pdf)
+
 Image Classification: DeiT with iRPE
 
 # Model Zoo
@@ -89,6 +91,18 @@ File | Description
 [`rpe_models.py`](./rpe_models.py) | The implementation of models with iRPE
 [`rpe_vision_transformer.py`](./rpe_vision_transformer.py) | We equip iRPE on `Attention`, `Block`, and `VisionTransformer` modules
 [`rpe_ops`](./rpe_ops) | The CUDA implementation of iRPE operators for efficient training
+
+# Citing iRPE
+If this project is helpful for you, please cite it. Thank you! : )
+
+```bibtex
+@article{iRPE,
+  title={Rethinking and Improving Relative Position Encoding for Vision Transformer},
+  author={Kan Wu and Peng Houwen and Chen Minghao and Fu Jianlong and Chao Hongyang},
+  journal={Proceedings of the IEEE/CVF International Conference on Computer Vision},
+  year={2021}
+}
+```
 
 # License
 [Apache License](./LICENSE)

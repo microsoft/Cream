@@ -2,6 +2,8 @@ Hiring research interns for neural architecture search projects: houwen.peng@mic
 
 # Rethinking and Improving Relative Position Encoding for Vision Transformer
 
+[[Paper]](https://houwenpeng.com/publications/iRPE.pdf)
+
 Object Detection: DETR with iRPE
 
 # Model Zoo
@@ -137,6 +139,18 @@ File | Description
 [`models/rpe_attention/multi_head_attention.py`](./models/rpe_attention/multi_head_attention.py) | The nn.Module `MultiheadAttention` with iRPE
 [`models/rpe_attention/rpe_attention_function.py`](./models/rpe_attention/rpe_attention_function.py) | The function `rpe_multi_head_attention_forward` with iRPE
 [`rpe_ops`](./rpe_ops) | The CUDA implementation of iRPE operators for efficient training
+
+# Citing iRPE
+If this project is helpful for you, please cite it. Thank you! : )
+
+```bibtex
+@article{iRPE,
+  title={Rethinking and Improving Relative Position Encoding for Vision Transformer},
+  author={Kan Wu and Peng Houwen and Chen Minghao and Fu Jianlong and Chao Hongyang},
+  journal={Proceedings of the IEEE/CVF International Conference on Computer Vision},
+  year={2021}
+}
+```
 
 # License
 [Apache License](./LICENSE)

@@ -1,5 +1,6 @@
 #include <torch/extension.h>
 
+#include <string>
 #include <vector>
 
 using index_t = int;
@@ -122,7 +123,12 @@ void rpe_index_backward_cpu(torch::Tensor grad_input, torch::Tensor grad_output,
       });
 }
 
+std::string version() {
+  return "1.2.0";
+}
+
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
+  m.def("version", &version, "The version of the package `rpe_index_cpp`");
   m.def("forward_cpu", &rpe_index_forward_cpu, "2D RPE Index Forward (CPU)");
   m.def("backward_cpu", &rpe_index_backward_cpu, "2D RPE Index Backward (CPU)");
 

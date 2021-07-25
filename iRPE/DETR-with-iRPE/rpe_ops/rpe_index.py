@@ -2,15 +2,32 @@ import torch
 import rpe_index_cpp
 
 
+EXPECTED_VERSION = "1.2.0"
+assert rpe_index_cpp.version() == EXPECTED_VERSION, \
+        f"""Unmatched `rpe_index_cpp` version: {rpe_index_cpp.version()}, expected version: {EXPECTED_VERSION}
+Please re-build the package `rpe_ops`."""
+
+
 class RPEIndexFunction(torch.autograd.Function):
+    '''Y[b, h, i, j] = input[b, h, i, index[i, j]]'''
     @staticmethod
     def forward(ctx, input, index):
         '''
-          - Inputs
-              input: float32 (B, H, L_query, num_buckets)
-              index: int64 (L_query, L_key) 
-          - Outputs
-              Y: float32 (B, H, L_query, L_key)
+        Y[b, h, i, j] = input[b, h, i, index[i, j]]
+
+        Parameters
+        ----------
+        input: torch.Tensor, float32
+            The shape is (B, H, L_query, num_buckets)
+        index: torch.Tensor, int32
+            The shape is (L_query, L_key)
+
+        where B is the batch size, and H is the number of attention heads.
+
+        Returns
+        -------
+        Y: torch.Tensor, float32
+            The shape is (B, H, L_query, L_key)
         '''
 
         num_buckets = input.size(-1)

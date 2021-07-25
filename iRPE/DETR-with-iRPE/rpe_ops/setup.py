@@ -15,7 +15,7 @@ if torch.cuda.is_available():
     define_macros.append(('WITH_CUDA', None))
 
 setup(name='rpe_index',
-      version="1.10",
+      version="1.2.0",
       ext_modules=[ext_t(
                    'rpe_index_cpp',
                    ext_fnames,
