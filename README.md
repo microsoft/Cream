@@ -14,9 +14,9 @@ Hiring research interns for neural architecture search projects: houwen.peng@mic
 
 
 ## News
-- :boom: July, 2021: [**iRPE**](./iRPE) is now released [[pdf]](https://houwenpeng.com/publications/iRPE.pdf).
-- :boom: July, 2021: [**iRPE**](https://houwenpeng.com/publications/iRPE.pdf) was accepted by ICCV'21.
-- :boom: July, 2021: [**AutoFormer**](https://arxiv.org/abs/2107.00651) was accepted by ICCV'21.
+- :boom: July, 2021: [**iRPE**](./iRPE) (**with CUDA Acceleration**) is now released. Paper is [here](https://houwenpeng.com/publications/iRPE.pdf).
+- :boom: July, 2021: [**iRPE**](https://houwenpeng.com/publications/iRPE.pdf) has been accepted by ICCV'21.
+- :boom: July, 2021: [**AutoFormer**](https://arxiv.org/abs/2107.00651) hasbeen accepted by ICCV'21.
 - :boom: July, 2021: [**AutoFormer**](https://github.com/microsoft/AutoML/tree/main/AutoFormer) is now available on [arXiv](https://arxiv.org/abs/2107.00651).
 - :boom: Oct, 2020: Code for [**Cream**](https://github.com/microsoft/AutoML/tree/main/Cream) is now released.
 - :boom: Oct, 2020: [**Cream**](https://github.com/microsoft/AutoML/tree/main/Cream) was accepted to NeurIPS'20
