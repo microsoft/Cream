@@ -51,7 +51,7 @@ In this work, we present a simple yet effective architecture distillation method
 
 
 ## Bibtex
-```
+```bibtex
 @article{iRPE,
   title={Rethinking and Improving Relative Position Encoding for Vision Transformer},
   author={Kan Wu and Peng Houwen and Chen Minghao and Fu Jianlong and Chao Hongyang},
@@ -73,7 +73,6 @@ In this work, we present a simple yet effective architecture distillation method
   volume={33},
   year={2020}
 }
-
 ```
 
 ## License
