@@ -51,7 +51,7 @@ In this work, we present a simple yet effective architecture distillation method
 
 
 ## Bibtex
-```
+```bibtex
 @article{chen2021autoformer,
   title={AutoFormer: Searching Transformers for Visual Recognition},
   author={Chen, Minghao and Peng, Houwen and Fu, Jianlong and Ling, Haibin},
@@ -66,7 +66,6 @@ In this work, we present a simple yet effective architecture distillation method
   volume={33},
   year={2020}
 }
-
 ```
 
 ## License
