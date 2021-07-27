@@ -10,6 +10,8 @@ Image Classification: DeiT with iRPE
 
 We equip DeiT models with contextual product shared-head RPE with 50 buckets, and report their accuracy on ImageNet-1K Validation set.
 
+Resolution: `224 x 224`
+
 Model | RPE-Q | RPE-K | RPE-V | #Params(M) | MACs(M) | Top-1 Acc.(%) | Top-5 Acc.(%) | Link | Log
 ----- | ----- | ----- | ----- | ---------- | ------- | ------------- | ------------- | ---- | ---
 tiny | | ✔ | | 5.76 | 1284 | 73.7 | 92.0 | [link](https://github.com/wkcn/iRPE-model-zoo/releases/download/1.0/deit_tiny_patch16_224_ctx_product_50_shared_k.pth) | [log](https://github.com/wkcn/iRPE-model-zoo/releases/download/1.0/log_deit_tiny_patch16_224_ctx_product_50_shared_k.txt), [detail](https://github.com/wkcn/iRPE-model-zoo/releases/download/1.0/detail_deit_tiny_patch16_224_ctx_product_50_shared_k.log)
