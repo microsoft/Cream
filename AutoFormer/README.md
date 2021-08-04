@@ -5,8 +5,8 @@
 This is an official implementation of AutoFormer.
 
 <div align="center">
-    <img width="49%" alt="AutoFormer overview" src=".figure/overview.gif"/>
-    <img width="49%" alt="AutoFormer overview" src=".figure/details.gif"/>
+    <img width="49%" alt="AutoFormer overview" src="https://github.com/wkcn/automl-clean/releases/download/1.0/overview.gif"/>
+    <img width="49%" alt="AutoFormer overview" src="https://github.com/wkcn/automl-clean/releases/download/1.0/details.gif"/>
 </div>
 
 
