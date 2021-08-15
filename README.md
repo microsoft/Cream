@@ -55,14 +55,14 @@ In this work, we present a simple yet effective architecture distillation method
 @article{iRPE,
   title={Rethinking and Improving Relative Position Encoding for Vision Transformer},
   author={Wu, Kan and Peng, Houwen and Chen, Minghao and Fu, Jianlong and Chao, Hongyang},
-  journal={Proceedings of the IEEE/CVF International Conference on Computer Vision},
+  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
   year={2021}
 }
 
 @article{chen2021autoformer,
   title={AutoFormer: Searching Transformers for Visual Recognition},
   author={Chen, Minghao and Peng, Houwen and Fu, Jianlong and Ling, Haibin},
-  journal={arXiv preprint arXiv:2107.00651},
+  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
   year={2021}
 }
 
