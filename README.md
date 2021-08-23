@@ -25,13 +25,10 @@ Hiring research interns for neural architecture search projects: houwen.peng@mic
 
 ### [AutoFormer](https://github.com/microsoft/AutoML/tree/main/AutoFormer)
 
-***Coming soon!!!***
-
 AutoFormer is new one-shot architecture search framework dedicated to vision transformer search. It entangles the weights of different vision transformer blocks in the same layers during supernet training. 
 Benefiting from the strategy, the trained supernet allows thousands of subnets to be very well-trained. Specifically, the performance of these subnets with weights inherited from the supernet is comparable to those retrained from scratch.
 <div align="center">
-    <img width="49%" alt="AutoFormer overview" src="https://github.com/microsoft/AutoML/releases/download/static_files/autoformer_overview.gif"/>
-    <img width="49%" alt="AutoFormer detail" src="https://github.com/microsoft/AutoML/releases/download/static_files/autoformer_details.gif"/>
+    <img width="70%" alt="AutoFormer overview" src="AutoFormer/.figure/overview.png"/>
 </div>
 
 ### [iRPE](./iRPE)
