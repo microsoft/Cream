@@ -14,6 +14,7 @@ Hiring research interns for neural architecture search projects: houwen.peng@mic
 
 
 ## News
+- :boom: Aug, 2021: Code for [**AutoFormer**](https://github.com/microsoft/AutoML/tree/main/AutoFormer) is now released.
 - :boom: July, 2021: [**iRPE code**](./iRPE) (**with CUDA Acceleration**) is now released. Paper is [here](https://houwenpeng.com/publications/iRPE.pdf).
 - :boom: July, 2021: [**iRPE**](https://houwenpeng.com/publications/iRPE.pdf) has been accepted by ICCV'21.
 - :boom: July, 2021: [**AutoFormer**](https://arxiv.org/abs/2107.00651) has been accepted by ICCV'21.
