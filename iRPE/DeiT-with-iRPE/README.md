@@ -83,6 +83,8 @@ The step is similar to training. Add `--eval --resume <the checkpoint path>`.
 python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model deit_small_patch16_224_ctx_product_50_shared_k --batch-size 128 --data-path ./ImageNet/ --output_dir ./outputs/ --load-tar --eval --resume deit_small_patch16_224_ctx_product_50_shared_k.pth
 ```
 
+`--resume <the checkpoint path>` can be replaced by `--pretrained`, then the checkpoint will be downloaded automatically. The download directory is usually `$HOME/.cache/torch/hub/checkpoints`.
+
 ## Code Structure
 
 Our code is based on [DeiT](https://github.com/facebookresearch/deit) and [pytorch-image-models](https://github.com/rwightman/pytorch-image-models). Thank you!
