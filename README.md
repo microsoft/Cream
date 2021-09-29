@@ -11,6 +11,7 @@
 
 > [**Cream**](./Cream) (```@NeurIPS'20```): **Cream of the Crop: Distilling Prioritized Paths For One-Shot Neural Architecture Search**
 
+We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com/microsoft/nni) (Neural Network Intelligence).
 
 ## News
 - :sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com
