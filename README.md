@@ -15,6 +15,7 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 
 ## News
 - :sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com
+- :boom: Oct, 2021: **AutoFormerV2** has been accepted by NeurIPS'21, will be released soon.
 - :boom: Aug, 2021: Code for [**AutoFormer**](./AutoFormer) is now released.
 - :boom: July, 2021: [**iRPE code**](./iRPE) (**with CUDA Acceleration**) is now released. Paper is [here](https://houwenpeng.com/publications/iRPE.pdf).
 - :boom: July, 2021: [**iRPE**](https://houwenpeng.com/publications/iRPE.pdf) has been accepted by ICCV'21.
