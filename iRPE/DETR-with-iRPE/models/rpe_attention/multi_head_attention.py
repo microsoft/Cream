@@ -5,13 +5,6 @@ from typing import Optional, Tuple
 import torch
 from torch import Tensor
 from torch import nn
-try:
-    # compatible with <= PyTorch 1.7
-    from torch.nn.modules.linear import _LinearWithBias
-except:
-    # >= PyTorch 1.8
-    _LinearWithBias = None
-    from torch.nn.modules.linear import NonDynamicallyQuantizableLinear
 
 from torch.nn.init import xavier_uniform_
 from torch.nn.init import constant_
@@ -86,12 +79,7 @@ class RPEMultiheadAttention(nn.Module):
             self.in_proj_bias = Parameter(torch.empty(3 * embed_dim))
         else:
             self.register_parameter('in_proj_bias', None)
-        if _LinearWithBias is not None:
-            # compatible with <= PyTorch 1.7
-            self.out_proj = _LinearWithBias(embed_dim, embed_dim)
-        else:
-            # >= PyTorch 1.8
-            self.out_proj = NonDynamicallyQuantizableLinear(embed_dim, embed_dim, bias=bias)
+        self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
 
         if add_bias_kv:
             self.bias_k = Parameter(torch.empty(1, 1, embed_dim))
