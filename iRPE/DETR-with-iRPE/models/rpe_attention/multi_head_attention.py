@@ -6,8 +6,10 @@ import torch
 from torch import Tensor
 from torch import nn
 try:
+    # compatible with <= PyTorch 1.7
     from torch.nn.modules.linear import _LinearWithBias
 except:
+    # >= PyTorch 1.8
     _LinearWithBias = None
     from torch.nn.modules.linear import NonDynamicallyQuantizableLinear
 
