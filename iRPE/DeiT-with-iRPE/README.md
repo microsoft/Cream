@@ -2,7 +2,7 @@ Hiring research interns for neural architecture search projects: houwen.peng@mic
 
 # Rethinking and Improving Relative Position Encoding for Vision Transformer
 
-[[Paper]](https://houwenpeng.com/publications/iRPE.pdf)
+[[Paper]](https://openaccess.thecvf.com/content/ICCV2021/html/Wu_Rethinking_and_Improving_Relative_Position_Encoding_for_Vision_Transformer_ICCV_2021_paper.html)
 
 Image Classification: DeiT with iRPE
 
@@ -100,11 +100,13 @@ File | Description
 If this project is helpful for you, please cite it. Thank you! : )
 
 ```bibtex
-@article{iRPE,
-  title={Rethinking and Improving Relative Position Encoding for Vision Transformer},
-  author={Wu, Kan and Peng, Houwen and Chen, Minghao and Fu, Jianlong and Chao, Hongyang},
-  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
-  year={2021}
+@InProceedings{iRPE,
+    author    = {Wu, Kan and Peng, Houwen and Chen, Minghao and Fu, Jianlong and Chao, Hongyang},
+    title     = {Rethinking and Improving Relative Position Encoding for Vision Transformer},
+    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
+    month     = {October},
+    year      = {2021},
+    pages     = {10033-10041}
 }
 ```
 
