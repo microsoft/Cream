@@ -37,7 +37,6 @@ def my_open(root, fname):
     fname: file
     '''
     root = str(root)
-    base_name = os.path.basename(root)
     if READ_IMAGE_IF_EXISTED:
         image_fname = os.path.join(root, fname)
         try:
@@ -47,6 +46,7 @@ def my_open(root, fname):
             READ_IMAGE_IF_EXISTED = False
     zip_fname = root + '.zip'
     handle = get_zip_handle(zip_fname)
+    base_name = os.path.basename(root)
     zname = f'{base_name}/{fname}'
     return handle.read(zname)
 
