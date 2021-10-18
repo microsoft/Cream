@@ -40,12 +40,11 @@ def my_open(root, fname):
     base_name = os.path.basename(root)
     if READ_IMAGE_IF_EXISTED:
         image_fname = os.path.join(root, fname)
-        if os.path.exists(image_fname):
+        try:
             return open(image_fname, 'rb').read()
-        else:
-            # switch to reading zip file
+        except:
+            # switch to reading zip file because image file not found
             READ_IMAGE_IF_EXISTED = False
-
     zip_fname = root + '.zip'
     handle = get_zip_handle(zip_fname)
     zname = f'{base_name}/{fname}'
