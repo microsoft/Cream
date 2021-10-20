@@ -17,8 +17,8 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 - :sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com
 - :boom: Oct, 2021: **AutoFormerV2** has been accepted by NeurIPS'21, will be released soon.
 - :boom: Aug, 2021: Code for [**AutoFormer**](./AutoFormer) is now released.
-- :boom: July, 2021: [**iRPE code**](./iRPE) (**with CUDA Acceleration**) is now released. Paper is [here](https://houwenpeng.com/publications/iRPE.pdf).
-- :boom: July, 2021: [**iRPE**](https://houwenpeng.com/publications/iRPE.pdf) has been accepted by ICCV'21.
+- :boom: July, 2021: [**iRPE code**](./iRPE) (**with CUDA Acceleration**) is now released. Paper is [here](https://openaccess.thecvf.com/content/ICCV2021/html/Wu_Rethinking_and_Improving_Relative_Position_Encoding_for_Vision_Transformer_ICCV_2021_paper.html).
+- :boom: July, 2021: [**iRPE**](https://openaccess.thecvf.com/content/ICCV2021/html/Wu_Rethinking_and_Improving_Relative_Position_Encoding_for_Vision_Transformer_ICCV_2021_paper.html) has been accepted by ICCV'21.
 - :boom: July, 2021: [**AutoFormer**](https://arxiv.org/abs/2107.00651) has been accepted by ICCV'21.
 - :boom: July, 2021: [**AutoFormer**](./AutoFormer) is now available on [arXiv](https://arxiv.org/abs/2107.00651).
 - :boom: Oct, 2020: Code for [**Cream**](./Cream) is now released.
@@ -52,11 +52,13 @@ In this work, we present a simple yet effective architecture distillation method
 
 ## Bibtex
 ```bibtex
-@article{iRPE,
-  title={Rethinking and Improving Relative Position Encoding for Vision Transformer},
-  author={Wu, Kan and Peng, Houwen and Chen, Minghao and Fu, Jianlong and Chao, Hongyang},
-  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
-  year={2021}
+@InProceedings{iRPE,
+    author    = {Wu, Kan and Peng, Houwen and Chen, Minghao and Fu, Jianlong and Chao, Hongyang},
+    title     = {Rethinking and Improving Relative Position Encoding for Vision Transformer},
+    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
+    month     = {October},
+    year      = {2021},
+    pages     = {10033-10041}
 }
 
 @article{AutoFormer,

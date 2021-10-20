@@ -1,7 +1,7 @@
 Hiring research interns for neural architecture search projects: houwen.peng@microsoft.com
 # Rethinking and Improving Relative Position Encoding for Vision Transformer
 
-[[Paper]](https://houwenpeng.com/publications/iRPE.pdf)
+[[Paper]](https://openaccess.thecvf.com/content/ICCV2021/html/Wu_Rethinking_and_Improving_Relative_Position_Encoding_for_Vision_Transformer_ICCV_2021_paper.html)
 
 **Image RPE (iRPE for short) methods are new relative position encoding methods dedicated to 2D images**, considering directional relative distance modeling as well as the interactions between queries and relative position embeddings in self-attention mechanism. The proposed iRPE methods are simple and lightweight, being easily plugged into transformer blocks. Experiments demonstrate that solely due to the proposed encoding methods, **DeiT and DETR obtain up to 1.5% (top-1 Acc) and 1.3% (mAP) stable improvements** over their original versions on ImageNet and COCO respectively, without tuning any extra hyperparamters such as learning rate and weight decay. Our ablation and analysis also yield interesting findings, some of which run counter to previous understanding.
 <div align="center">
@@ -53,10 +53,12 @@ rpe-2.0-product-ctx-1-k | ResNet-50 |  9 x 9   | 300   | 0.422 | 0.623  | 0.446 
 If this project is helpful for you, please cite it. Thank you! : )
 
 ```bibtex
-@article{iRPE,
-  title={Rethinking and Improving Relative Position Encoding for Vision Transformer},
-  author={Wu, Kan and Peng, Houwen and Chen, Minghao and Fu, Jianlong and Chao, Hongyang},
-  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
-  year={2021}
+@InProceedings{iRPE,
+    author    = {Wu, Kan and Peng, Houwen and Chen, Minghao and Fu, Jianlong and Chao, Hongyang},
+    title     = {Rethinking and Improving Relative Position Encoding for Vision Transformer},
+    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
+    month     = {October},
+    year      = {2021},
+    pages     = {10033-10041}
 }
 ```
