@@ -29,13 +29,23 @@ def get_zip_handle(fname):
     return ZIPS[fname]
 
 
+READ_IMAGE_IF_EXISTED = True
 def my_open(root, fname):
+    global READ_IMAGE_IF_EXISTED
     '''
     root:  xxx/train2017
     fname: file
     '''
     root = str(root)
-    handle = get_zip_handle(root + '.zip')
+    if READ_IMAGE_IF_EXISTED:
+        image_fname = os.path.join(root, fname)
+        try:
+            return open(image_fname, 'rb').read()
+        except:
+            # switch to reading zip file because image file not found
+            READ_IMAGE_IF_EXISTED = False
+    zip_fname = root + '.zip'
+    handle = get_zip_handle(zip_fname)
     base_name = os.path.basename(root)
     zname = f'{base_name}/{fname}'
     return handle.read(zname)
