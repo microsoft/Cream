@@ -41,7 +41,7 @@ The directory structure is the standard layout as following.
 ## Model Zoo
 For evaluation, we provide the checkpoints and configs of our models in [GitHub](https://github.com/silent-chen/AutoFormerV2-model-zoo/).
 
-After downloading the models, you can do the evaluation following the description in *Quick Start - Test*).
+After downloading the models, you can do the evaluation following the description in *Evaluation*).
 
 Model download links:
 
