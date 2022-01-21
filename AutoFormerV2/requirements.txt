@@ -1,0 +1,10 @@
+torch==1.7.1
+timm==0.3.2
+scikit-image
+ptflops
+easydict
+PyYAML
+pillow
+torchvision==0.8.2
+opencv-python
+yacs==0.1.8
