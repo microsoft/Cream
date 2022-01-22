@@ -3,10 +3,14 @@
 
 ***This is a collection of our AutoML-NAS work***
 
-> [**iRPE**](./iRPE) (```NEW```): **Rethinking and Improving Relative Position Encoding for Vision Transformer**
+
+> [**AutoFormerV2**](./AutoFormerV2) (```@NeurIPS'21```): **Searching the Search Space of Vision Transformer**
 
 
-> [**AutoFormer**](./AutoFormer) (```NEW```): **AutoFormer: Searching Transformers for Visual Recognition**
+> [**iRPE**](./iRPE) (```@ICCV'21```): **Rethinking and Improving Relative Position Encoding for Vision Transformer**
+
+
+> [**AutoFormer**](./AutoFormer) (```@ICCV'21```): **AutoFormer: Searching Transformers for Visual Recognition**
 
 
 > [**Cream**](./Cream) (```@NeurIPS'20```): **Cream of the Crop: Distilling Prioritized Paths For One-Shot Neural Architecture Search**
@@ -15,7 +19,8 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 
 ## News
 - :sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com
-- :boom: Oct, 2021: **AutoFormerV2** has been accepted by NeurIPS'21, will be released soon.
+- :boom: Jan, 2022: Code for [**AutoFormerV2**](./AutoFormerV2) is now released.
+- :boom: Oct, 2021: **AutoFormerV2** has been accepted by NeurIPS'21, code will be released soon.
 - :boom: Aug, 2021: Code for [**AutoFormer**](./AutoFormer) is now released.
 - :boom: July, 2021: [**iRPE code**](./iRPE) (**with CUDA Acceleration**) is now released. Paper is [here](https://openaccess.thecvf.com/content/ICCV2021/html/Wu_Rethinking_and_Improving_Relative_Position_Encoding_for_Vision_Transformer_ICCV_2021_paper.html).
 - :boom: July, 2021: [**iRPE**](https://openaccess.thecvf.com/content/ICCV2021/html/Wu_Rethinking_and_Improving_Relative_Position_Encoding_for_Vision_Transformer_ICCV_2021_paper.html) has been accepted by ICCV'21.
@@ -25,6 +30,13 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 - :boom: Oct, 2020: [**Cream**](./Cream) was accepted to NeurIPS'20
 
 ## Works
+### [AutoFormerV2](./AutoFormerV2)
+In this work, instead of searching the architecture in a predefined search space, with the help of AutoFormer, we proposed to search the search space to automatically find a great search space first. 
+After that we search the architectures in the searched space. In addition, we provide insightful observations and guidelines for general vision transformer design.
+<div align="center">
+    <img width="70%" alt="AutoFormerV2 overview" src="AutoFormerV2/.figure/overview.jpg"/>
+</div>
+
 
 ### [AutoFormer](./AutoFormer)
 
@@ -52,6 +64,14 @@ In this work, we present a simple yet effective architecture distillation method
 
 ## Bibtex
 ```bibtex
+
+@article{S3,
+  title={Searching the Search Space of Vision Transformer},
+  author={Minghao, Chen and Kan, Wu and Bolin, Ni and Houwen, Peng and Bei, Liu and Jianlong, Fu and Hongyang, Chao and Haibin, Ling},
+  booktitle={Conference and Workshop on Neural Information Processing Systems (NeurIPS)},
+  year={2021}
+}
+
 @InProceedings{iRPE,
     author    = {Wu, Kan and Peng, Houwen and Chen, Minghao and Fu, Jianlong and Chao, Hongyang},
     title     = {Rethinking and Improving Relative Position Encoding for Vision Transformer},
