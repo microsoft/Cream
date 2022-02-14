@@ -11,7 +11,7 @@ In this work, we propose new joint optimization objectives and a novel Cyclic Di
 ## Model Zoo
 For evaluation, we provide the checkpoints and configs of our models in [Google Drive](https://drive.google.com/drive/folders/1CkFp24bEDq0wUp504BQ68jn5Vs069qox?usp=sharing).
 
-After downloading the models, you can do the evaluation following the description in *SETUP.md*).
+After downloading the models, you can do the evaluation following the description in *SETUP.md*.
 
 Model download links:
 
