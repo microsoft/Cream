@@ -29,9 +29,9 @@ Model download links:
 ### NATS-Bench
 | Model | CIFAR10 Validation | CIFAR10 Test | CIFAR100 Validation | CIFAR100 Test | ImageNet-16-120 Validation | ImageNet-16-120 Test | Download link |
 |-------|--------------------|--------------|---------------------|---------------|----------------------------|----------------------|---------------|
-| Cell1 | 91.50%             | 94.37%       | 73.31%              | 73.09%        | 45.59%                     | 46.33%               | [Cell, Log](https://drive.google.com/file/d/13CpMr1V-S0d8C2WbIHwSzApmdBInKn0U/view?usp=sharing)             |
-| Cell2 | 91.37%             | 94.09%       | 72.64%              | 72.57%        | 45.46%                     | 45.63%               | [Cell, Log](https://drive.google.com/file/d/1Gbnm61NbYmEkdW6YCBUWDA_sQGtm83vR/view?usp=sharing)             |
-| Cell3 | 90.51%             | 93.62%       | 70.43               | 70.10%        | 44.23%                     | 44.57%               | [Cell, Log](https://drive.google.com/file/d/1zq2Eg8IZt5MVXFnmKuuCDS5bei-ENlWw/view?usp=sharing)             |
+| Cell-1 | 91.50%             | 94.37%       | 73.31%              | 73.09%        | 45.59%                     | 46.33%               | [Cell, Log](https://drive.google.com/file/d/13CpMr1V-S0d8C2WbIHwSzApmdBInKn0U/view?usp=sharing)             |
+| Cell-2 | 91.37%             | 94.09%       | 72.64%              | 72.57%        | 45.46%                     | 45.63%               | [Cell, Log](https://drive.google.com/file/d/1Gbnm61NbYmEkdW6YCBUWDA_sQGtm83vR/view?usp=sharing)             |
+| Cell-3 | 90.51%             | 93.62%       | 70.43               | 70.10%        | 44.23%                     | 44.57%               | [Cell, Log](https://drive.google.com/file/d/1zq2Eg8IZt5MVXFnmKuuCDS5bei-ENlWw/view?usp=sharing)             |
 
 ### Chain-structured Search Space
 
@@ -50,8 +50,8 @@ CDARTS-b | 1280x800 |  8.1G  | 6.4M  | 36.2 | 56.7 | 38.3  | 20.9 | 39.8 | 48.5 
 ### Semantic Segmentation
 | Dataset    | Encoder  | Input Size  | Params. | Flops | mIoU % | Download link |
 |------------|----------|-------------|---------|-------|--------|---------------|
-| Cityscapes | CDARTS-b | 1024x2048 | 5.9M    | 20.7G | 78.1 | [Model,Config,Log](https://drive.google.com/drive/folders/1MO_hgwWcUf1c1OFYO-6Rit6IA-3fMKAO?usp=sharing) |
-| ADE20K     | CDARTS-b | 640x640   | 2.7M    | 5.9G  | 40.4 | [Model,Config,Log](https://drive.google.com/drive/folders/1OJyNLkMMK1IIu1F3USrkNsa9BeLlGiUp?usp=sharing) |
+| Cityscapes | CDARTS-b | 1024x2048 | 5.9M    | 20.7G | 78.1 | [Model, Config, Log](https://drive.google.com/drive/folders/1MO_hgwWcUf1c1OFYO-6Rit6IA-3fMKAO?usp=sharing) |
+| ADE20K     | CDARTS-b | 640x640   | 2.7M    | 5.9G  | 40.4 | [Model, Config, Log](https://drive.google.com/drive/folders/1OJyNLkMMK1IIu1F3USrkNsa9BeLlGiUp?usp=sharing) |
 
 
 ## Bibtex
