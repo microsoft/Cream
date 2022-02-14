@@ -61,7 +61,7 @@ If this repo is helpful for you, please consider to cite it. Thank you! :)
 @article{CDARTS,
   title={Cyclic Differentiable Architecture Search},
   author={Yu, Hongyuan and Peng, Houwen and Huang, Yan and Fu, Jianlong and Du, Hao and Wang, Liang and Ling, Haibin},
-  booktitle={IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI)},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI)},
   year={2022}
 }
 ```
