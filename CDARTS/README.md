@@ -5,7 +5,7 @@
 In this work, we propose new joint optimization objectives and a novel Cyclic Differentiable ARchiTecture Search framework, dubbed CDARTS. Considering the structure difference, CDARTS builds a cyclic feedback mechanism between the search and evaluation networks with introspective distillation. First, the search network generates an initial architecture for evaluation, and the weights of the evaluation network are optimized. Second, the architecture weights in the search network are further optimized by the label supervision in classification, as well as the regularization from the evaluation network through feature distillation. Repeating the above cycle results in a joint optimization of the search and evaluation networks and thus enables the evolution of the architecture to fit the final evaluation network.
 
 <div align="center">
-    <img width="80%" alt="CDARTS overview" src="demo/framework1.png"/>
+    <img width="60%" alt="CDARTS overview" src="demo/framework1.png"/>
 </div>
 
 ## Model Zoo
