@@ -1,0 +1,16 @@
+checkpoint/
+*.pyc
+/*.log
+*ptm
+.vscode
+*visualize_images*/
+*_tsne_*
+*hard_triplet_*
+*_feature.pkl
+Visualize_Network_*
+hard_mining/
+backup.py
+*png
+*pdf
+*.bak*
+*.sh

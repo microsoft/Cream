@@ -1,0 +1,24 @@
+data_path: "../DATASET/cityscapes/"
+det2_cfg: "configs/Cityscapes-PanopticSegmentation/panoptic_deeplab_R_52_os16_mg124_poly_90k_bs32_crop_512_1024.yaml"
+seed: 12345
+random_sample: False
+opt: "sgd"
+opt_eps: 0.001
+sched: "new" #"raw for original"
+epochs: 4000
+drop_path_prob: 0.2
+image_height: 512
+image_width: 1024
+eval_height: 1024 
+eval_width: 2048
+batch_size: 4
+mode: "poly"
+base_lr: 0.05
+workers: 4
+Fch: 6
+warmup_start_lr: 5e-6
+warmup_iters: 1000
+weight_decay: 1e-4
+model_ema: True
+model_ema_decay: 0.9998
+stem_head_width: 1.0

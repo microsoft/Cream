@@ -1,0 +1,1 @@
+from .build import build_segmentation_model_from_cfg
