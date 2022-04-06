@@ -3,6 +3,7 @@
 
 ***This is a collection of our AutoML-NAS work***
 
+> [**MiniViT**](./MiniViT) (```@CVPR'22```): **MiniViT: Compressing Vision Transformers with Weight Multiplexing**
 
 > [**CDARTS**](./CDARTS) (```@TPAMI'22```): **Cyclic Differentiable Architecture Search**
 
