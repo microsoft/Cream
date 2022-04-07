@@ -1,0 +1,19 @@
+DATA:
+  IMG_SIZE: 384
+MODEL:
+  TYPE: swin_minivit_distill
+  NAME: swin_base_patch4_window7_224to384_minivit
+  DROP_PATH_RATE: 0.2
+  SWIN:
+    EMBED_DIM: 128
+    DEPTHS: [ 2, 2, 18, 2 ]
+    NUM_HEADS: [ 4, 8, 16, 32 ]
+    WINDOW_SIZE: 12
+MINIVIT:
+  SEPARATE_LAYERNUM_LIST: [1, 1, 9, 1]
+TRAIN:
+  EPOCHS: 30
+  WARMUP_EPOCHS: 5
+  WEIGHT_DECAY: 1e-8
+  BASE_LR: 2e-5
+  CLIP_GRAD: 5.0
