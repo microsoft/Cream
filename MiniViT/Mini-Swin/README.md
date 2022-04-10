@@ -99,5 +99,6 @@ python -m torch.distributed.launch --nproc_per_node 8 --master_port 1234 main.py
 To evaluate other MiniViTs, simply replace `--cfg configs/swin_tiny_patch4_window7_224_minivit_sharenum6.yaml` and `--resume <checkpoint-path>/mini-swin-tiny-12m.pth` by corresponding YAML and checkpoint files.
 
 # License
-[MIT License](./LICENSE)
+Our code is based on [Swin Transformer](https://github.com/microsoft/Swin-Transformer). Thank you!
 
+[MIT License](./LICENSE)

@@ -75,4 +75,6 @@ sh eval.sh
 ```
 
 # License
-[MIT License](./LICENSE)
+Our code is based on [DeiT](https://github.com/facebookresearch/deit). Thank you!
+
+[Apache License](./LICENSE)
