@@ -1,4 +1,4 @@
 torch
 torchvision
-timm
+timm==0.4.12
 easydict
