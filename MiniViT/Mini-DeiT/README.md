@@ -5,10 +5,11 @@ This repo is for MiniViT for DeiTs.
 ## Model Zoo
 Model | Params. | Input | Top-1 Acc. % | Top-5 Acc. % | Download link
 --- |:---:|:---:|:---:|:---:|:---:
-Mini-Swin-T | 12M | 224x224 | 81.3 | 95.7 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini-swin-tiny-12m.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_swin_tiny.txt)
-Mini-Swin-S | 26M | 224x224 | 83.9 | 97.0 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini-swin-small-26m.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_swin_small.txt)
-Mini-Swin-B | 46M | 224x224 | 84.5| 97.3 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini-swin-base-46m.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_swin_base.txt)
-Mini-Swin-B | 47M | 384x384 | 85.5 | 97.6 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_base_patch16_384.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_swin_base_384.txt)
+Mini-DeiT-Ti | 3M | 224x224 | 73.0 | 91.6 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_tiny_patch16_224.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_deit_tiny.txt)
+Mini-DeiT-S | 11M | 224x224 | 80.9 | 95.6 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_small_patch16_224.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_deit_small.txt)
+Mini-DeiT-B | 44M | 224x224 | 83.2 | 96.5 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_base_patch16_224.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_deit_base.txt)
+Mini-DeiT-B| 44M | 384x384 | 84.7 | 97.1 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_base_patch16_384.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_deit_base_384.txt)
+
 
 # Usage
 
@@ -57,30 +58,56 @@ Training Mini-DeiT-Ti:
 python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_tiny_patch16_224 --batch-size 128 --data-path <data-path> --output_dir ./outputs  --teacher-path <teacher-model-path> --distillation-type soft --distillation-alpha 1.0 --drop-path 0.0
 ```
 
-Training Mini-DeiT-S:
-
-```bash
+<details>
+<summary>Training Mini-DeiT-S</summary>
+<pre><code>
 python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_small_patch16_224 --batch-size 128 --data-path <data-path> --output_dir ./outputs  --teacher-path <teacher-model-path> --distillation-type soft --distillation-alpha 1.0 --drop-path 0.0
-```
+</code></pre>
+</details>
 
-Training Mini-DeiT-B:
-
-```bash
+<details>
+<summary>Training Mini-DeiT-B</summary>
+<pre><code>
 python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_base_patch16_224 --batch-size 128 --data-path <data-path> --output_dir ./outputs  --teacher-path <teacher-model-path> --distillation-type soft --distillation-alpha 1.0
-```
+</code></pre>
+</details>
 
-Finetune Mini-DeiT-B with resolution 384:
-```bash
-python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_base_patch16_384 --batch-size 128 --data-path <data-path> --output_dir ./outputs --finetune release_checkpoints/mini_deit_base_patch16_224.pth --input-size 384 --lr 5e-6 --min-lr 5e-6 --weight-decay 1e-8 --epochs 30
-```
+<details>
+<summary>Finetune Mini-DeiT-B with resolution 384</summary>
+<pre><code>
+python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_base_patch16_384 --batch-size 128 --data-path <data-path> --output_dir ./outputs --finetune checkpoints/mini_deit_base_patch16_224.pth --input-size 384 --lr 5e-6 --min-lr 5e-6 --weight-decay 1e-8 --epochs 30
+</code></pre>
+</details>
 
 ## Evaluation
 
 Run the following commands for evaluation:
 
+Evaluate Mini-DeiT-Ti:
 ```bash
-sh eval.sh
+python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_tiny_patch16_224 --batch-size 128 --data-path <data-path> --output_dir ./outputs  --resume ./release_checkpoints/mini_deit_tiny_patch16_224.pth --eval
 ```
+
+<details>
+<summary>Evaluate Mini-DeiT-S</summary>
+<pre><code>
+python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_small_patch16_224 --batch-size 128 --data-path <data-path> --output_dir ./outputs  --resume ./release_checkpoints/mini_deit_small_patch16_224.pth --eval
+</code></pre>
+</details>
+
+<details>
+<summary>Evaluate Mini-DeiT-B</summary>
+<pre><code>
+python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_base_patch16_224 --batch-size 128 --data-path <data-path> --output_dir ./outputs  --resume ./release_checkpoints/mini_deit_base_patch16_224.pth --eval
+</code></pre>
+</details>
+
+<details>
+<summary>Evaluate Mini-DeiT-B-384</summary>
+<pre><code>
+python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_base_patch16_384 --batch-size 128 --data-path <data-path> --output_dir ./outputs  --resume ./release_checkpoints/mini_deit_base_patch16_384.pth --input-size 384 --eval
+</code></pre>
+</details>
 
 ## Bibtex
 
