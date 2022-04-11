@@ -14,7 +14,7 @@ import argparse
 from config import get_config
 
 def parse_option():
-    parser = argparse.ArgumentParser('Swin Transformer training and evaluation script', add_help=False)
+    parser = argparse.ArgumentParser('Mini-Swin training and evaluation script', add_help=False)
     parser.add_argument('--cfg', type=str, required=True, metavar="FILE", help='path to config file', )
     parser.add_argument(
         "--opts",
