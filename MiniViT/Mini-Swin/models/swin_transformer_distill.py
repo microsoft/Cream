@@ -307,9 +307,9 @@ class BasicLayerDISTILL(nn.Module):
 
 
 class SwinTransformerDISTILL(nn.Module):
-    r""" Swin Transformer
-        A PyTorch impl of : `Swin Transformer: Hierarchical Vision Transformer using Shifted Windows`  -
-          https://arxiv.org/pdf/2103.14030
+    r""" Swin Transformer for Self-Attention and Hidden-State Distillation.
+         The model structure is the same as the official Swin Transformer.
+         It will return extra outputs of self-attention and hidden state.
 
     Args:
         img_size (int | tuple(int)): Input image size. Default 224
