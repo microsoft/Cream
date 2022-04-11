@@ -1,12 +1,3 @@
 timm==0.4.12
-easydict
-einops
 yacs
 termcolor
-pyzmq
-psutil
-tqdm
-fvcore
-einops
-scipy
-lmdb
