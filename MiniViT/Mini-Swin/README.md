@@ -1,6 +1,6 @@
 # Mini-Swin
 
-This repo is for MiniViT for swin transformers
+This repo is for MiniViT for swin transformers.
 
 # Usage
 
@@ -97,6 +97,18 @@ Run the following commands for evaluation:
 python -m torch.distributed.launch --nproc_per_node 8 --master_port 1234 main.py --cfg configs/swin_tiny_patch4_window7_224_minivit_sharenum6.yaml --data-path /sdb/imagenet --batch-size 64 --tag inference --is_sep_layernorm --is_transform_ffn --is_transform_heads --resume <checkpoint-path>/mini-swin-tiny-12m.pth
 ```
 To evaluate other MiniViTs, simply replace `--cfg configs/swin_tiny_patch4_window7_224_minivit_sharenum6.yaml` and `--resume <checkpoint-path>/mini-swin-tiny-12m.pth` by corresponding YAML and checkpoint files.
+
+## Bibtex
+
+If this repo is helpful for you, please consider to cite it. Thank you! :)
+```bibtex
+@article{MiniViT,
+  title={MiniViT: Compressing Vision Transformers with Weight Multiplexing},
+  author={Zhang, Jinnian and Peng, Houwen and Wu, Kan and Liu, Mengchen and Xiao, Bin and Fu, Jianlong and Yuan, Lu},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year={2022}
+}
+```
 
 # License
 Our code is based on [Swin Transformer](https://github.com/microsoft/Swin-Transformer). Thank you!

@@ -1,6 +1,6 @@
 # Mini-DeiT
 
-This repo is for MiniViT for DeiTs
+This repo is for MiniViT for DeiTs.
 
 # Usage
 
@@ -72,6 +72,18 @@ Run the following commands for evaluation:
 
 ```bash
 sh eval.sh
+```
+
+## Bibtex
+
+If this repo is helpful for you, please consider to cite it. Thank you! :)
+```bibtex
+@article{MiniViT,
+  title={MiniViT: Compressing Vision Transformers with Weight Multiplexing},
+  author={Zhang, Jinnian and Peng, Houwen and Wu, Kan and Liu, Mengchen and Xiao, Bin and Fu, Jianlong and Yuan, Lu},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year={2022}
+}
 ```
 
 # License
