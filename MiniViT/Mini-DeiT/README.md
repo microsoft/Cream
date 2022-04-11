@@ -2,6 +2,14 @@
 
 This repo is for MiniViT for DeiTs.
 
+## Model Zoo
+Model | Params. | Input | Top-1 Acc. % | Top-5 Acc. % | Download link
+--- |:---:|:---:|:---:|:---:|:---:
+Mini-Swin-T | 12M | 224x224 | 81.3 | 95.7 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini-swin-tiny-12m.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_swin_tiny.txt)
+Mini-Swin-S | 26M | 224x224 | 83.9 | 97.0 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini-swin-small-26m.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_swin_small.txt)
+Mini-Swin-B | 46M | 224x224 | 84.5| 97.3 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini-swin-base-46m.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_swin_base.txt)
+Mini-Swin-B | 47M | 384x384 | 85.5 | 97.6 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_base_patch16_384.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_swin_base_384.txt)
+
 # Usage
 
 Create the environment:

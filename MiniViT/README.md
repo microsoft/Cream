@@ -24,7 +24,7 @@ MiniViT can compress DeiT-B (86M) to **9M** (**9.7x**), without seriously compro
 
 For evaluation, we provide the checkpoints of our models in the following table.
 
-Model | Params. | Input | Top-1 Acc. % | Top-5 Acc. % | Download link 
+Model | Params. | Input | Top-1 Acc. % | Top-5 Acc. % | Download link
 --- |:---:|:---:|:---:|:---:|:---:
 Mini-DeiT-Ti | 3M | 224x224 | 73.0 | 91.6 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_tiny_patch16_224.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_deit_tiny.txt)
 Mini-DeiT-S | 11M | 224x224 | 80.9 | 95.6 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_small_patch16_224.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_deit_small.txt)
