@@ -99,7 +99,7 @@ python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model 
 
 <details>
 <summary>Evaluate Mini-DeiT-B-384</summary>
-<pre><code>python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_base_patch16_384 --batch-size 128 --data-path ./ImageNet --output_dir ./outputs  --resume ./release_checkpoints/mini_deit_base_patch16_384.pth --input-size 384 --eval
+<pre><code>python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_base_patch16_384 --batch-size 32 --data-path ./ImageNet --output_dir ./outputs  --resume ./release_checkpoints/mini_deit_base_patch16_384.pth --input-size 384 --eval
 </code></pre>
 </details>
 
