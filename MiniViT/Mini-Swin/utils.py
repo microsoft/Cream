@@ -124,10 +124,8 @@ def load_checkpoint(config, model, optimizer, lr_scheduler, logger):
                 l2 = int(l2 ** 0.5)
                 sl = int(l ** 0.5)
                 if sl == 13:
-                    #l2 = 23
                     pad = 5
                 elif sl == 27:
-                    #l2 = 47
                     pad = 10
                 else:
                     assert sl in [23, 47], sl
