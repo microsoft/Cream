@@ -72,7 +72,7 @@ python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model 
 
 <details>
 <summary>Finetune Mini-DeiT-B with resolution 384</summary>
-<pre><code>python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_base_patch16_384 --batch-size 128 --data-path ./ImageNet --output_dir ./outputs --finetune checkpoints/mini_deit_base_patch16_224.pth --input-size 384 --lr 5e-6 --min-lr 5e-6 --weight-decay 1e-8 --epochs 30
+<pre><code>python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_base_patch16_384 --batch-size 32 --data-path ./ImageNet --output_dir ./outputs --finetune checkpoints/mini_deit_base_patch16_224.pth --input-size 384 --lr 5e-6 --min-lr 5e-6 --weight-decay 1e-8 --epochs 30
 </code></pre>
 </details>
 
