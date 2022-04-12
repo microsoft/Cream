@@ -48,20 +48,23 @@ ImageNet/
 ## Training
 
 
-### Mini-Swin-Tiny
+Training Mini-Swin-Tiny
+
 ```bash
 python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/swin_tiny_patch4_window7_224_minivit_sharenum6.yaml --data-path <data-path>  --output <output-folder> --tag mini-swin-tiny --batch-size 128 --is_sep_layernorm --is_transform_heads --is_transform_ffn --do_distill --alpha 0.0 --teacher <teacher-path> --attn_loss --hidden_loss --hidden_relation --student_layer_list 11_9_7_5_3_1 --teacher_layer_list 23_21_15_9_3_1 --hidden_weight 0.1
 ```
 
-### Mini-Swin-Small
-```bash
-python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/swin_small_patch4_window7_224_minivit_sharenum2.yaml --data-path <data-path>  --output <output-folder> --tag mini-swin-small --batch-size 128 --is_sep_layernorm --is_transform_heads --is_transform_ffn --do_distill --alpha 0.0 --teacher <teacher-path> --attn_loss --hidden_loss --hidden_relation --student_layer_list 23_21_15_9_3_1 --teacher_layer_list 23_21_15_9_3_1 --hidden_weight 0.1
-```
+<details>
+<summary>Training Mini-Swin-Small</summary>
+<pre><code>python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/swin_small_patch4_window7_224_minivit_sharenum2.yaml --data-path <data-path>  --output <output-folder> --tag mini-swin-small --batch-size 128 --is_sep_layernorm --is_transform_heads --is_transform_ffn --do_distill --alpha 0.0 --teacher <teacher-path> --attn_loss --hidden_loss --hidden_relation --student_layer_list 23_21_15_9_3_1 --teacher_layer_list 23_21_15_9_3_1 --hidden_weight 0.1
+</code></pre>
+</details>
 
-### Mini-Swin-Base
-```bash
-python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/swin_base_patch4_window7_224_minivit_sharenum2.yaml --data-path <data-path>  --output <output-folder> --tag mini-swin-base --batch-size 128 --is_sep_layernorm --is_transform_heads --is_transform_ffn --do_distill --alpha 0.0 --teacher <teacher-path> --attn_loss --hidden_loss --hidden_relation --student_layer_list 23_21_15_9_3_1 --teacher_layer_list 23_21_15_9_3_1 --hidden_weight 0.1
-```
+<details>
+<summary>Training Mini-Swin-Base</summary>
+<pre><code>python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/swin_base_patch4_window7_224_minivit_sharenum2.yaml --data-path <data-path>  --output <output-folder> --tag mini-swin-base --batch-size 128 --is_sep_layernorm --is_transform_heads --is_transform_ffn --do_distill --alpha 0.0 --teacher <teacher-path> --attn_loss --hidden_loss --hidden_relation --student_layer_list 23_21_15_9_3_1 --teacher_layer_list 23_21_15_9_3_1 --hidden_weight 0.1
+</code></pre>
+</details>
 
 ### Finetune Mini-Swin-B with resolution 384:
 ```bash
@@ -72,10 +75,29 @@ python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/swin
 
 Run the following commands for evaluation:
 
+Evaluate Mini-Swin-Tiny
+
 ```bash
-python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/swin_tiny_patch4_window7_224_minivit_sharenum6.yaml --data-path <data-path> --batch-size 64 --tag inference --is_sep_layernorm --is_transform_ffn --is_transform_heads --resume <checkpoint-path>/mini-swin-tiny-12m.pth --eval
+python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/swin_tiny_patch4_window7_224_minivit_sharenum6.yaml --data-path <data-path> --batch-size 64 --is_sep_layernorm --is_transform_ffn --is_transform_heads --resume <checkpoint-path>/mini-swin-tiny-12m.pth --eval
 ```
-To evaluate other MiniViTs, simply replace `--cfg configs/swin_tiny_patch4_window7_224_minivit_sharenum6.yaml` and `--resume <checkpoint-path>/mini-swin-tiny-12m.pth` by corresponding YAML and checkpoint files.
+
+<details>
+<summary>Evaluate Mini-Swin-Small</summary>
+<pre><code>python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/swin_small_patch4_window7_224_minivit_sharenum2.yaml --data-path <data-path> --batch-size 64 --is_sep_layernorm --is_transform_ffn --is_transform_heads --resume checkpoints/mini-swin-small-26m.pth --eval
+</code></pre>
+</details>
+
+<details>
+<summary>Evaluate Mini-Swin-Base</summary>
+<pre><code>python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/swin_base_patch4_window7_224_minivit_sharenum2.yaml --data-path <data-path> --batch-size 64 --is_sep_layernorm --is_transform_ffn --is_transform_heads --resume checkpoints/mini-swin-base-46m.pth --eval
+</code></pre>
+</details>
+
+<details>
+<summary>Evaluate Mini-Swin-Base-384</summary>
+<pre><code>python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/swin_base_patch4_window7_224to384_minivit_sharenum2_adamw.yaml --data-path <data-path> --batch-size 32 --is_sep_layernorm --is_transform_ffn --is_transform_heads --resume checkpoints/mini-swin-base-224to384.pth --eval
+</code></pre>
+</details>
 
 ## Bibtex
 
