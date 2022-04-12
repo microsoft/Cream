@@ -73,7 +73,7 @@ python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/swin
 Run the following commands for evaluation:
 
 ```bash
-python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/swin_tiny_patch4_window7_224_minivit_sharenum6.yaml --data-path /sdb/imagenet --batch-size 64 --tag inference --is_sep_layernorm --is_transform_ffn --is_transform_heads --resume <checkpoint-path>/mini-swin-tiny-12m.pth
+python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/swin_tiny_patch4_window7_224_minivit_sharenum6.yaml --data-path <data-path> --batch-size 64 --tag inference --is_sep_layernorm --is_transform_ffn --is_transform_heads --resume <checkpoint-path>/mini-swin-tiny-12m.pth --eval
 ```
 To evaluate other MiniViTs, simply replace `--cfg configs/swin_tiny_patch4_window7_224_minivit_sharenum6.yaml` and `--resume <checkpoint-path>/mini-swin-tiny-12m.pth` by corresponding YAML and checkpoint files.
 
