@@ -4,6 +4,6 @@ scikit-image
 ptflops
 easydict
 PyYAML
-pillow==9.0.1
+pillow
 torchvision==0.2.1
 opencv-python
