@@ -82,24 +82,24 @@ Run the following commands for evaluation:
 
 Evaluate Mini-DeiT-Ti
 ```bash
-python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_tiny_patch16_224 --batch-size 128 --data-path ./ImageNet --output_dir ./outputs  --resume ./release_checkpoints/mini_deit_tiny_patch16_224.pth --eval
+python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_tiny_patch16_224 --batch-size 128 --data-path ./ImageNet --output_dir ./outputs  --resume ./checkpoints/mini_deit_tiny_patch16_224.pth --eval
 ```
 
 <details>
 <summary>Evaluate Mini-DeiT-S</summary>
-<pre><code>python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_small_patch16_224 --batch-size 128 --data-path ./ImageNet --output_dir ./outputs  --resume ./release_checkpoints/mini_deit_small_patch16_224.pth --eval
+<pre><code>python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_small_patch16_224 --batch-size 128 --data-path ./ImageNet --output_dir ./outputs  --resume ./checkpoints/mini_deit_small_patch16_224.pth --eval
 </code></pre>
 </details>
 
 <details>
 <summary>Evaluate Mini-DeiT-B</summary>
-<pre><code>python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_base_patch16_224 --batch-size 128 --data-path ./ImageNet --output_dir ./outputs  --resume ./release_checkpoints/mini_deit_base_patch16_224.pth --eval
+<pre><code>python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_base_patch16_224 --batch-size 128 --data-path ./ImageNet --output_dir ./outputs  --resume ./checkpoints/mini_deit_base_patch16_224.pth --eval
 </code></pre>
 </details>
 
 <details>
 <summary>Evaluate Mini-DeiT-B-384</summary>
-<pre><code>python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_base_patch16_384 --batch-size 32 --data-path ./ImageNet --output_dir ./outputs  --resume ./release_checkpoints/mini_deit_base_patch16_384.pth --input-size 384 --eval
+<pre><code>python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_base_patch16_384 --batch-size 32 --data-path ./ImageNet --output_dir ./outputs  --resume ./checkpoints/mini_deit_base_patch16_384.pth --input-size 384 --eval
 </code></pre>
 </details>
 

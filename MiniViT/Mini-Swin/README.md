@@ -78,7 +78,7 @@ Run the following commands for evaluation:
 Evaluate Mini-Swin-Tiny
 
 ```bash
-python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/swin_tiny_patch4_window7_224_minivit_sharenum6.yaml --data-path <data-path> --batch-size 64 --is_sep_layernorm --is_transform_ffn --is_transform_heads --resume <checkpoint-path>/mini-swin-tiny-12m.pth --eval
+python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/swin_tiny_patch4_window7_224_minivit_sharenum6.yaml --data-path <data-path> --batch-size 64 --is_sep_layernorm --is_transform_ffn --is_transform_heads --resume checkpoints/mini-swin-tiny-12m.pth --eval
 ```
 
 <details>
