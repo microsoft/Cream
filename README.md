@@ -23,6 +23,8 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 
 ## News
 - :sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com
+- :boom: Apr, 2022: Code for [**MiniViT**](./MiniViT) is now released.
+- :boom: Mar, 2022: [**MiniViT**](./MiniViT) has been accepted by CVPR'22.
 - :boom: Feb, 2022: Code for [**CDARTS**](./CDARTS) is now released.
 - :boom: Feb, 2022: [**CDARTS**](./CDARTS) has been accepted by TPAMI'22.
 - :boom: Jan, 2022: Code for [**AutoFormerV2**](./AutoFormerV2) is now released.
@@ -36,6 +38,12 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 - :boom: Oct, 2020: [**Cream**](./Cream) was accepted to NeurIPS'20
 
 ## Works
+### [MiniViT](./MiniViT)
+MiniViT is a new compression framework that achieves parameter reduction in vision transformers while retaining the same performance. The central idea of MiniViT is to multiplex the weights of consecutive transformer blocks. Specifically, we make the weights shared across layers, while imposing a transformation on the weights to increase diversity. Weight distillation over self-attention is also applied to transfer knowledge from large-scale ViT models to weight-multiplexed compact models.
+<div align="center">
+    <img width="50%" alt="MiniViT overview" src="./MiniViT/.figure/framework.png"/>
+</div>
+
 ### [CDARTS](./CDARTS)
 In this work, we propose new joint optimization objectives and a novel Cyclic Differentiable ARchiTecture Search framework, dubbed CDARTS. Considering the structure difference, CDARTS builds a cyclic feedback mechanism between the search and evaluation networks with introspective distillation. 
 <div align="center">
@@ -77,6 +85,12 @@ In this work, we present a simple yet effective architecture distillation method
 
 ## Bibtex
 ```bibtex
+@article{MiniViT,
+  title={MiniViT: Compressing Vision Transformers with Weight Multiplexing},
+  author={Zhang, Jinnian and Peng, Houwen and Wu, Kan and Liu, Mengchen and Xiao, Bin and Fu, Jianlong and Yuan, Lu},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year={2022}
+}
 
 @article{CDARTS,
   title={Cyclic Differentiable Architecture Search},
