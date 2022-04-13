@@ -41,7 +41,7 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 ### [MiniViT](./MiniViT)
 MiniViT is a new compression framework that achieves parameter reduction in vision transformers while retaining the same performance. The central idea of MiniViT is to multiplex the weights of consecutive transformer blocks. Specifically, we make the weights shared across layers, while imposing a transformation on the weights to increase diversity. Weight distillation over self-attention is also applied to transfer knowledge from large-scale ViT models to weight-multiplexed compact models.
 <div align="center">
-    <img width="50%" alt="MiniViT overview" src="./MiniViT/.figure/framework.png"/>
+    <img width="70%" alt="MiniViT overview" src="./MiniViT/.figure/framework.png"/>
 </div>
 
 ### [CDARTS](./CDARTS)
