@@ -8,7 +8,7 @@ Model | Params. | Input | Top-1 Acc. % | Top-5 Acc. % | Download link
 Mini-DeiT-Ti | 3M | 224x224 | 73.0 | 91.6 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_tiny_patch16_224.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_deit_tiny.txt)
 Mini-DeiT-S | 11M | 224x224 | 80.9 | 95.6 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_small_patch16_224.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_deit_small.txt)
 Mini-DeiT-B | 44M | 224x224 | 83.2 | 96.5 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_base_patch16_224.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_deit_base.txt)
-Mini-DeiT-B| 44M | 384x384 | 84.7 | 97.1 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_base_patch16_384.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_deit_base_384.txt)
+Mini-DeiT-B| 44M | 384x384 | 84.9 | 97.2 | [model](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_base_patch16_384.pth), [log](https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/log_mini_deit_base_384.txt)
 
 
 # Usage
