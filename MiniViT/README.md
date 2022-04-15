@@ -2,7 +2,7 @@
 
 :sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com.
 
-**This is an official implementation of Mini-DeiT and Mini-Swin.**
+**This is an official implementation of [MiniViT](https://arxiv.org/pdf/2204.07154.pdf), including Mini-DeiT and Mini-Swin.**
 
 MiniViT is a new compression framework that achieves parameter reduction in vision transformers while retaining the same performance. The central idea of MiniViT is to multiplex the weights of consecutive transformer blocks. Specifically, we make the weights shared across layers, while imposing a transformation on the weights to increase diversity. Weight distillation over self-attention is also applied to transfer knowledge from large-scale ViT models to weight-multiplexed compact models.
 
