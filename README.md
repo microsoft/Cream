@@ -24,7 +24,7 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 ## News
 - :sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com
 - :boom: Apr, 2022: Code for [**MiniViT**](./MiniViT) is now released.
-- :boom: Mar, 2022: [**MiniViT**](./MiniViT) has been accepted by CVPR'22.
+- :boom: Mar, 2022: [**MiniViT**](https://arxiv.org/pdf/2204.07154.pdf) has been accepted by CVPR'22.
 - :boom: Feb, 2022: Code for [**CDARTS**](./CDARTS) is now released.
 - :boom: Feb, 2022: [**CDARTS**](./CDARTS) has been accepted by TPAMI'22.
 - :boom: Jan, 2022: Code for [**AutoFormerV2**](./AutoFormerV2) is now released.
