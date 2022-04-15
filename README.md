@@ -1,5 +1,5 @@
 
-# Neureal Architecture Search and Design
+# Neureal Architecture Design and Search
 
 ***This is a collection of our AutoML-NAS work***
 
