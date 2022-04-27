@@ -55,18 +55,18 @@ ImageNet/
 Training Mini-DeiT-Ti
 
 ```bash
-python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_tiny_patch16_224 --batch-size 128 --data-path ./ImageNet --output_dir ./outputs  --teacher-path <teacher-model-path> --distillation-type soft --distillation-alpha 1.0 --drop-path 0.0
+python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_tiny_patch16_224 --batch-size 128 --data-path ./ImageNet --output_dir ./outputs  --teacher-model regnety_160 --distillation-type soft --distillation-alpha 1.0 --drop-path 0.0
 ```
 
 <details>
 <summary>Training Mini-DeiT-S</summary>
-<pre><code>python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_small_patch16_224 --batch-size 128 --data-path ./ImageNet --output_dir ./outputs  --teacher-path <teacher-model-path> --distillation-type soft --distillation-alpha 1.0 --drop-path 0.0
+<pre><code>python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_small_patch16_224 --batch-size 128 --data-path ./ImageNet --output_dir ./outputs  --teacher-model regnety_160 --distillation-type soft --distillation-alpha 1.0 --drop-path 0.0
 </code></pre>
 </details>
 
 <details>
 <summary>Training Mini-DeiT-B</summary>
-<pre><code>python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_base_patch16_224 --batch-size 128 --data-path ./ImageNet --output_dir ./outputs  --teacher-path <teacher-model-path> --distillation-type soft --distillation-alpha 1.0
+<pre><code>python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model mini_deit_base_patch16_224 --batch-size 128 --data-path ./ImageNet --output_dir ./outputs  --teacher-model regnety_160 --distillation-type soft --distillation-alpha 1.0 --drop-path 0.1
 </code></pre>
 </details>
 
