@@ -373,10 +373,11 @@ def get_bucket_ids_2d(method, height, width,
     height, width: int
         The height and width of the feature map.
         The sequence length is equal to `height * width`.
-    skip: int [0 or 1]
+    skip: int
         The number of skip token before spatial tokens.
         When skip is 0, no classification token.
         When skip is 1, there is a classification token before spatial tokens.
+        When skip > 1, there are `skip` extra tokens before spatial tokens.
     alpha, beta, gamma: float
         The coefficients of piecewise index function.
     dtype: torch.dtype
@@ -393,22 +394,25 @@ def get_bucket_ids_2d(method, height, width,
     num_buckets: int
         The number of buckets including `skip` token.
     """
-    assert skip in [
-        0, 1], f"`get_bucket_ids_2d` only support skip is 0 or 1, current skip={skip}"
     bucket_ids, num_buckets, L = get_bucket_ids_2d_without_skip(method, height, width,
                                                                 alpha, beta, gamma,
                                                                 dtype, device)
 
     # add an extra encoding (id = num_buckets) for the classification token
     if skip > 0:
-        assert skip == 1, "`get_bucket_ids_2d` only support skip is 0 or 1"
         new_bids = bucket_ids.new_empty(size=(skip + L, skip + L))
-        new_bids[0] = num_buckets
-        new_bids[:, 0] = num_buckets
+
+        # if extra token exists, we add extra bucket as its encoding.
+        extra_bucket_id = num_buckets
+        num_buckets += 1
+
+        new_bids[:skip] = extra_bucket_id
+        new_bids[:, :skip] = extra_bucket_id
         new_bids[skip:, skip:] = bucket_ids
+
         bucket_ids = new_bids
     bucket_ids = bucket_ids.contiguous()
-    return bucket_ids, num_buckets + skip
+    return bucket_ids, num_buckets
 
 
 class iRPE(nn.Module):
@@ -782,10 +786,11 @@ def get_single_rpe_config(ratio=1.9,
         Choices: [None, 'bias', 'contextual']
     shared_head: bool
         Whether to share weight among different heads.
-    skip: int [0 or 1]
+    skip: int
         The number of skip token before spatial tokens.
         When skip is 0, no classification token.
         When skip is 1, there is a classification token before spatial tokens.
+        When skip > 1, there are `skip` extra tokens before spatial tokens.
 
     Returns
     -------
@@ -810,7 +815,8 @@ def get_single_rpe_config(ratio=1.9,
                                          config.beta,
                                          config.gamma)
     # add extra bucket for `skip` token (e.g. class token)
-    config.num_buckets += skip
+    if skip > 0:
+        config.num_buckets += 1
     return config
 
 
@@ -834,10 +840,11 @@ def get_rpe_config(ratio=1.9,
         Choices: [None, 'bias', 'contextual']
     shared_head: bool
         Whether to share weight among different heads.
-    skip: int [0 or 1]
+    skip: int
         The number of skip token before spatial tokens.
         When skip is 0, no classification token.
         When skip is 1, there is a classification token before spatial tokens.
+        When skip > 1, there are `skip` extra tokens before spatial tokens.
     rpe_on: str
         Where RPE attaches.
         "q": RPE on queries
