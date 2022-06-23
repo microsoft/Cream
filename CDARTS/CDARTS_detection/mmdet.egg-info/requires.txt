@@ -1,6 +1,0 @@
-mmcv>=0.2.6
-numpy
-matplotlib
-six
-terminaltables
-pycocotools

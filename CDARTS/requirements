@@ -1,5 +1,0 @@
-graphviz
-torch==1.2
-torchvision==0.2
-tensorboard
-tensorboardX
