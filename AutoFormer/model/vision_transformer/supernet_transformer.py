@@ -3,12 +3,9 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from model.module.Linear_super import LinearSuper
-from model.module.layernorm_super import LayerNormSuper
-from model.module.multihead_super import AttentionSuper
-from model.module.embedding_super import PatchembedSuper
-from model.utils import trunc_normal_
-from model.utils import DropPath
+from AutoFormer.AutoFormer.model import LinearSuper,\
+    LayerNormSuper,AttentionSuper,PatchembedSuper,\
+    trunc_normal_,DropPath
 import numpy as np
 
 def gelu(x: torch.Tensor) -> torch.Tensor:
