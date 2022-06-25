@@ -18,7 +18,7 @@ from supernet_engine import train_one_epoch, evaluate
 from lib.samplers import RASampler
 from lib import utils
 from lib.config import cfg, update_config_from_file
-from model.supernet_transformer import Vision_TransformerSuper
+from model.vision_transformer.supernet_transformer import Vision_TransformerSuper
 
 
 def get_args_parser():

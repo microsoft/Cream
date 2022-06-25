@@ -3,7 +3,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from AutoFormer.AutoFormer.model import LinearSuper,\
+from AutoFormer.model import LinearSuper,\
     LayerNormSuper,AttentionSuper,PatchembedSuper,\
     trunc_normal_,DropPath
 import numpy as np
