@@ -709,6 +709,8 @@ class SwinIR(nn.Module):
         self.upscale = upscale
         self.upsampler = upsampler
         self.window_size = window_size
+        self.drop_rate = drop_rate
+        self.attn_drop_rate = attn_drop_rate
 
         #####################################################################################################
         ################################### 1, shallow feature extraction ###################################
@@ -863,17 +865,17 @@ class SwinIR(nn.Module):
         self.sample_stl_num = config['stl_num']
         self.sample_num_heads = config['num_heads']
 
-        self.sample_dropout = calc_dropout(self.super_dropout, self.sample_embed_dim[0], self.embed_dim)
+        self.sample_dropout = calc_dropout(self.drop_rate, self.sample_embed_dim[0], self.embed_dim)
 
         # TODO: Switch to PatchembedSuper and check if it's alright
-        self.patch_embed.set_sample_config(self.sample_embed_dim[0])
+        # self.patch_embed.set_sample_config(self.sample_embed_dim[0])
 
         self.sample_output_dim = [out_dim for out_dim in self.sample_embed_dim[1:]] + [self.sample_embed_dim[-1]]
         for i, layer in enumerate(self.layers):
             # not exceed sample layer number
             if i < self.sample_rstb_num:
-                sample_dropout = calc_dropout(self.super_dropout, self.sample_embed_dim[i], self.embed_dim)
-                sample_attn_dropout = calc_dropout(self.super_attn_dropout, self.sample_embed_dim[i], self.embed_dim)
+                sample_dropout = calc_dropout(self.drop_rate, self.sample_embed_dim[i], self.embed_dim)
+                sample_attn_dropout = calc_dropout(self.attn_drop_rate, self.sample_embed_dim[i], self.embed_dim)
                 
                 layer.set_sample_config(is_identity_layer=False,
                                         sample_embed_dim=self.sample_embed_dim[i],
@@ -885,9 +887,10 @@ class SwinIR(nn.Module):
             # exceeds sample layer number
             else:
                 layer.set_sample_config(is_identity_layer=True)
-        if self.pre_norm:
-            self.norm.set_sample_config(self.sample_embed_dim[-1])
-        self.head.set_sample_config(self.sample_embed_dim[-1], self.num_classes)
+
+        # TODO: Switch to LayerNormSuper if it's alright
+        # if self.pre_norm:
+            # self.norm.set_sample_config(self.sample_embed_dim[-1])
 
     def forward_features(self, x):
         x_size = (x.shape[2], x.shape[3])
