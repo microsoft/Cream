@@ -10,6 +10,8 @@ import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
+from AutoFormer.lib.utils import calc_dropout
+
 
 class Mlp(nn.Module):
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
@@ -448,6 +450,15 @@ class RSTB(nn.Module):
         self.dim = dim
         self.input_resolution = input_resolution
 
+        # the configs of current sampled arch
+        self.sample_embed_dim = None
+        self.sample_mlp_ratio = None
+        self.sample_ffn_embed_dim_this_layer = None
+        self.sample_num_stl_this_layer = None
+        self.sample_scale = None
+        self.sample_dropout = None
+        self.sample_attn_dropout = None
+
         self.residual_group = BasicLayer(dim=dim,
                                          input_resolution=input_resolution,
                                          depth=depth,
@@ -477,6 +488,31 @@ class RSTB(nn.Module):
         self.patch_unembed = PatchUnEmbed(
             img_size=img_size, patch_size=patch_size, in_chans=0, embed_dim=dim,
             norm_layer=None)
+
+    def set_sample_config(self, is_identity_layer, sample_embed_dim=None, sample_mlp_ratio=None, sample_num_heads=None, sample_dropout=None, sample_attn_dropout=None, sample_out_dim=None):
+
+        if is_identity_layer:
+            self.is_identity_layer = True
+            return
+
+        self.is_identity_layer = False
+
+        self.sample_embed_dim = sample_embed_dim
+        self.sample_out_dim = sample_out_dim
+        self.sample_mlp_ratio = sample_mlp_ratio
+        self.sample_ffn_embed_dim_this_layer = int(sample_embed_dim*sample_mlp_ratio)
+        self.sample_num_heads_this_layer = sample_num_heads
+
+        self.sample_dropout = sample_dropout
+        self.sample_attn_dropout = sample_attn_dropout
+        self.attn_layer_norm.set_sample_config(sample_embed_dim=self.sample_embed_dim)
+
+        self.attn.set_sample_config(sample_q_embed_dim=self.sample_num_heads_this_layer*64, sample_num_heads=self.sample_num_heads_this_layer, sample_in_embed_dim=self.sample_embed_dim)
+
+        self.fc1.set_sample_config(sample_in_dim=self.sample_embed_dim, sample_out_dim=self.sample_ffn_embed_dim_this_layer)
+        self.fc2.set_sample_config(sample_in_dim=self.sample_ffn_embed_dim_this_layer, sample_out_dim=self.sample_out_dim)
+
+        self.ffn_layer_norm.set_sample_config(sample_embed_dim=self.sample_embed_dim)
 
     def forward(self, x, x_size):
         return self.patch_embed(self.conv(self.patch_unembed(self.residual_group(x, x_size), x_size))) + x
@@ -677,6 +713,15 @@ class SwinIR(nn.Module):
         self.num_features = embed_dim
         self.mlp_ratio = mlp_ratio
 
+        # configs for the sampled subTransformer
+        self.sample_rstb_num = None
+        self.sample_embed_dim = None
+        self.sample_mlp_ratio = None
+        self.sample_stl_num = None
+        self.sample_num_heads = None
+        self.sample_dropout = None
+        # self.sample_output_dim = None
+
         # split image into non-overlapping patches
         self.patch_embed = PatchEmbed(
             img_size=img_size, patch_size=patch_size, in_chans=embed_dim, embed_dim=embed_dim,
@@ -786,6 +831,53 @@ class SwinIR(nn.Module):
         mod_pad_w = (self.window_size - w % self.window_size) % self.window_size
         x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), 'reflect')
         return x
+
+    def set_sample_config(self, config: dict):
+        """Sets the sample config for SwinIR
+
+        An example config:
+        {
+            'rstb_num': 4,                  # Num of RSTB layers/blocks in the network
+            'stl_num': 6,                   # Num STL blocks per RSTB layer
+            'embed_dim': [36, 36, 60, 60]   # Per RSTB layer
+            'mlp_ratio': [2., 2., 1.5, 1.5] # Per RSTB layer
+            'num_heads': [6, 6, 6, 6]       # Per RSTB layer
+        }
+
+        So, all STL blocks are same within one RSTB layer. 
+        The variation is between RSTB blocks.
+        """
+        self.sample_rstb_num = config['rstb_num']
+        self.sample_embed_dim = config['embed_dim']
+        self.sample_mlp_ratio = config['mlp_ratio']
+        self.sample_stl_num = config['stl_num']
+        self.sample_num_heads = config['num_heads']
+
+        self.sample_dropout = calc_dropout(self.super_dropout, self.sample_embed_dim[0], self.super_embed_dim)
+
+        # TODO: Switch to PatchembedSuper and check if it's alright
+        self.patch_embed.set_sample_config(self.sample_embed_dim[0])
+
+        self.sample_output_dim = [out_dim for out_dim in self.sample_embed_dim[1:]] + [self.sample_embed_dim[-1]]
+        for i, layer in enumerate(self.layers):
+            # not exceed sample layer number
+            if i < self.sample_rstb_num:
+                sample_dropout = calc_dropout(self.super_dropout, self.sample_embed_dim[i], self.super_embed_dim)
+                sample_attn_dropout = calc_dropout(self.super_attn_dropout, self.sample_embed_dim[i], self.super_embed_dim)
+                
+                layer.set_sample_config(is_identity_layer=False,
+                                        sample_embed_dim=self.sample_embed_dim[i],
+                                        sample_mlp_ratio=self.sample_mlp_ratio[i],
+                                        sample_num_heads=self.sample_num_heads[i],
+                                        sample_dropout=sample_dropout,
+                                        sample_out_dim=self.sample_output_dim[i],
+                                        sample_attn_dropout=sample_attn_dropout)
+            # exceeds sample layer number
+            else:
+                layer.set_sample_config(is_identity_layer=True)
+        if self.pre_norm:
+            self.norm.set_sample_config(self.sample_embed_dim[-1])
+        self.head.set_sample_config(self.sample_embed_dim[-1], self.num_classes)
 
     def forward_features(self, x):
         x_size = (x.shape[2], x.shape[3])
