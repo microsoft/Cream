@@ -9,8 +9,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
-
-from lib.utils import calc_dropout
+from AutoFormer.lib.utils import calc_dropout
+from AutoFormer.model.vision_transformer.module.Linear_super import LinearSuper
 
 
 class Mlp(nn.Module):
@@ -297,6 +297,23 @@ class SwinTransformerBlock(nn.Module):
         # norm2
         flops += self.dim * H * W
         return flops
+    def set_sample_config(self,
+                          sample_embed_dim=None,
+                          sample_mlp_ratio=None,
+                          sample_num_heads=None,
+                          sample_dropout=None,
+                          sample_out_dim=None,
+                          sample_attn_dropout=None
+                          ):
+
+        self.attn.set_sample_config(sample_embed_dim, sample_mlp_ratio, sample_num_heads,
+                          sample_dropout, sample_out_dim, sample_attn_dropout)
+        self.norm1.set_sample_config(sample_embed_dim, sample_mlp_ratio, sample_num_heads,
+                                    sample_dropout, sample_out_dim, sample_attn_dropout)
+        self.norm2.set_sample_config(sample_embed_dim, sample_mlp_ratio, sample_num_heads,
+                                    sample_dropout, sample_out_dim, sample_attn_dropout)
+        self.mlp.set_sample_config(sample_embed_dim, sample_mlp_ratio, sample_num_heads,
+                                    sample_dropout, sample_out_dim, sample_attn_dropout)
 
 
 class PatchMerging(nn.Module):
@@ -373,8 +390,10 @@ class BasicLayer(nn.Module):
                  drop_path=0., norm_layer=nn.LayerNorm, downsample=None, use_checkpoint=False):
 
         super().__init__()
+
         self.dim = dim
         self.input_resolution = input_resolution
+
         self.depth = depth
         self.use_checkpoint = use_checkpoint
 
@@ -416,6 +435,32 @@ class BasicLayer(nn.Module):
         if self.downsample is not None:
             flops += self.downsample.flops()
         return flops
+
+    def set_sample_config(self,
+                          sample_embed_dim=None,
+                          sample_mlp_ratio=None,
+                          sample_num_heads=None,
+                          sample_dropout=None,
+                          sample_out_dim=None,
+                          sample_attn_dropout=None
+                          ):
+        self.sample_embed_dim = sample_embed_dim
+        self.sample_out_dim = sample_out_dim
+        self.sample_mlp_ratio = sample_mlp_ratio
+        self.sample_num_heads = sample_num_heads
+        self.sample_dropout = sample_dropout
+        self.sample_attn_dropout = sample_attn_dropout
+
+        for i in range(self.depth):
+            self.blocks[i].set_sample_config(sample_embed_dim=sample_embed_dim,
+                                                  sample_mlp_ratio=sample_mlp_ratio,
+                                                  sample_num_heads=sample_num_heads,
+                                                  sample_dropout=sample_dropout,
+                                                  sample_out_dim=sample_out_dim,
+                                                  sample_attn_dropout=sample_attn_dropout)
+
+        #todo: see path merging layer
+
 
 
 class RSTB(nn.Module):
@@ -962,7 +1007,7 @@ if __name__ == '__main__':
                    embed_dim=60, num_heads=[6, 6, 6, 6], mlp_ratio=2, upsampler='pixelshuffledirect')
     print(model)
     print(height, width, model.flops() / 1e9)
-
-    x = torch.randn((1, 3, height, width))
-    x = model(x)
-    print(x.shape)
+    #
+    # x = torch.randn((1, 3, height, width))
+    # x = model(x)
+    #print(x.shape)
