@@ -233,3 +233,7 @@ def init_distributed_mode(args):
                                          world_size=args.world_size, rank=args.rank)
     torch.distributed.barrier()
     setup_for_distributed(args.rank == 0)
+
+
+def calc_dropout(dropout, sample_embed_dim, super_embed_dim):
+    return dropout * 1.0 * sample_embed_dim / super_embed_dim

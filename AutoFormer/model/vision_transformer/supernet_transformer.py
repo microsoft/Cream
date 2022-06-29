@@ -3,6 +3,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from AutoFormer.lib.utils import calc_dropout
 from AutoFormer.model import LinearSuper,\
     LayerNormSuper,AttentionSuper,PatchembedSuper,\
     trunc_normal_,DropPath
@@ -300,8 +301,6 @@ class TransformerEncoderLayer(nn.Module):
         total_flops += self.fc2.get_complexity(sequence_length+1)
         return total_flops
 
-def calc_dropout(dropout, sample_embed_dim, super_embed_dim):
-    return dropout * 1.0 * sample_embed_dim / super_embed_dim
 
 
 
