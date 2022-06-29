@@ -507,22 +507,18 @@ class RSTB(nn.Module):
         self.sample_embed_dim = sample_embed_dim
         self.sample_out_dim = sample_out_dim
         self.sample_mlp_ratio = sample_mlp_ratio
-        self.sample_ffn_embed_dim_this_layer = int(sample_embed_dim*sample_mlp_ratio)
         self.sample_num_heads_this_layer = sample_num_heads
 
         self.sample_dropout = sample_dropout
         self.sample_attn_dropout = sample_attn_dropout
 
-        """
-        self.attn_layer_norm.set_sample_config(sample_embed_dim=self.sample_embed_dim)
+        self.residual_group.set_sample_config(sample_embed_dim=sample_embed_dim,
+                                              sample_mlp_ratio=sample_mlp_ratio,
+                                              sample_num_heads=sample_num_heads,
+                                              sample_dropout=sample_dropout,
+                                              sample_out_dim=sample_out_dim,
+                                              sample_attn_dropout=sample_attn_dropout)
 
-        self.attn.set_sample_config(sample_q_embed_dim=self.sample_num_heads_this_layer*64, sample_num_heads=self.sample_num_heads_this_layer, sample_in_embed_dim=self.sample_embed_dim)
-
-        self.fc1.set_sample_config(sample_in_dim=self.sample_embed_dim, sample_out_dim=self.sample_ffn_embed_dim_this_layer)
-        self.fc2.set_sample_config(sample_in_dim=self.sample_ffn_embed_dim_this_layer, sample_out_dim=self.sample_out_dim)
-
-        self.ffn_layer_norm.set_sample_config(sample_embed_dim=self.sample_embed_dim)
-        """
 
     def forward(self, x, x_size):
         return self.patch_embed(self.conv(self.patch_unembed(self.residual_group(x, x_size), x_size))) + x
