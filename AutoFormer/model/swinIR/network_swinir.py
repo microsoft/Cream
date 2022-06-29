@@ -10,7 +10,7 @@ import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
-from AutoFormer.lib.utils import calc_dropout
+from lib.utils import calc_dropout
 
 
 class Mlp(nn.Module):
@@ -489,7 +489,14 @@ class RSTB(nn.Module):
             img_size=img_size, patch_size=patch_size, in_chans=0, embed_dim=dim,
             norm_layer=None)
 
-    def set_sample_config(self, is_identity_layer, sample_embed_dim=None, sample_mlp_ratio=None, sample_num_heads=None, sample_dropout=None, sample_attn_dropout=None, sample_out_dim=None):
+    def set_sample_config(self, 
+                          is_identity_layer, 
+                          sample_embed_dim=None, 
+                          sample_mlp_ratio=None, 
+                          sample_num_heads=None, 
+                          sample_dropout=None, 
+                          sample_attn_dropout=None, 
+                          sample_out_dim=None):
 
         if is_identity_layer:
             self.is_identity_layer = True
@@ -505,6 +512,8 @@ class RSTB(nn.Module):
 
         self.sample_dropout = sample_dropout
         self.sample_attn_dropout = sample_attn_dropout
+
+        """
         self.attn_layer_norm.set_sample_config(sample_embed_dim=self.sample_embed_dim)
 
         self.attn.set_sample_config(sample_q_embed_dim=self.sample_num_heads_this_layer*64, sample_num_heads=self.sample_num_heads_this_layer, sample_in_embed_dim=self.sample_embed_dim)
@@ -513,6 +522,7 @@ class RSTB(nn.Module):
         self.fc2.set_sample_config(sample_in_dim=self.sample_ffn_embed_dim_this_layer, sample_out_dim=self.sample_out_dim)
 
         self.ffn_layer_norm.set_sample_config(sample_embed_dim=self.sample_embed_dim)
+        """
 
     def forward(self, x, x_size):
         return self.patch_embed(self.conv(self.patch_unembed(self.residual_group(x, x_size), x_size))) + x
@@ -853,7 +863,7 @@ class SwinIR(nn.Module):
         self.sample_stl_num = config['stl_num']
         self.sample_num_heads = config['num_heads']
 
-        self.sample_dropout = calc_dropout(self.super_dropout, self.sample_embed_dim[0], self.super_embed_dim)
+        self.sample_dropout = calc_dropout(self.super_dropout, self.sample_embed_dim[0], self.embed_dim)
 
         # TODO: Switch to PatchembedSuper and check if it's alright
         self.patch_embed.set_sample_config(self.sample_embed_dim[0])
@@ -862,8 +872,8 @@ class SwinIR(nn.Module):
         for i, layer in enumerate(self.layers):
             # not exceed sample layer number
             if i < self.sample_rstb_num:
-                sample_dropout = calc_dropout(self.super_dropout, self.sample_embed_dim[i], self.super_embed_dim)
-                sample_attn_dropout = calc_dropout(self.super_attn_dropout, self.sample_embed_dim[i], self.super_embed_dim)
+                sample_dropout = calc_dropout(self.super_dropout, self.sample_embed_dim[i], self.embed_dim)
+                sample_attn_dropout = calc_dropout(self.super_attn_dropout, self.sample_embed_dim[i], self.embed_dim)
                 
                 layer.set_sample_config(is_identity_layer=False,
                                         sample_embed_dim=self.sample_embed_dim[i],
