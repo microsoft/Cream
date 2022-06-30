@@ -9,8 +9,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
-from AutoFormer.lib.utils import calc_dropout
-from AutoFormer.model.vision_transformer.module.Linear_super import LinearSuper
+from lib.utils import calc_dropout
+from model.vision_transformer.module.Linear_super import LinearSuper
 
 
 class Mlp(nn.Module):
