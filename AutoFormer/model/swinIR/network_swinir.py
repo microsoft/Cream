@@ -297,7 +297,9 @@ class SwinTransformerBlock(nn.Module):
         # norm2
         flops += self.dim * H * W
         return flops
+
     def set_sample_config(self,
+                          is_identity_layer=False,
                           sample_embed_dim=None,
                           sample_mlp_ratio=None,
                           sample_num_heads=None,
@@ -305,6 +307,12 @@ class SwinTransformerBlock(nn.Module):
                           sample_out_dim=None,
                           sample_attn_dropout=None
                           ):
+
+        if is_identity_layer:
+            self.is_identity_layer = True
+            return
+        
+        self.is_identity_layer = False
 
         self.attn.set_sample_config(sample_embed_dim, sample_mlp_ratio, sample_num_heads,
                           sample_dropout, sample_out_dim, sample_attn_dropout)
@@ -437,6 +445,7 @@ class BasicLayer(nn.Module):
         return flops
 
     def set_sample_config(self,
+                          sample_stl_num,
                           sample_embed_dim=None,
                           sample_mlp_ratio=None,
                           sample_num_heads=None,
@@ -444,6 +453,7 @@ class BasicLayer(nn.Module):
                           sample_out_dim=None,
                           sample_attn_dropout=None
                           ):
+        self.sample_stl_num = sample_stl_num
         self.sample_embed_dim = sample_embed_dim
         self.sample_out_dim = sample_out_dim
         self.sample_mlp_ratio = sample_mlp_ratio
@@ -452,12 +462,16 @@ class BasicLayer(nn.Module):
         self.sample_attn_dropout = sample_attn_dropout
 
         for i in range(self.depth):
-            self.blocks[i].set_sample_config(sample_embed_dim=sample_embed_dim,
-                                                  sample_mlp_ratio=sample_mlp_ratio,
-                                                  sample_num_heads=sample_num_heads,
-                                                  sample_dropout=sample_dropout,
-                                                  sample_out_dim=sample_out_dim,
-                                                  sample_attn_dropout=sample_attn_dropout)
+            if i < self.sample_stl_num:
+                self.blocks[i].set_sample_config(is_identity_layer=False,
+                                                 sample_embed_dim=sample_embed_dim,
+                                                 sample_mlp_ratio=sample_mlp_ratio,
+                                                 sample_num_heads=sample_num_heads,
+                                                 sample_dropout=sample_dropout,
+                                                 sample_out_dim=sample_out_dim,
+                                                 sample_attn_dropout=sample_attn_dropout)
+            else:
+                self.blocks[i].set_sample_config(is_identity_layer=True)
 
         #todo: see path merging layer
 
@@ -536,6 +550,7 @@ class RSTB(nn.Module):
 
     def set_sample_config(self, 
                           is_identity_layer, 
+                          sample_stl_num,
                           sample_embed_dim=None, 
                           sample_mlp_ratio=None, 
                           sample_num_heads=None, 
@@ -557,7 +572,8 @@ class RSTB(nn.Module):
         self.sample_dropout = sample_dropout
         self.sample_attn_dropout = sample_attn_dropout
 
-        self.residual_group.set_sample_config(sample_embed_dim=sample_embed_dim,
+        self.residual_group.set_sample_config(sample_stl_num=sample_stl_num,
+                                              sample_embed_dim=sample_embed_dim,
                                               sample_mlp_ratio=sample_mlp_ratio,
                                               sample_num_heads=sample_num_heads,
                                               sample_dropout=sample_dropout,
@@ -919,6 +935,7 @@ class SwinIR(nn.Module):
                 sample_attn_dropout = calc_dropout(self.attn_drop_rate, self.sample_embed_dim[i], self.embed_dim)
                 
                 layer.set_sample_config(is_identity_layer=False,
+                                        sample_stl_num=self.sample_stl_num,
                                         sample_embed_dim=self.sample_embed_dim[i],
                                         sample_mlp_ratio=self.sample_mlp_ratio[i],
                                         sample_num_heads=self.sample_num_heads[i],
