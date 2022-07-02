@@ -90,6 +90,8 @@ class WindowAttention(nn.Module):
         # define a parameter table of relative position bias
         self.relative_position_bias_table = nn.Parameter(
             torch.zeros((2 * window_size[0] - 1) * (2 * window_size[1] - 1), num_heads))  # 2*Wh-1 * 2*Ww-1, nH
+        trunc_normal_(self.relative_position_bias_table, std=.02)
+        self.sample_relative_position_bias_table = None
 
         # get pair-wise relative position index for each token inside the window
         coords_h = torch.arange(self.window_size[0])
@@ -104,14 +106,22 @@ class WindowAttention(nn.Module):
         relative_position_index = relative_coords.sum(-1)  # Wh*Ww, Wh*Ww
         self.register_buffer("relative_position_index", relative_position_index)
 
-        self.qkv = nn.LinearSuper(dim, dim * 3, bias=qkv_bias)
+        self.qkv = LinearSuper(dim, dim * 3, bias=qkv_bias)
         self.attn_drop = nn.Dropout(attn_drop)
-        self.proj = nn.LinearSuper(dim, dim)
+        self.proj = LinearSuper(dim, dim)
 
         self.proj_drop = nn.Dropout(proj_drop)
 
-        trunc_normal_(self.relative_position_bias_table, std=.02)
         self.softmax = nn.Softmax(dim=-1)
+
+        self.sample_num_heads = None
+        self.sample_embed_dim = None
+
+    def set_sample_config(self, sample_embed_dim, sample_num_heads):
+        self.sample_num_heads = sample_num_heads
+        self.sample_embed_dim = sample_embed_dim
+        self.sample_scale = (sample_embed_dim // self.sample_num_heads) ** -0.5
+        self.sample_relative_position_bias_table = self.relative_position_bias_table[:,:self.sample_num_heads]
 
     def forward(self, x, mask=None):
         """
@@ -123,10 +133,10 @@ class WindowAttention(nn.Module):
         qkv = self.qkv(x).reshape(B_, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]  # make torchscript happy (cannot use tensor as tuple)
 
-        q = q * self.scale
+        q = q * self.sample_scale
         attn = (q @ k.transpose(-2, -1))
 
-        relative_position_bias = self.relative_position_bias_table[self.relative_position_index.view(-1)].view(
+        relative_position_bias = self.sample_relative_position_bias_table[self.relative_position_index.view(-1)].view(
             self.window_size[0] * self.window_size[1], self.window_size[0] * self.window_size[1], -1)  # Wh*Ww,Wh*Ww,nH
         relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()  # nH, Wh*Ww, Wh*Ww
         attn = attn + relative_position_bias.unsqueeze(0)
@@ -314,14 +324,15 @@ class SwinTransformerBlock(nn.Module):
         
         self.is_identity_layer = False
 
-        self.attn.set_sample_config(sample_embed_dim, sample_mlp_ratio, sample_num_heads,
-                          sample_dropout, sample_out_dim, sample_attn_dropout)
+        self.attn.set_sample_config(sample_embed_dim, sample_num_heads)
+        """
         self.norm1.set_sample_config(sample_embed_dim, sample_mlp_ratio, sample_num_heads,
                                     sample_dropout, sample_out_dim, sample_attn_dropout)
         self.norm2.set_sample_config(sample_embed_dim, sample_mlp_ratio, sample_num_heads,
                                     sample_dropout, sample_out_dim, sample_attn_dropout)
         self.mlp.set_sample_config(sample_embed_dim, sample_mlp_ratio, sample_num_heads,
                                     sample_dropout, sample_out_dim, sample_attn_dropout)
+        """
 
 
 class PatchMerging(nn.Module):
@@ -550,7 +561,7 @@ class RSTB(nn.Module):
 
     def set_sample_config(self, 
                           is_identity_layer, 
-                          sample_stl_num,
+                          sample_stl_num=None,
                           sample_embed_dim=None, 
                           sample_mlp_ratio=None, 
                           sample_num_heads=None, 
