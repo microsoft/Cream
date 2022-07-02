@@ -151,7 +151,7 @@ class WindowAttention(nn.Module):
         self.sample_relative_position_bias_table = self.relative_position_bias_table[:,:self.sample_num_heads]
 
         self.qkv.set_sample_config(sample_embed_dim, sample_embed_dim * 3)
-        self.proj.set_sample_config(sample_embed_dim, sample_embed_dim * 3)
+        self.proj.set_sample_config(sample_embed_dim, sample_embed_dim)
 
     def forward(self, x, mask=None):
         """
@@ -356,6 +356,7 @@ class SwinTransformerBlock(nn.Module):
 
         self.attn.set_sample_config(sample_embed_dim, sample_num_heads)
         self.norm1.set_sample_config(sample_embed_dim)
+        self.norm2.set_sample_config(sample_embed_dim)
         """
         self.norm1.set_sample_config(sample_embed_dim, sample_mlp_ratio, sample_num_heads,
                                     sample_dropout, sample_out_dim, sample_attn_dropout)
