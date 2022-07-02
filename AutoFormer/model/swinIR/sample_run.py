@@ -1,3 +1,5 @@
+import torch
+
 from .network_swinir import SwinIR
 
 
@@ -26,6 +28,10 @@ def main():
                    upsampler='pixelshuffledirect')
 
     model.set_sample_config(cfg)
+
+    img = torch.rand(32, 3, 64, 64)
+    out = model(img)
+    print('Output shape: ', out.shape)
 
 
 if __name__ == '__main__':
