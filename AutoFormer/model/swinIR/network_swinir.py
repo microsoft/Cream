@@ -64,6 +64,33 @@ def window_reverse(windows, window_size, H, W):
     return x
 
 
+class LayerNormSuper(nn.Module):
+    """Applies Layer Normalization with ability to sample weights
+
+    For now only supports one dimensional `normalization_shape`
+    unlike `nn.LayerNorm`
+    """
+    def __init__(self, normalized_dim: int):
+        super(LayerNormSuper, self).__init__()
+
+        self.normalized_dim = normalized_dim
+        self.norm = nn.LayerNorm(normalized_shape=normalized_dim)
+
+        self.sample_normalized_dim = normalized_dim
+        self.sample_weight = None
+        self.sample_bias = None
+
+    def set_sample_config(self, normalized_dim):
+        self.sample_normalized_dim = normalized_dim
+        self.sample_weight = self.norm.weight[:normalized_dim]
+        self.sample_bias = self.norm.bias[:normalized_dim]
+
+    def forward(self, x: torch.Tensor):
+        return F.layer_norm(x,
+                            tuple((self.sample_normalized_dim,)),
+                            self.sample_weight, self.sample_bias, self.norm.eps)
+
+
 class WindowAttention(nn.Module):
     r""" Window based multi-head self attention (W-MSA) module with relative position bias.
     It supports both of shifted and non-shifted window.
@@ -189,12 +216,12 @@ class SwinTransformerBlock(nn.Module):
         attn_drop (float, optional): Attention dropout rate. Default: 0.0
         drop_path (float, optional): Stochastic depth rate. Default: 0.0
         act_layer (nn.Module, optional): Activation layer. Default: nn.GELU
-        norm_layer (nn.Module, optional): Normalization layer.  Default: nn.LayerNorm
+        norm_layer (nn.Module, optional): Normalization layer.  Default: LayerNormSuper
     """
 
     def __init__(self, dim, input_resolution, num_heads, window_size=7, shift_size=0,
                  mlp_ratio=4., qkv_bias=True, qk_scale=None, drop=0., attn_drop=0., drop_path=0.,
-                 act_layer=nn.GELU, norm_layer=nn.LayerNorm):
+                 act_layer=nn.GELU, norm_layer=LayerNormSuper):
         super().__init__()
         self.dim = dim
         self.input_resolution = input_resolution
@@ -325,6 +352,7 @@ class SwinTransformerBlock(nn.Module):
         self.is_identity_layer = False
 
         self.attn.set_sample_config(sample_embed_dim, sample_num_heads)
+        self.norm1.set_sample_config(sample_embed_dim)
         """
         self.norm1.set_sample_config(sample_embed_dim, sample_mlp_ratio, sample_num_heads,
                                     sample_dropout, sample_out_dim, sample_attn_dropout)
@@ -399,14 +427,14 @@ class BasicLayer(nn.Module):
         drop (float, optional): Dropout rate. Default: 0.0
         attn_drop (float, optional): Attention dropout rate. Default: 0.0
         drop_path (float | tuple[float], optional): Stochastic depth rate. Default: 0.0
-        norm_layer (nn.Module, optional): Normalization layer. Default: nn.LayerNorm
+        norm_layer (nn.Module, optional): Normalization layer. Default: LayerNormSuper
         downsample (nn.Module | None, optional): Downsample layer at the end of the layer. Default: None
         use_checkpoint (bool): Whether to use checkpointing to save memory. Default: False.
     """
 
     def __init__(self, dim, input_resolution, depth, num_heads, window_size,
                  mlp_ratio=4., qkv_bias=True, qk_scale=None, drop=0., attn_drop=0.,
-                 drop_path=0., norm_layer=nn.LayerNorm, downsample=None, use_checkpoint=False):
+                 drop_path=0., norm_layer=LayerNormSuper, downsample=None, use_checkpoint=False):
 
         super().__init__()
 
@@ -503,7 +531,7 @@ class RSTB(nn.Module):
         drop (float, optional): Dropout rate. Default: 0.0
         attn_drop (float, optional): Attention dropout rate. Default: 0.0
         drop_path (float | tuple[float], optional): Stochastic depth rate. Default: 0.0
-        norm_layer (nn.Module, optional): Normalization layer. Default: nn.LayerNorm
+        norm_layer (nn.Module, optional): Normalization layer. Default: LayerNormSuper
         downsample (nn.Module | None, optional): Downsample layer at the end of the layer. Default: None
         use_checkpoint (bool): Whether to use checkpointing to save memory. Default: False.
         img_size: Input image size.
@@ -513,7 +541,7 @@ class RSTB(nn.Module):
 
     def __init__(self, dim, input_resolution, depth, num_heads, window_size,
                  mlp_ratio=4., qkv_bias=True, qk_scale=None, drop=0., attn_drop=0.,
-                 drop_path=0., norm_layer=nn.LayerNorm, downsample=None, use_checkpoint=False,
+                 drop_path=0., norm_layer=LayerNormSuper, downsample=None, use_checkpoint=False,
                  img_size=224, patch_size=4, resi_connection='1conv'):
         super(RSTB, self).__init__()
 
@@ -635,6 +663,10 @@ class PatchEmbed(nn.Module):
         else:
             self.norm = None
 
+    def set_sample_config(self, embed_dim):
+        if self.norm is not None:
+            self.norm.set_sample_config(embed_dim)
+
     def forward(self, x):
         x = x.flatten(2).transpose(1, 2)  # B Ph*Pw C
         if self.norm is not None:
@@ -747,7 +779,7 @@ class SwinIR(nn.Module):
         drop_rate (float): Dropout rate. Default: 0
         attn_drop_rate (float): Attention dropout rate. Default: 0
         drop_path_rate (float): Stochastic depth rate. Default: 0.1
-        norm_layer (nn.Module): Normalization layer. Default: nn.LayerNorm.
+        norm_layer (nn.Module): Normalization layer. Default: LayerNormSuper.
         ape (bool): If True, add absolute position embedding to the patch embedding. Default: False
         patch_norm (bool): If True, add normalization after patch embedding. Default: True
         use_checkpoint (bool): Whether to use checkpointing to save memory. Default: False
@@ -761,7 +793,7 @@ class SwinIR(nn.Module):
                  embed_dim=96, depths=[6, 6, 6, 6], num_heads=[6, 6, 6, 6],
                  window_size=7, mlp_ratio=4., qkv_bias=True, qk_scale=None,
                  drop_rate=0., attn_drop_rate=0., drop_path_rate=0.1,
-                 norm_layer=nn.LayerNorm, ape=False, patch_norm=True,
+                 norm_layer=LayerNormSuper, ape=False, patch_norm=True,
                  use_checkpoint=False, upscale=2, img_range=1., upsampler='', resi_connection='1conv',
                  **kwargs):
         super(SwinIR, self).__init__()
@@ -898,6 +930,9 @@ class SwinIR(nn.Module):
         elif isinstance(m, nn.LayerNorm):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
+        elif isinstance(m, LayerNormSuper):
+            nn.init.constant_(m.norm.bias, 0)
+            nn.init.constant_(m.norm.weight, 1.0)
 
     @torch.jit.ignore
     def no_weight_decay(self):
@@ -937,8 +972,7 @@ class SwinIR(nn.Module):
 
         self.sample_dropout = calc_dropout(self.drop_rate, self.sample_embed_dim[0], self.embed_dim)
 
-        # TODO: Switch to PatchembedSuper and check if it's alright
-        # self.patch_embed.set_sample_config(self.sample_embed_dim[0])
+        self.patch_embed.set_sample_config(self.sample_embed_dim[0])
 
         self.conv_sample_weight = self.conv_first.weight[:self.sample_embed_dim[0], ...]
         self.conv_sample_bias = self.conv_first.bias[:self.sample_embed_dim[0], ...]
