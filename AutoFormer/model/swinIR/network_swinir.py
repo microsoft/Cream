@@ -800,6 +800,8 @@ class SwinIR(nn.Module):
         self.sample_stl_num = None
         self.sample_num_heads = None
         self.sample_dropout = None
+        self.conv_sample_weight = None
+        self.conv_sample_bias = None
         # self.sample_output_dim = None
 
         # split image into non-overlapping patches
@@ -938,6 +940,9 @@ class SwinIR(nn.Module):
         # TODO: Switch to PatchembedSuper and check if it's alright
         # self.patch_embed.set_sample_config(self.sample_embed_dim[0])
 
+        self.conv_sample_weight = self.conv_first.weight[:self.sample_embed_dim[0], ...]
+        self.conv_sample_bias = self.conv_first.bias[:self.sample_embed_dim[0], ...]
+
         self.sample_output_dim = [out_dim for out_dim in self.sample_embed_dim[1:]] + [self.sample_embed_dim[-1]]
         for i, layer in enumerate(self.layers):
             # not exceed sample layer number
@@ -985,18 +990,31 @@ class SwinIR(nn.Module):
 
         if self.upsampler == 'pixelshuffle':
             # for classical SR
-            x = self.conv_first(x)
+            x = F.conv2d(x, 
+                         self.conv_sample_weight, self.conv_sample_bias, 
+                         stride=1, 
+                         padding=self.conv_first.padding, 
+                         dilation=self.conv_first.dilation)
+
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.conv_before_upsample(x)
             x = self.conv_last(self.upsample(x))
         elif self.upsampler == 'pixelshuffledirect':
             # for lightweight SR
-            x = self.conv_first(x)
+            x = F.conv2d(x, 
+                         self.conv_sample_weight, self.conv_sample_bias, 
+                         stride=1, 
+                         padding=self.conv_first.padding, 
+                         dilation=self.conv_first.dilation)
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.upsample(x)
         elif self.upsampler == 'nearest+conv':
             # for real-world SR
-            x = self.conv_first(x)
+            x = F.conv2d(x, 
+                         self.conv_sample_weight, self.conv_sample_bias, 
+                         stride=1, 
+                         padding=self.conv_first.padding, 
+                         dilation=self.conv_first.dilation)
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.conv_before_upsample(x)
             x = self.lrelu(self.conv_up1(torch.nn.functional.interpolate(x, scale_factor=2, mode='nearest')))
@@ -1005,7 +1023,11 @@ class SwinIR(nn.Module):
             x = self.conv_last(self.lrelu(self.conv_hr(x)))
         else:
             # for image denoising and JPEG compression artifact reduction
-            x_first = self.conv_first(x)
+            x_first = F.conv2d(x, 
+                               self.conv_sample_weight, self.conv_sample_bias, 
+                               stride=1, 
+                               padding=self.conv_first.padding, 
+                               dilation=self.conv_first.dilation)
             res = self.conv_after_body(self.forward_features(x_first)) + x_first
             x = x + self.conv_last(res)
 
