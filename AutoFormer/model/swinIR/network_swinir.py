@@ -640,6 +640,9 @@ class RSTB(nn.Module):
         self.patch_unembed.set_sample_config(embed_dim=sample_embed_dim)
 
     def forward(self, x, x_size):
+        if self.is_identity_layer:
+            return x
+
         basic_layer_x = self.residual_group(x, x_size)
         print("basic layer x", basic_layer_x.shape)
         path_unembed_x = self.patch_unembed(basic_layer_x, x_size)
@@ -1041,9 +1044,8 @@ class SwinIR(nn.Module):
             else:
                 layer.set_sample_config(is_identity_layer=True)
 
-        # TODO: Switch to LayerNormSuper if it's alright
-        # if self.pre_norm:
-        # self.norm.set_sample_config(self.sample_embed_dim[-1])
+        self.patch_unembed.set_sample_config(embed_dim=self.sample_embed_dim[-1])
+        self.norm.set_sample_config(self.sample_embed_dim[-1])
 
     def forward_features(self, x):
         x_size = (x.shape[2], x.shape[3])
