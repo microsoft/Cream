@@ -795,6 +795,8 @@ class UpsampleOneStep(nn.Sequential):
     def __init__(self, scale, num_feat, num_out_ch, input_resolution=None):
         self.num_feat = num_feat
         self.input_resolution = input_resolution
+        self.scale=scale
+        self.out_ch = num_out_ch
         m = []
         m.append(nn.Conv2d(num_feat, (scale ** 2) * num_out_ch, 3, 1, 1))
         m.append(nn.PixelShuffle(scale))
@@ -804,6 +806,16 @@ class UpsampleOneStep(nn.Sequential):
         H, W = self.input_resolution
         flops = H * W * self.num_feat * 3 * 9
         return flops
+    def set_sample_config(self,
+                          sample_embed_dim=None
+                          ):
+        self.num_feat=sample_embed_dim
+        m = []
+        m.append(nn.Conv2d(self.num_feat, (self.scale ** 2) * self.out_ch, 3, 1, 1))
+        m.append(nn.PixelShuffle(self.scale))
+        super(UpsampleOneStep, self).__init__(*m)
+
+
 
 
 class SwinIR(nn.Module):
@@ -1022,8 +1034,6 @@ class SwinIR(nn.Module):
         self.conv_sample_weight = self.conv_first.weight[:self.sample_embed_dim[0], ...]
         self.conv_sample_bias = self.conv_first.bias[:self.sample_embed_dim[0], ...]
 
-        self.conv_after_body_sample_weight = self.conv_after_body.weight[:self.sample_embed_dim[-1], ...]
-        self.conv_after_body_sample_bias = self.conv_after_body.bias[:self.sample_embed_dim[-1], ...]
 
         self.sample_output_dim = [out_dim for out_dim in self.sample_embed_dim[1:]] + [self.sample_embed_dim[-1]]
         for i, layer in enumerate(self.layers):
@@ -1046,6 +1056,12 @@ class SwinIR(nn.Module):
 
         self.patch_unembed.set_sample_config(embed_dim=self.sample_embed_dim[-1])
         self.norm.set_sample_config(self.sample_embed_dim[-1])
+
+        self.conv_after_body_sample_weight = self.conv_after_body.weight[:self.sample_embed_dim[-1],
+                                             :self.sample_embed_dim[0], ...]
+        self.conv_after_body_sample_bias = self.conv_after_body.bias[:self.sample_embed_dim[-1], ...]
+        self.upsample.set_sample_config(sample_embed_dim=self.sample_embed_dim[-1])
+
 
     def forward_features(self, x):
         x_size = (x.shape[2], x.shape[3])
@@ -1082,9 +1098,9 @@ class SwinIR(nn.Module):
             x = self.conv_last(self.upsample(x))
         elif self.upsampler == 'pixelshuffledirect':
             # for lightweight SR
-            # print("conv sample first", self.conv_sample_weight.shape)
-            # print("conv sample bias", self.conv_sample_bias.shape)
-            # print("x", x.shape)
+            print("conv sample first", self.conv_sample_weight.shape)
+            print("conv sample bias", self.conv_sample_bias.shape)
+            print("x", x.shape)
             x = F.conv2d(x,
                          self.conv_sample_weight, self.conv_sample_bias,
                          stride=1,
@@ -1092,9 +1108,20 @@ class SwinIR(nn.Module):
                          dilation=self.conv_first.dilation)
             #print("x here", x.shape)
             forward_x = self.forward_features(x)
-            dfe_x = self.conv_after_body(forward_x, self.conv_after_body_sample_weight, self.conv_after_body_sample_bias)\
-                + x
+            print(forward_x.shape)
+            print(self.conv_after_body_sample_bias.shape)
+            print(self.conv_after_body_sample_weight.shape)
+            dfe_x = F.conv2d(forward_x,
+                             self.conv_after_body_sample_weight,
+                             self.conv_after_body_sample_bias,
+                             stride=1,
+                             padding=self.conv_after_body.padding,
+                             dilation=self.conv_after_body.dilation
+                             )
+            dfe_x = dfe_x + x
+            print("dfe shape",dfe_x.shape)
             x = self.upsample(dfe_x)
+
         elif self.upsampler == 'nearest+conv':
             # for real-world SR
             x = F.conv2d(x,
