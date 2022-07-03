@@ -285,18 +285,20 @@ def main(args):
                'embed_dim': cfg.SEARCH_SPACE.EMBED_DIM , 'depth': cfg.SEARCH_SPACE.DEPTH}
 
     model.to(device)
-    if args.teacher_model:
-        teacher_model = create_model(
-            args.teacher_model,
-            pretrained=True,
-            num_classes=args.nb_classes,
-        )
-        teacher_model.to(device)
-        teacher_loss = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
-    else:
-        teacher_model = None
-        teacher_loss = None
+    # if args.teacher_model:
+    #     teacher_model = create_model(
+    #         args.teacher_model,
+    #         pretrained=True,
+    #         num_classes=args.nb_classes,
+    #     )
+    #     teacher_model.to(device)
+    #     teacher_loss = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
+    # else:
+    #     teacher_model = None
+    #     teacher_loss = None
 
+    teacher_model = None
+    teacher_loss = None
     model_ema = None
 
     model_without_ddp = model
@@ -314,15 +316,16 @@ def main(args):
     loss_scaler = NativeScaler()
     lr_scheduler, _ = create_scheduler(args, optimizer)
 
-    # criterion = LabelSmoothingCrossEntropy()
+    # TODO: Adapt criterion based on the arg in json file 
+    criterion = torch.nn.L1Loss()
 
-    if args.mixup > 0.:
-        # smoothing is handled with mixup label transform
-        criterion = SoftTargetCrossEntropy()
-    elif args.smoothing:
-        criterion = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
-    else:
-        criterion = torch.nn.CrossEntropyLoss()
+    # if args.mixup > 0.:
+    #     # smoothing is handled with mixup label transform
+    #     criterion = SoftTargetCrossEntropy()
+    # elif args.smoothing:
+    #     criterion = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
+    # else:
+    #     criterion = torch.nn.CrossEntropyLoss()
 
     output_dir = Path(args.output_dir)
 
@@ -353,7 +356,7 @@ def main(args):
                           'num_heads': cfg.RETRAIN.NUM_HEADS,'mlp_ratio': cfg.RETRAIN.MLP_RATIO}
     if args.eval:
         test_stats = evaluate(data_loader_val, model, device,  mode = args.mode, retrain_config=retrain_config)
-        print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
+        print(f"Accuracy of the network on the {len(valid_set)} test images: {test_stats['acc1']:.1f}%")
         return
 
     print("Start training")
@@ -367,7 +370,7 @@ def main(args):
         train_stats = train_one_epoch(
             model, criterion, data_loader_train,
             optimizer, device, epoch, loss_scaler,
-            args.clip_grad, model_ema, mixup_fn,
+            args.clip_grad, model_ema, None,
             amp=args.amp, teacher_model=teacher_model,
             teach_loss=teacher_loss,
             choices=choices, mode = args.mode, retrain_config=retrain_config,
@@ -388,7 +391,7 @@ def main(args):
                 }, checkpoint_path)
 
         test_stats = evaluate(data_loader_val, model, device, amp=args.amp, choices=choices, mode = args.mode, retrain_config=retrain_config)
-        print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
+        print(f"Accuracy of the network on the {len(valid_set)} test images: {test_stats['acc1']:.1f}%")
         max_accuracy = max(max_accuracy, test_stats["acc1"])
         print(f'Max accuracy: {max_accuracy:.2f}%')
 
