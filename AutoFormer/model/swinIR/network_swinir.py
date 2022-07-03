@@ -18,9 +18,9 @@ class Mlp(nn.Module):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
-        self.fc1 = nn.Linear(in_features, hidden_features)
+        self.fc1 = LinearSuper(in_features, hidden_features)
         self.act = act_layer()
-        self.fc2 = nn.Linear(hidden_features, out_features)
+        self.fc2 = LinearSuper(hidden_features, out_features)
         self.drop = nn.Dropout(drop)
 
     def forward(self, x):
@@ -30,6 +30,15 @@ class Mlp(nn.Module):
         x = self.fc2(x)
         x = self.drop(x)
         return x
+
+    def set_sample_config(self,
+                          sample_embed_dim=None,
+                          sample_mlp_ratio=None
+                          ):
+
+        self.fc1.set_sample_config(int(sample_embed_dim), int(sample_embed_dim * sample_mlp_ratio))
+        self.fc2.set_sample_config(int(sample_embed_dim * sample_mlp_ratio), int(sample_embed_dim))
+
 
 
 def window_partition(x, window_size):
@@ -70,6 +79,7 @@ class LayerNormSuper(nn.Module):
     For now only supports one dimensional `normalization_shape`
     unlike `nn.LayerNorm`
     """
+
     def __init__(self, normalized_dim: int):
         super(LayerNormSuper, self).__init__()
 
@@ -148,7 +158,7 @@ class WindowAttention(nn.Module):
         self.sample_num_heads = sample_num_heads
         self.sample_embed_dim = sample_embed_dim
         self.sample_scale = (sample_embed_dim // self.sample_num_heads) ** -0.5
-        self.sample_relative_position_bias_table = self.relative_position_bias_table[:,:self.sample_num_heads]
+        self.sample_relative_position_bias_table = self.relative_position_bias_table[:, :self.sample_num_heads]
 
         self.qkv.set_sample_config(sample_embed_dim, sample_embed_dim * 3)
         self.proj.set_sample_config(sample_embed_dim, sample_embed_dim)
@@ -238,13 +248,13 @@ class SwinTransformerBlock(nn.Module):
             self.window_size = min(self.input_resolution)
         assert 0 <= self.shift_size < self.window_size, "shift_size must in 0-window_size"
 
-        self.norm1 = norm_layer(dim)
+        self.norm1 = LayerNormSuper(self.dim)
         self.attn = WindowAttention(
             dim, window_size=to_2tuple(self.window_size), num_heads=num_heads,
             qkv_bias=qkv_bias, qk_scale=qk_scale, attn_drop=attn_drop, proj_drop=drop)
 
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
-        self.norm2 = norm_layer(dim)
+        self.norm2 = LayerNormSuper(self.dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
         self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
 
@@ -357,14 +367,8 @@ class SwinTransformerBlock(nn.Module):
         self.attn.set_sample_config(sample_embed_dim, sample_num_heads)
         self.norm1.set_sample_config(sample_embed_dim)
         self.norm2.set_sample_config(sample_embed_dim)
-        """
-        self.norm1.set_sample_config(sample_embed_dim, sample_mlp_ratio, sample_num_heads,
-                                    sample_dropout, sample_out_dim, sample_attn_dropout)
-        self.norm2.set_sample_config(sample_embed_dim, sample_mlp_ratio, sample_num_heads,
-                                    sample_dropout, sample_out_dim, sample_attn_dropout)
-        self.mlp.set_sample_config(sample_embed_dim, sample_mlp_ratio, sample_num_heads,
-                                    sample_dropout, sample_out_dim, sample_attn_dropout)
-        """
+        self.mlp.set_sample_config(sample_embed_dim, sample_mlp_ratio)
+
 
 
 class PatchMerging(nn.Module):
@@ -516,8 +520,7 @@ class BasicLayer(nn.Module):
             else:
                 self.blocks[i].set_sample_config(is_identity_layer=True)
 
-        #todo: see path merging layer
-
+        # todo: see path merging layer, downsample is None though
 
 
 class RSTB(nn.Module):
@@ -543,13 +546,16 @@ class RSTB(nn.Module):
         resi_connection: The convolutional block before residual connection.
     """
 
-    def __init__(self, dim, input_resolution, depth, num_heads, window_size,
+    def __init__(self, dim,
+                 input_resolution, depth, num_heads, window_size,
+                 output_dim=None,
                  mlp_ratio=4., qkv_bias=True, qk_scale=None, drop=0., attn_drop=0.,
                  drop_path=0., norm_layer=LayerNormSuper, downsample=None, use_checkpoint=False,
                  img_size=224, patch_size=4, resi_connection='1conv'):
         super(RSTB, self).__init__()
 
         self.dim = dim
+        self.output_dim = self.dim if output_dim == None else output_dim
         self.input_resolution = input_resolution
 
         # the configs of current sampled arch
@@ -575,10 +581,11 @@ class RSTB(nn.Module):
                                          use_checkpoint=use_checkpoint)
 
         if resi_connection == '1conv':
-            self.conv = nn.Conv2d(dim, dim, 3, 1, 1)
+            self.conv = nn.Conv2d(dim, self.output_dim, 3, 1, 1)
         elif resi_connection == '3conv':
             # to save parameters and memory
-            self.conv = nn.Sequential(nn.Conv2d(dim, dim // 4, 3, 1, 1), nn.LeakyReLU(negative_slope=0.2, inplace=True),
+            self.conv = nn.Sequential(nn.Conv2d(dim, dim // 4, 3, 1, 1),
+                                      nn.LeakyReLU(negative_slope=0.2, inplace=True),
                                       nn.Conv2d(dim // 4, dim // 4, 1, 1, 0),
                                       nn.LeakyReLU(negative_slope=0.2, inplace=True),
                                       nn.Conv2d(dim // 4, dim, 3, 1, 1))
@@ -591,14 +598,14 @@ class RSTB(nn.Module):
             img_size=img_size, patch_size=patch_size, in_chans=0, embed_dim=dim,
             norm_layer=None)
 
-    def set_sample_config(self, 
-                          is_identity_layer, 
+    def set_sample_config(self,
+                          is_identity_layer,
                           sample_stl_num=None,
-                          sample_embed_dim=None, 
-                          sample_mlp_ratio=None, 
-                          sample_num_heads=None, 
-                          sample_dropout=None, 
-                          sample_attn_dropout=None, 
+                          sample_embed_dim=None,
+                          sample_mlp_ratio=None,
+                          sample_num_heads=None,
+                          sample_dropout=None,
+                          sample_attn_dropout=None,
                           sample_out_dim=None):
 
         if is_identity_layer:
@@ -622,10 +629,37 @@ class RSTB(nn.Module):
                                               sample_dropout=sample_dropout,
                                               sample_out_dim=sample_out_dim,
                                               sample_attn_dropout=sample_attn_dropout)
+        self.patch_embed.set_sample_config(embed_dim=sample_out_dim)
+        #Todo: see conv weights using sampled weights for the last layer
+        #
+        print(self.sample_embed_dim)
+        self.conv_sample_weight = self.conv.weight[:self.sample_out_dim, :self.sample_embed_dim, ...]
+        self.conv_sample_bias = self.conv.bias[:self.sample_out_dim, ...]
 
+        #Todo:see path unembedding set sample config
+        self.patch_unembed.set_sample_config(embed_dim=sample_embed_dim)
 
     def forward(self, x, x_size):
-        return self.patch_embed(self.conv(self.patch_unembed(self.residual_group(x, x_size), x_size))) + x
+        basic_layer_x = self.residual_group(x, x_size)
+        print("basic layer x", basic_layer_x.shape)
+        path_unembed_x = self.patch_unembed(basic_layer_x, x_size)
+
+        print(self.sample_embed_dim)
+        print("path unembe shape", path_unembed_x.shape)
+        print("conv actual weight",self.conv.weight.shape)
+        print("conv weight shape", self.conv_sample_weight.shape)
+        conv_x = F.conv2d(path_unembed_x,
+                 self.conv_sample_weight, self.conv_sample_bias,
+                 stride=1,
+                 padding=self.conv.padding,
+                 dilation=self.conv.dilation)
+        print("convx size",conv_x.shape)
+        path_embed_x = self.patch_embed(conv_x)
+        print("path embed size", path_embed_x.shape)
+        path_embed_x = path_embed_x + x
+        return path_embed_x
+
+
 
     def flops(self):
         flops = 0
@@ -713,6 +747,10 @@ class PatchUnEmbed(nn.Module):
         B, HW, C = x.shape
         x = x.transpose(1, 2).view(B, self.embed_dim, x_size[0], x_size[1])  # B Ph*Pw C
         return x
+
+    def set_sample_config(self, embed_dim):
+            self.embed_dim = embed_dim
+
 
     def flops(self):
         flops = 0
@@ -981,13 +1019,16 @@ class SwinIR(nn.Module):
         self.conv_sample_weight = self.conv_first.weight[:self.sample_embed_dim[0], ...]
         self.conv_sample_bias = self.conv_first.bias[:self.sample_embed_dim[0], ...]
 
+        self.conv_after_body_sample_weight = self.conv_after_body.weight[:self.sample_embed_dim[-1], ...]
+        self.conv_after_body_sample_bias = self.conv_after_body.bias[:self.sample_embed_dim[-1], ...]
+
         self.sample_output_dim = [out_dim for out_dim in self.sample_embed_dim[1:]] + [self.sample_embed_dim[-1]]
         for i, layer in enumerate(self.layers):
             # not exceed sample layer number
             if i < self.sample_rstb_num:
                 sample_dropout = calc_dropout(self.drop_rate, self.sample_embed_dim[i], self.embed_dim)
                 sample_attn_dropout = calc_dropout(self.attn_drop_rate, self.sample_embed_dim[i], self.embed_dim)
-                
+
                 layer.set_sample_config(is_identity_layer=False,
                                         sample_stl_num=self.sample_stl_num,
                                         sample_embed_dim=self.sample_embed_dim[i],
@@ -1002,7 +1043,7 @@ class SwinIR(nn.Module):
 
         # TODO: Switch to LayerNormSuper if it's alright
         # if self.pre_norm:
-            # self.norm.set_sample_config(self.sample_embed_dim[-1])
+        # self.norm.set_sample_config(self.sample_embed_dim[-1])
 
     def forward_features(self, x):
         x_size = (x.shape[2], x.shape[3])
@@ -1028,10 +1069,10 @@ class SwinIR(nn.Module):
 
         if self.upsampler == 'pixelshuffle':
             # for classical SR
-            x = F.conv2d(x, 
-                         self.conv_sample_weight, self.conv_sample_bias, 
-                         stride=1, 
-                         padding=self.conv_first.padding, 
+            x = F.conv2d(x,
+                         self.conv_sample_weight, self.conv_sample_bias,
+                         stride=1,
+                         padding=self.conv_first.padding,
                          dilation=self.conv_first.dilation)
 
             x = self.conv_after_body(self.forward_features(x)) + x
@@ -1039,19 +1080,25 @@ class SwinIR(nn.Module):
             x = self.conv_last(self.upsample(x))
         elif self.upsampler == 'pixelshuffledirect':
             # for lightweight SR
-            x = F.conv2d(x, 
-                         self.conv_sample_weight, self.conv_sample_bias, 
-                         stride=1, 
-                         padding=self.conv_first.padding, 
+            # print("conv sample first", self.conv_sample_weight.shape)
+            # print("conv sample bias", self.conv_sample_bias.shape)
+            # print("x", x.shape)
+            x = F.conv2d(x,
+                         self.conv_sample_weight, self.conv_sample_bias,
+                         stride=1,
+                         padding=self.conv_first.padding,
                          dilation=self.conv_first.dilation)
-            x = self.conv_after_body(self.forward_features(x)) + x
-            x = self.upsample(x)
+            #print("x here", x.shape)
+            forward_x = self.forward_features(x)
+            dfe_x = self.conv_after_body(forward_x, self.conv_after_body_sample_weight, self.conv_after_body_sample_bias)\
+                + x
+            x = self.upsample(dfe_x)
         elif self.upsampler == 'nearest+conv':
             # for real-world SR
-            x = F.conv2d(x, 
-                         self.conv_sample_weight, self.conv_sample_bias, 
-                         stride=1, 
-                         padding=self.conv_first.padding, 
+            x = F.conv2d(x,
+                         self.conv_sample_weight, self.conv_sample_bias,
+                         stride=1,
+                         padding=self.conv_first.padding,
                          dilation=self.conv_first.dilation)
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.conv_before_upsample(x)
@@ -1061,17 +1108,17 @@ class SwinIR(nn.Module):
             x = self.conv_last(self.lrelu(self.conv_hr(x)))
         else:
             # for image denoising and JPEG compression artifact reduction
-            x_first = F.conv2d(x, 
-                               self.conv_sample_weight, self.conv_sample_bias, 
-                               stride=1, 
-                               padding=self.conv_first.padding, 
+            x_first = F.conv2d(x,
+                               self.conv_sample_weight, self.conv_sample_bias,
+                               stride=1,
+                               padding=self.conv_first.padding,
                                dilation=self.conv_first.dilation)
             res = self.conv_after_body(self.forward_features(x_first)) + x_first
             x = x + self.conv_last(res)
 
         x = x / self.img_range + self.mean
 
-        return x[:, :, :H*self.upscale, :W*self.upscale]
+        return x[:, :, :H * self.upscale, :W * self.upscale]
 
     def flops(self):
         flops = 0
@@ -1098,4 +1145,4 @@ if __name__ == '__main__':
     #
     # x = torch.randn((1, 3, height, width))
     # x = model(x)
-    #print(x.shape)
+    # print(x.shape)
