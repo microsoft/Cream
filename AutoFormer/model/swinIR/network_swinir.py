@@ -11,6 +11,9 @@ import torch.utils.checkpoint as checkpoint
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from lib.utils import calc_dropout
 from model.vision_transformer.module.Linear_super import LinearSuper
+import logging
+
+logger = logging.getLogger('swinIR_model')
 
 
 class Mlp(nn.Module):
@@ -35,10 +38,8 @@ class Mlp(nn.Module):
                           sample_embed_dim=None,
                           sample_mlp_ratio=None
                           ):
-
         self.fc1.set_sample_config(int(sample_embed_dim), int(sample_embed_dim * sample_mlp_ratio))
         self.fc2.set_sample_config(int(sample_embed_dim * sample_mlp_ratio), int(sample_embed_dim))
-
 
 
 def window_partition(x, window_size):
@@ -361,14 +362,13 @@ class SwinTransformerBlock(nn.Module):
         if is_identity_layer:
             self.is_identity_layer = True
             return
-        
+
         self.is_identity_layer = False
 
         self.attn.set_sample_config(sample_embed_dim, sample_num_heads)
         self.norm1.set_sample_config(sample_embed_dim)
         self.norm2.set_sample_config(sample_embed_dim)
         self.mlp.set_sample_config(sample_embed_dim, sample_mlp_ratio)
-
 
 
 class PatchMerging(nn.Module):
@@ -630,39 +630,28 @@ class RSTB(nn.Module):
                                               sample_out_dim=sample_out_dim,
                                               sample_attn_dropout=sample_attn_dropout)
         self.patch_embed.set_sample_config(embed_dim=sample_out_dim)
-        #Todo: see conv weights using sampled weights for the last layer
+        # Todo: see conv weights using sampled weights for the last layer
         #
-        print(self.sample_embed_dim)
+        logger.debug(f'embed_dim:{self.sample_embed_dim}')
         self.conv_sample_weight = self.conv.weight[:self.sample_out_dim, :self.sample_embed_dim, ...]
         self.conv_sample_bias = self.conv.bias[:self.sample_out_dim, ...]
 
-        #Todo:see path unembedding set sample config
+        # Todo:see path unembedding set sample config
         self.patch_unembed.set_sample_config(embed_dim=sample_embed_dim)
 
     def forward(self, x, x_size):
         if self.is_identity_layer:
             return x
-
         basic_layer_x = self.residual_group(x, x_size)
-        print("basic layer x", basic_layer_x.shape)
         path_unembed_x = self.patch_unembed(basic_layer_x, x_size)
-
-        print(self.sample_embed_dim)
-        print("path unembe shape", path_unembed_x.shape)
-        print("conv actual weight",self.conv.weight.shape)
-        print("conv weight shape", self.conv_sample_weight.shape)
         conv_x = F.conv2d(path_unembed_x,
-                 self.conv_sample_weight, self.conv_sample_bias,
-                 stride=1,
-                 padding=self.conv.padding,
-                 dilation=self.conv.dilation)
-        print("convx size",conv_x.shape)
+                          self.conv_sample_weight, self.conv_sample_bias,
+                          stride=1,
+                          padding=self.conv.padding,
+                          dilation=self.conv.dilation)
         path_embed_x = self.patch_embed(conv_x)
-        print("path embed size", path_embed_x.shape)
         path_embed_x = path_embed_x + x
         return path_embed_x
-
-
 
     def flops(self):
         flops = 0
@@ -752,8 +741,7 @@ class PatchUnEmbed(nn.Module):
         return x
 
     def set_sample_config(self, embed_dim):
-            self.embed_dim = embed_dim
-
+        self.embed_dim = embed_dim
 
     def flops(self):
         flops = 0
@@ -795,7 +783,7 @@ class UpsampleOneStep(nn.Sequential):
     def __init__(self, scale, num_feat, num_out_ch, input_resolution=None):
         self.num_feat = num_feat
         self.input_resolution = input_resolution
-        self.scale=scale
+        self.scale = scale
         self.out_ch = num_out_ch
         m = []
         m.append(nn.Conv2d(num_feat, (scale ** 2) * num_out_ch, 3, 1, 1))
@@ -806,16 +794,15 @@ class UpsampleOneStep(nn.Sequential):
         H, W = self.input_resolution
         flops = H * W * self.num_feat * 3 * 9
         return flops
+
     def set_sample_config(self,
                           sample_embed_dim=None
                           ):
-        self.num_feat=sample_embed_dim
+        self.num_feat = sample_embed_dim
         m = []
         m.append(nn.Conv2d(self.num_feat, (self.scale ** 2) * self.out_ch, 3, 1, 1))
         m.append(nn.PixelShuffle(self.scale))
         super(UpsampleOneStep, self).__init__(*m)
-
-
 
 
 class SwinIR(nn.Module):
@@ -1034,7 +1021,6 @@ class SwinIR(nn.Module):
         self.conv_sample_weight = self.conv_first.weight[:self.sample_embed_dim[0], ...]
         self.conv_sample_bias = self.conv_first.bias[:self.sample_embed_dim[0], ...]
 
-
         self.sample_output_dim = [out_dim for out_dim in self.sample_embed_dim[1:]] + [self.sample_embed_dim[-1]]
         for i, layer in enumerate(self.layers):
             # not exceed sample layer number
@@ -1062,7 +1048,6 @@ class SwinIR(nn.Module):
         self.conv_after_body_sample_bias = self.conv_after_body.bias[:self.sample_embed_dim[-1], ...]
         self.upsample.set_sample_config(sample_embed_dim=self.sample_embed_dim[-1])
 
-
     def forward_features(self, x):
         x_size = (x.shape[2], x.shape[3])
         x = self.patch_embed(x)
@@ -1081,7 +1066,7 @@ class SwinIR(nn.Module):
     def forward(self, x):
         H, W = x.shape[2:]
         x = self.check_image_size(x)
-        
+
         self.mean = self.mean.type_as(x)
         x = (x - self.mean) * self.img_range
 
@@ -1098,19 +1083,12 @@ class SwinIR(nn.Module):
             x = self.conv_last(self.upsample(x))
         elif self.upsampler == 'pixelshuffledirect':
             # for lightweight SR
-            print("conv sample first", self.conv_sample_weight.shape)
-            print("conv sample bias", self.conv_sample_bias.shape)
-            print("x", x.shape)
             x = F.conv2d(x,
                          self.conv_sample_weight, self.conv_sample_bias,
                          stride=1,
                          padding=self.conv_first.padding,
                          dilation=self.conv_first.dilation)
-            #print("x here", x.shape)
             forward_x = self.forward_features(x)
-            print(forward_x.shape)
-            print(self.conv_after_body_sample_bias.shape)
-            print(self.conv_after_body_sample_weight.shape)
             dfe_x = F.conv2d(forward_x,
                              self.conv_after_body_sample_weight,
                              self.conv_after_body_sample_bias,
@@ -1119,7 +1097,6 @@ class SwinIR(nn.Module):
                              dilation=self.conv_after_body.dilation
                              )
             dfe_x = dfe_x + x
-            print("dfe shape",dfe_x.shape)
             x = self.upsample(dfe_x)
 
         elif self.upsampler == 'nearest+conv':
@@ -1169,9 +1146,9 @@ if __name__ == '__main__':
     model = SwinIR(upscale=2, img_size=(height, width),
                    window_size=window_size, img_range=1., depths=[6, 6, 6, 6],
                    embed_dim=60, num_heads=[6, 6, 6, 6], mlp_ratio=2, upsampler='pixelshuffledirect')
-    print(model)
-    print(height, width, model.flops() / 1e9)
-    #
-    # x = torch.randn((1, 3, height, width))
-    # x = model(x)
-    # print(x.shape)
+    logger.debug(f'obtained model:{model}')
+    logger.debug(f'height:{height}, width:{width}, params:{model.flops() / 1e9}')
+
+    x = torch.randn((1, 3, height, width))
+    x = model(x)
+    logger.debug(f'output shape:{x.shape}')
