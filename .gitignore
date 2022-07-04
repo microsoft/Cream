@@ -14,3 +14,11 @@ backup.py
 *.bak*
 *.sh
 KAIR
+*/trainsets/train/trainH/*
+!*/trainsets/train/trainH/0001.png
+*/trainsets/train/trainL/*
+!*/trainsets/train/trainL/0001x8.png
+*/trainsets/valid/validH/*
+!*/trainsets/valid/validH/0801.png
+*/trainsets/valid/validL/*
+!*/trainsets/valid/validL/0801x8.png

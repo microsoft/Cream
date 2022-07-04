@@ -30,8 +30,8 @@
     "valid": {
       "name": "valid_dataset"           // just name
       , "dataset_type": "sr"         // "dncnn" | "dnpatch" | "fdncnn" | "ffdnet" | "sr" | "srmd" | "dpsr" | "plain" | "plainpatch" | "jpeg"
-      , "dataroot_H": "trainsets/valid/trainH"// path of H training dataset. DIV2K (800 training images)
-      , "dataroot_L": "trainsets/valid/trainL"              // path of L training dataset
+      , "dataroot_H": "trainsets/valid/validH"// path of H training dataset. DIV2K (800 training images)
+      , "dataroot_L": "trainsets/valid/validL"              // path of L training dataset
 
       , "H_size": 128                   // 128/192/256/512.
 

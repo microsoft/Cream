@@ -3,6 +3,7 @@ import datetime
 import numpy as np
 import time
 import torch
+import math
 import torch.backends.cudnn as cudnn
 import json
 import yaml
@@ -20,7 +21,7 @@ from lib import utils
 from lib.config import cfg, update_config_from_file
 from model.vision_transformer.supernet_transformer import Vision_TransformerSuper
 from utils import utils_option as option
-from models.model_plain import ModelPlain
+# from models.model_plain import ModelPlain
 from torch.utils.data import DataLoader
 from data.dataset_sr import DatasetSR
 from torch.utils.data.distributed import DistributedSampler
@@ -33,7 +34,7 @@ def get_args_parser():
     # config file
     parser.add_argument('--cfg',help='experiment configure file name',required=True,type=str)
 
-    parser.add_argument('--opt', type=str, default='experiments/train_swinir_sr_lightweight.json', help='Path to option JSON file for SwinIR.')
+    parser.add_argument('--opt-doc', type=str, default='experiments/train_swinir_sr_lightweight.json', help='Path to option JSON file for SwinIR.')
     # custom parameters
     parser.add_argument('--platform', default='pai', type=str, choices=['itp', 'pai', 'aml'],
                         help='Name of model to train')
@@ -200,7 +201,7 @@ def main(args):
     args_text = yaml.safe_dump(args.__dict__, default_flow_style=False)
 
     # For reading from .json file, major part of .json can be turned into commandline args
-    opt = option.parse(parser.parse_args().opt, is_train=True)
+    opt = option.parse(parser.parse_args().opt_doc, is_train=True)
     init_iter_G, init_path_G = option.find_last_checkpoint(opt['path']['models'], net_type='G')
     init_iter_E, init_path_E = option.find_last_checkpoint(opt['path']['models'], net_type='E')
     opt['path']['pretrained_netG'] = init_path_G
@@ -260,6 +261,9 @@ def main(args):
                 drop_last=True,
                 shuffle=False,
             )
+        elif phase == 'test':
+            # TODO: Implement with test code
+            pass
         else:
             raise NotImplementedError("Phase [%s] is not recognized." % phase)
 
@@ -273,13 +277,14 @@ def main(args):
 
     print(f"Creating SwinIRTransformer")
     print(cfg)
-    model = SwinIR(img_size=args.image_size,
-                   window_size=args.patch_size,
-                   depths= cfg['depths'], 
-                   embed_dim= cfg['embed_dim'], 
-                   num_heads= cfg['num_heads'], 
-                   mlp_ratio= cfg['mlp_ratio'],
-                   upsampler=opt['netG']['upsampler'])
+    opt_net = opt['netG']
+    model = SwinIR(img_size=opt_net['img_size'],
+                   window_size=opt_net['window_size'],
+                   depths= opt_net['depths'], 
+                   embed_dim= opt_net['embed_dim'], 
+                   num_heads= opt_net['num_heads'], 
+                   mlp_ratio= opt_net['mlp_ratio'],
+                   upsampler=opt_net['upsampler'])
 
     choices = {'num_heads': cfg.SEARCH_SPACE.NUM_HEADS, 'mlp_ratio': cfg.SEARCH_SPACE.MLP_RATIO,
                'embed_dim': cfg.SEARCH_SPACE.EMBED_DIM , 'depth': cfg.SEARCH_SPACE.DEPTH}

@@ -99,7 +99,7 @@ class DatasetSR(data.Dataset):
         if L_path is None:
             L_path = H_path
 
-        return {'L': img_L, 'H': img_H, 'L_path': L_path, 'H_path': H_path}
+        return img_L, img_H
 
     def __len__(self):
         return len(self.paths_H)
