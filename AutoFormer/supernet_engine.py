@@ -45,17 +45,13 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     model_ema: Optional[ModelEma] = None, mixup_fn: Optional[Mixup] = None,
                     amp: bool = True, teacher_model: torch.nn.Module = None,
                     teach_loss: torch.nn.Module = None, choices=None, mode='super', retrain_config=None,
-                    sampler=None):
+                    sampler=sample_configs):
     model.train()
     criterion.train()
 
     # set random seed
     random.seed(epoch)
     
-    # Default to original AutoFormer sampler
-    if sampler is None:
-        sampler = sample_configs
-
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
     header = 'Epoch: [{}]'.format(epoch)
@@ -73,7 +69,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
         # sample random config
         if mode == 'super':
-            config = sample_configs(choices=choices)
+            config = sampler(choices=choices)
             model_module = unwrap_model(model)
             model_module.set_sample_config(config=config)
         elif mode == 'retrain':
@@ -133,7 +129,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 @torch.no_grad()
-def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', retrain_config=None):
+def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', retrain_config=None, sampler=sample_configs):
     criterion = torch.nn.CrossEntropyLoss()
 
     metric_logger = utils.MetricLogger(delimiter="  ")
@@ -142,7 +138,7 @@ def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', r
     # switch to evaluation mode
     model.eval()
     if mode == 'super':
-        config = sample_configs(choices=choices)
+        config = sampler(choices=choices)
         model_module = unwrap_model(model)
         model_module.set_sample_config(config=config)
     else:

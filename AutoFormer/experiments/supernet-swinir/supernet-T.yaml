@@ -1,0 +1,32 @@
+# TODO: SUbstitute appropriate_values
+SUPERNET:
+  MLP_RATIO: 2.0
+  NUM_HEADS:
+    - 6
+    - 6
+    - 6
+    - 6
+  EMBED_DIM: 60
+  DEPTHS: 
+    - 6
+    - 6
+    - 6
+    - 6
+SEARCH_SPACE:
+  MLP_RATIO:
+    - 1.5
+    - 2
+  NUM_HEADS:
+    - 4
+    - 6
+  EMBED_DIM:
+    - 36
+    - 48
+    - 60
+  RSTB_NUM:
+    - 2
+    - 3
+    - 4
+  STL_NUM:
+    - 4
+    - 6

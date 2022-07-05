@@ -15,7 +15,7 @@ from timm.scheduler import create_scheduler
 from timm.optim import create_optimizer
 from timm.utils import NativeScaler
 from lib.datasets import build_dataset
-from supernet_engine import train_one_epoch, evaluate
+from supernet_engine import train_one_epoch, evaluate, sample_configs_swinir
 from lib.samplers import RASampler
 from lib import utils
 from lib.config import cfg, update_config_from_file
@@ -280,10 +280,10 @@ def main(args):
     opt_net = opt['netG']
     model = SwinIR(img_size=opt_net['img_size'],
                    window_size=opt_net['window_size'],
-                   depths= opt_net['depths'], 
-                   embed_dim= opt_net['embed_dim'], 
-                   num_heads= opt_net['num_heads'], 
-                   mlp_ratio= opt_net['mlp_ratio'],
+                   depths= cfg.SUPERNET.DEPTHS, 
+                   embed_dim= cfg.SUPERNET.EMBED_DIM, 
+                   num_heads= cfg.SUPERNET.NUM_HEADS, 
+                   mlp_ratio= cfg.SUPERNET.MLP_RATIO,
                    upsampler=opt_net['upsampler'])
 
     choices = {'num_heads': cfg.SEARCH_SPACE.NUM_HEADS, 'mlp_ratio': cfg.SEARCH_SPACE.MLP_RATIO,
@@ -380,6 +380,7 @@ def main(args):
             amp=args.amp, teacher_model=teacher_model,
             teach_loss=teacher_loss,
             choices=choices, mode = args.mode, retrain_config=retrain_config,
+            sampler=sample_configs_swinir,
         )
 
         lr_scheduler.step(epoch)
