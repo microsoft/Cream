@@ -10,17 +10,32 @@ from lib import utils
 import random
 import time
 
+
 def sample_configs(choices):
+
     config = {}
     dimensions = ['mlp_ratio', 'num_heads']
-    rstb_num = random.choice(choices['rstb_num'])
+    depth = random.choice(choices['depth'])
     for dimension in dimensions:
-        config[dimension] = [random.choice(choices[dimension]) for _ in range(rstb_num)]
+        config[dimension] = [random.choice(choices[dimension]) for _ in range(depth)]
 
-    config['embed_dim'] = [random.choice(choices['embed_dim'])]*rstb_num
+    config['embed_dim'] = [random.choice(choices['embed_dim'])]*depth
+
+    config['layer_num'] = depth
+    return config
+
+
+def sample_configs_swinir(choices):
+    config = {}
+    rstb_num = random.choice(choices['rstb_num'])
+    config['stl_num'] = random.choice(choices['stl_num'])
+    config['embed_dim'] = [random.choice(choices['embed_dim'])] * rstb_num
+    config['num_heads'] = [random.choice(choices['num_heads'])] * rstb_num
+
+    # Only MLP_RATIO is allowed to vary per RSTB block
+    config['mlp_ratio'] = [random.choice(choices['mlp_ratio']) for _ in range(rstb_num)]
 
     config['rstb_num'] = rstb_num
-    config['stl_num'] = random.choice(choices['stl_num'])
     print(f'Sampled config: {config}')
     return config
 
@@ -29,12 +44,17 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     device: torch.device, epoch: int, loss_scaler, max_norm: float = 0,
                     model_ema: Optional[ModelEma] = None, mixup_fn: Optional[Mixup] = None,
                     amp: bool = True, teacher_model: torch.nn.Module = None,
-                    teach_loss: torch.nn.Module = None, choices=None, mode='super', retrain_config=None):
+                    teach_loss: torch.nn.Module = None, choices=None, mode='super', retrain_config=None,
+                    sampler=None):
     model.train()
     criterion.train()
 
     # set random seed
     random.seed(epoch)
+    
+    # Default to original AutoFormer sampler
+    if sampler is None:
+        sampler = sample_configs
 
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
