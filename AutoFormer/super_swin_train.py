@@ -29,7 +29,7 @@ from model.swinIR.network_swinir import SwinIR
 
 def get_args_parser():
     parser = argparse.ArgumentParser('AutoFormer training and evaluation script', add_help=False)
-    parser.add_argument('--batch-size', default=64, type=int)
+    parser.add_argument('--batch-size', default=16, type=int)
     parser.add_argument('--epochs', default=300, type=int)
     # config file
     parser.add_argument('--cfg',help='experiment configure file name',required=True,type=str)

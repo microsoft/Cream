@@ -11,16 +11,17 @@ import random
 import time
 
 def sample_configs(choices):
-
     config = {}
     dimensions = ['mlp_ratio', 'num_heads']
-    depth = random.choice(choices['depth'])
+    rstb_num = random.choice(choices['rstb_num'])
     for dimension in dimensions:
-        config[dimension] = [random.choice(choices[dimension]) for _ in range(depth)]
+        config[dimension] = [random.choice(choices[dimension]) for _ in range(rstb_num)]
 
-    config['embed_dim'] = [random.choice(choices['embed_dim'])]*depth
+    config['embed_dim'] = [random.choice(choices['embed_dim'])]*rstb_num
 
-    config['layer_num'] = depth
+    config['rstb_num'] = rstb_num
+    config['stl_num'] = random.choice(choices['stl_num'])
+    print(f'Sampled config: {config}')
     return config
 
 def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
@@ -70,7 +71,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     outputs = model(samples)
                     loss = 1/2 * criterion(outputs, targets) + 1/2 * teach_loss(outputs, teacher_label.squeeze())
                 else:
-                    outputs = model(samples)
+                    outputs = model(samples.half())
                     loss = criterion(outputs, targets)
         else:
             outputs = model(samples)

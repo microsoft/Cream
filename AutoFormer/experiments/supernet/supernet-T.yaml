@@ -6,21 +6,19 @@ SUPERNET:
   DEPTH: 14
 SEARCH_SPACE:
   MLP_RATIO:
-    - 2
-    - 2
     - 1.5
-    - 1.5
+    - 2
   NUM_HEADS:
-    - 6
-    - 6
-    - 6
+    - 4
     - 6
   EMBED_DIM:
     - 36
-    - 36
-    - 60
+    - 48
     - 60
   RSTB_NUM:
+    - 2
+    - 3
     - 4
   STL_NUM:
+    - 4
     - 6

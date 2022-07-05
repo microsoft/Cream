@@ -1,6 +1,6 @@
 aa: rand-m9-mstd0.5-inc1
 amp: true
-batch_size: 64
+batch_size: 16
 cfg: /home/ajesh/Projects/DL-lab/Main-Project/AutoFormer/AutoFormer/experiments/supernet/supernet-T.yaml
 change_qkv: false
 clip_grad: null
