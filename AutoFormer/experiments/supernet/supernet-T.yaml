@@ -1,3 +1,4 @@
+# TODO: SUbstitute appropriate_values
 SUPERNET:
   MLP_RATIO: 4.0
   NUM_HEADS: 4
@@ -5,16 +6,21 @@ SUPERNET:
   DEPTH: 14
 SEARCH_SPACE:
   MLP_RATIO:
-    - 3.5
-    - 4
+    - 2
+    - 2
+    - 1.5
+    - 1.5
   NUM_HEADS:
-    - 3
-    - 4
-  DEPTH:
-    - 12
-    - 13
-    - 14
+    - 6
+    - 6
+    - 6
+    - 6
   EMBED_DIM:
-    - 192
-    - 216
-    - 240
+    - 36
+    - 36
+    - 60
+    - 60
+  RSTB_NUM:
+    - 4
+  STL_NUM:
+    - 6

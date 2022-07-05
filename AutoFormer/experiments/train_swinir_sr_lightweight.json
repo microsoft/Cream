@@ -55,10 +55,10 @@
     , "img_size": 64
     , "window_size": 8  
     , "img_range": 1.0 
-    , "depths": [6, 6, 6, 6]
-    , "embed_dim": 60 
-    , "num_heads": [6, 6, 6, 6]
-    , "mlp_ratio": 2 
+    , "depths": [6, 6, 6, 6, 6, 6]
+    , "embed_dim": 96 
+    , "num_heads": [6, 6, 6, 6, 6, 6]
+    , "mlp_ratio": 4 
     , "upsampler": "pixelshuffledirect"        // "pixelshuffle" | "pixelshuffledirect" | "nearest+conv" | null
     , "resi_connection": "1conv"        // "1conv" | "3conv"
 

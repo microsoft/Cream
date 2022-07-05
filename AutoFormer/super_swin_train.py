@@ -287,7 +287,8 @@ def main(args):
                    upsampler=opt_net['upsampler'])
 
     choices = {'num_heads': cfg.SEARCH_SPACE.NUM_HEADS, 'mlp_ratio': cfg.SEARCH_SPACE.MLP_RATIO,
-               'embed_dim': cfg.SEARCH_SPACE.EMBED_DIM , 'depth': cfg.SEARCH_SPACE.DEPTH}
+               'embed_dim': cfg.SEARCH_SPACE.EMBED_DIM, 'rstb_num': cfg.SEARCH_SPACE.RSTB_NUM,
+               'stl_num': cfg.SEARCH_SPACE.STL_NUM }
 
     model.to(device)
     # if args.teacher_model:
@@ -296,7 +297,7 @@ def main(args):
     #         pretrained=True,
     #         num_classes=args.nb_classes,
     #     )
-    #     teacher_model.to(device)
+    #     teacher_model.to(device
     #     teacher_loss = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
     # else:
     #     teacher_model = None
