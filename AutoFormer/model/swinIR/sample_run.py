@@ -14,7 +14,7 @@ def main():
     cfg = {
             'rstb_num': 4,                   # Num of RSTB layers/blocks in the network
             'stl_num': 6,                    # Num STL blocks per RSTB layer
-            'embed_dim': [36, 36, 60, 60],   # Per RSTB layer
+            'embed_dim': [36, 36, 36, 36],   # Per RSTB layer
             'mlp_ratio': [2., 2., 1.5, 1.5], # Per RSTB layer
             'num_heads': [6, 6, 6, 6],       # Per RSTB layer
     }
