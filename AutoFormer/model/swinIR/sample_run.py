@@ -16,7 +16,7 @@ def main():
             'stl_num': 6,                    # Num STL blocks per RSTB layer
             'embed_dim': [36, 36, 36, 36],   # Per RSTB layer
             'mlp_ratio': [2., 2., 1.5, 1.5], # Per RSTB layer
-            'num_heads': [6, 6, 6, 6],       # Per RSTB layer
+            'num_heads': [4, 4, 4, 4],       # Per RSTB layer
     }
 
     model = SwinIR(img_size=64,
