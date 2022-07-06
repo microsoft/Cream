@@ -290,6 +290,9 @@ class SwinTransformerBlock(nn.Module):
         return attn_mask
 
     def forward(self, x, x_size):
+        if self.is_identity_layer:
+            return x
+
         H, W = x_size
         B, L, C = x.shape
         # assert L == H * W, "input feature has wrong size"
