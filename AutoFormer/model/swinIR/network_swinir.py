@@ -62,8 +62,8 @@ class Conv2DSuper(nn.Module):
 
         self.conv_sample_weight = self.conv.weight[:self.sample_out_channels,
                                                    :self.sample_in_channels,
-                                                   k_i: k_i + kernel_size,
-                                                   k_i: k_i + kernel_size]
+                                                   k_i: k_i + self.sample_kernel_size,
+                                                   k_i: k_i + self.sample_kernel_size]
         self.conv_sample_bias = self.conv.bias[:self.sample_out_channels, ...]
 
         self.sample_padding = self.super_padding - k_i
@@ -833,7 +833,7 @@ class Upsample(nn.Sequential):
         super(Upsample, self).__init__(*m)
 
 
-class UpsampleOneStep(nn.Sequential):
+class UpsampleOneStep(nn.Module):
     """UpsampleOneStep module (the difference with Upsample is that it always only has 1conv + 1pixelshuffle)
        Used in lightweight SR to save parameters.
 
@@ -844,14 +844,15 @@ class UpsampleOneStep(nn.Sequential):
     """
 
     def __init__(self, scale, num_feat, num_out_ch, input_resolution=None):
+        super().__init__()
         self.num_feat = num_feat
         self.input_resolution = input_resolution
         self.scale = scale
         self.out_ch = num_out_ch
-        m = []
-        m.append(nn.Conv2d(num_feat, (scale ** 2) * num_out_ch, 3, 1, 1))
-        m.append(nn.PixelShuffle(scale))
-        super(UpsampleOneStep, self).__init__(*m)
+        self.layers = nn.ModuleList([
+            Conv2DSuper(num_feat, (scale ** 2) * num_out_ch, 3, 1, 1),
+            nn.PixelShuffle(scale)
+        ])
 
     def flops(self):
         H, W = self.input_resolution
@@ -862,10 +863,14 @@ class UpsampleOneStep(nn.Sequential):
                           sample_embed_dim=None
                           ):
         self.num_feat = sample_embed_dim
-        m = []
-        m.append(nn.Conv2d(self.num_feat, (self.scale ** 2) * self.out_ch, 3, 1, 1))
-        m.append(nn.PixelShuffle(self.scale))
-        super(UpsampleOneStep, self).__init__(*m)
+        # Access Conv2DSuper module and set_sample_config
+        self.layers[0].set_sample_config(in_channels=self.num_feat, 
+                                         out_channels=(self.scale ** 2) * self.out_ch)
+
+    def forward(self, x):
+        for m in self.layers:
+            x = m(x)
+        return x
 
 
 class SwinIR(nn.Module):
