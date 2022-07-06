@@ -87,7 +87,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     outputs = model(samples)
                     loss = 1/2 * criterion(outputs, targets) + 1/2 * teach_loss(outputs, teacher_label.squeeze())
                 else:
-                    outputs = model(samples.half())
+                    outputs = model(samples)
                     loss = criterion(outputs, targets)
         else:
             outputs = model(samples)
