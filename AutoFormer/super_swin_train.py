@@ -50,7 +50,7 @@ def get_args_parser():
                         help='Name of model to train')
     # AutoFormer config
     parser.add_argument('--mode', type=str, default='super', choices=['super', 'retrain'], help='mode of AutoFormer')
-    parser.add_argument('--input-size', default=64, type=int)
+    parser.add_argument('--input-size', default=32, type=int)
     parser.add_argument('--patch_size', default=8, type=int)
 
     parser.add_argument('--drop', type=float, default=0.0, metavar='PCT',

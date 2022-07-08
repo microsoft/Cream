@@ -27,7 +27,7 @@ epochs: 300
 eval: false
 gp: false
 inat_category: name
-input_size: 64
+input_size: 32
 lr: 0.0002
 max_relative_position: 14
 mixup: 0.8
