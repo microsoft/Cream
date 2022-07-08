@@ -20,24 +20,19 @@
       , "dataroot_H": "trainsets/train/trainH"// path of H training dataset. DIV2K (800 training images)
       , "dataroot_L": "trainsets/train/trainL"              // path of L training dataset
 
-      , "H_size": 64                   // 128/192/256/512.
+      , "H_size": 64                   // This should be 128/192/256/512.
 
       , "dataloader_shuffle": true
       , "dataloader_num_workers": 8
       , "dataloader_batch_size": 16      // Total batch size =8x8=64 in SwinIR
     }
     ,
-    "valid": {
-      "name": "valid_dataset"           // just name
+    "test": {
+      "name": "test_dataset"           // just name
       , "dataset_type": "sr"         // "dncnn" | "dnpatch" | "fdncnn" | "ffdnet" | "sr" | "srmd" | "dpsr" | "plain" | "plainpatch" | "jpeg"
       , "dataroot_H": "testsets/Set14/original"// path of H training dataset. DIV2K (800 training images)
-      , "dataroot_L": "testsets/Set14/LRbicx2"              // path of L training dataset
-
-      , "H_size": 64                   // 128/192/256/512.
-
-      , "dataloader_shuffle": true
-      , "dataloader_num_workers": 8
-      , "dataloader_batch_size": 16      // Total batch size =8x8=64 in SwinIR
+      , "dataroot_L": "testsets/Set14/LRbicx2"       // path of L training dataset
+      , "H_size": 64
     }
   }
 

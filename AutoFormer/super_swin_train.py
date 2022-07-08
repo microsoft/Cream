@@ -84,7 +84,7 @@ def get_args_parser():
                         help='weight decay (default: 0)')
 
     # Learning rate schedule parameters
-    parser.add_argument('--sched', default='multistep', type=str, metavar='SCHEDULER',
+    parser.add_argument('--sched', default='step', type=str, metavar='SCHEDULER',
                         help='MultiStepLR (default: "multistep"')
     parser.add_argument('--lr', type=float, default=2e-4, metavar='LR',
                         help='learning rate (default: 2e-4)')
@@ -94,25 +94,25 @@ def get_args_parser():
     #                     help='learning rate noise limit percent (default: 0.67)')
     # parser.add_argument('--lr-noise-std', type=float, default=1.0, metavar='STDDEV',
     #                     help='learning rate noise std-dev (default: 1.0)')
-    # parser.add_argument('--warmup-lr', type=float, default=1e-6, metavar='LR',
-    #                     help='warmup learning rate (default: 1e-6)')
+    parser.add_argument('--warmup-lr', type=float, default=0, metavar='LR',
+                        help='warmup learning rate (default: 1e-6)')
     # parser.add_argument('--min-lr', type=float, default=1e-5, metavar='LR',
     #                     help='lower lr bound for cyclic schedulers that hit 0 (1e-5)')
     # parser.add_argument('--lr-power', type=float, default=1.0,
     #                     help='power of the polynomial lr scheduler')
 
-    # parser.add_argument('--decay-epochs', type=float, default=30, metavar='N',
-    #                     help='epoch interval to decay LR')
-    # parser.add_argument('--warmup-epochs', type=int, default=5, metavar='N',
-    #                     help='epochs to warmup LR, if scheduler supports')
+    parser.add_argument('--decay-epochs', type=float, default=50, metavar='N',
+                        help='epoch interval to decay LR')
+    parser.add_argument('--warmup-epochs', type=int, default=0, metavar='N',
+                        help='epochs to warmup LR, if scheduler supports')
     # parser.add_argument('--cooldown-epochs', type=int, default=10, metavar='N',
     #                     help='epochs to cooldown LR at min_lr, after cyclic schedule ends')
     # parser.add_argument('--patience-epochs', type=int, default=10, metavar='N',
     #                     help='patience epochs for Plateau LR scheduler (default: 10')
     parser.add_argument('--decay-rate', '--dr', type=float, default=0.5, metavar='RATE',
                         help='LR decay rate (default: 0.5)')
-    parser.add_argument('--decay-milestones', '--dmile', type=list, default=[250000, 400000, 450000, 475000, 500000], metavar='MILESTONES',
-                        help='LR decay milestones (default: [250000, 400000, 450000, 475000, 500000])')
+    # parser.add_argument('--decay-milestones', '--dmile', type=list, default=[50, 100, 150, 200, 250], metavar='MILESTONES',
+    #                     help='LR decay milestones (default: [50, 100, 150, 200, 250])')
 
     # Augmentation parameters
     parser.add_argument('--color-jitter', type=float, default=0.4, metavar='PCT',
@@ -211,6 +211,7 @@ def main(args):
     current_step = max(init_iter_G, init_iter_E, init_iter_optimizerG)
 
     border = opt['scale']
+    args.scale = border
 
     device = torch.device(args.device)
 
@@ -245,9 +246,10 @@ def main(args):
                 drop_last=True,
                 shuffle=False,
             )
-        elif phase == 'valid':
-            valid_set = DatasetSR(dataset_opt)
-            data_loader_val = DataLoader(valid_set, batch_size=1,
+        elif phase == 'test':
+            print(dataset_opt)
+            test_set = DatasetSR(dataset_opt)
+            data_loader_test = DataLoader(test_set, batch_size=1,
                                      shuffle=False, num_workers=1,
                                      drop_last=False, pin_memory=True)
         else:
@@ -347,8 +349,8 @@ def main(args):
         retrain_config = {'layer_num': cfg.RETRAIN.DEPTH, 'embed_dim': [cfg.RETRAIN.EMBED_DIM]*cfg.RETRAIN.DEPTH,
                           'num_heads': cfg.RETRAIN.NUM_HEADS,'mlp_ratio': cfg.RETRAIN.MLP_RATIO}
     if args.eval:
-        test_stats = evaluate(data_loader_val, model, device,  mode = args.mode, retrain_config=retrain_config)
-        print(f"Accuracy of the network on the {len(valid_set)} test images: {test_stats['acc1']:.1f}%")
+        test_stats = evaluate(data_loader_test, model, device,  mode = args.mode, retrain_config=retrain_config)
+        print(f"Accuracy of the network on the {len(test_set)} test images: {test_stats['acc1']:.1f}%")
         return
 
     print("Start training")
@@ -383,8 +385,8 @@ def main(args):
                     'args': args,
                 }, checkpoint_path)
 
-        test_stats = evaluate(data_loader_val, model, device, amp=args.amp, choices=choices, mode = args.mode, retrain_config=retrain_config)
-        print(f"Accuracy of the network on the {len(valid_set)} test images: {test_stats['acc1']:.1f}%")
+        test_stats = evaluate(data_loader_test, model, device, amp=args.amp, choices=choices, mode = args.mode, retrain_config=retrain_config)
+        print(f"Accuracy of the network on the {len(test_set)} test images: {test_stats['acc1']:.1f}%")
         max_accuracy = max(max_accuracy, test_stats["acc1"])
         print(f'Max accuracy: {max_accuracy:.2f}%')
 

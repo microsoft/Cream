@@ -9,12 +9,7 @@ cutmix: 1.0
 cutmix_minmax: null
 data_path: ./data/imagenet/
 data_set: IMNET
-decay_milestones:
-- 250000
-- 400000
-- 450000
-- 475000
-- 500000
+decay_epochs: 50
 decay_rate: 0.5
 device: cuda
 dist_eval: false
@@ -57,11 +52,13 @@ reprob: 0.25
 resplit: false
 resume: ''
 rpe_type: bias
-sched: multistep
+sched: step
 seed: 0
 smoothing: 0.1
 start_epoch: 0
 teacher_model: ''
 train_interpolation: bicubic
+warmup_epochs: 0
+warmup_lr: 0
 weight_decay: 0
 world_size: 1
