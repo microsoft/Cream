@@ -247,23 +247,9 @@ def main(args):
             )
         elif phase == 'valid':
             valid_set = DatasetSR(dataset_opt)
-            if args.distributed:
-                num_tasks = utils.get_world_size()
-                global_rank = utils.get_rank()
-                valid_sampler = DistributedSampler(valid_set, num_replicas=num_tasks, rank=global_rank, shuffle=False)
-            else:
-                valid_sampler = torch.utils.data.SequentialSampler(valid_set)
-            data_loader_val = DataLoader(
-                valid_set, sampler=valid_sampler,
-                batch_size=args.batch_size,
-                num_workers=args.num_workers,
-                pin_memory=args.pin_mem,
-                drop_last=True,
-                shuffle=False,
-            )
-        elif phase == 'test':
-            # TODO: Implement with test code
-            pass
+            data_loader_val = DataLoader(valid_set, batch_size=1,
+                                     shuffle=False, num_workers=1,
+                                     drop_last=False, pin_memory=True)
         else:
             raise NotImplementedError("Phase [%s] is not recognized." % phase)
 
