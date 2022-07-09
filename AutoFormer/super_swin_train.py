@@ -349,13 +349,13 @@ def main(args):
         retrain_config = {'layer_num': cfg.RETRAIN.DEPTH, 'embed_dim': [cfg.RETRAIN.EMBED_DIM]*cfg.RETRAIN.DEPTH,
                           'num_heads': cfg.RETRAIN.NUM_HEADS,'mlp_ratio': cfg.RETRAIN.MLP_RATIO}
     if args.eval:
-        test_stats = evaluate(data_loader_test, model, device,  mode = args.mode, retrain_config=retrain_config)
-        print(f"Accuracy of the network on the {len(test_set)} test images: {test_stats['acc1']:.1f}%")
+        test_stats = evaluate(data_loader_test, model, device,  mode = args.mode, retrain_config=retrain_config, scaling=args.scale)
+        print(f"PSNR of the network on the {len(test_set)} test images: {test_stats['psnr']:.1f}%")
         return
 
     print("Start training")
     start_time = time.time()
-    max_accuracy = 0.0
+    max_psnr = 0.0
 
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
@@ -385,10 +385,10 @@ def main(args):
                     'args': args,
                 }, checkpoint_path)
 
-        test_stats = evaluate(data_loader_test, model, device, amp=args.amp, choices=choices, mode = args.mode, retrain_config=retrain_config)
-        print(f"Accuracy of the network on the {len(test_set)} test images: {test_stats['acc1']:.1f}%")
-        max_accuracy = max(max_accuracy, test_stats["acc1"])
-        print(f'Max accuracy: {max_accuracy:.2f}%')
+        test_stats = evaluate(data_loader_test, model, device, amp=args.amp, choices=choices, mode = args.mode, retrain_config=retrain_config, scaling=args.scale)
+        print(f"PSNR of the network on the {len(test_set)} test images: {test_stats['psnr']:.1f}%")
+        max_psnr = max(max_psnr, test_stats["psnr"])
+        print(f'Max PSNR: {max_psnr:.2f}%')
 
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
                      **{f'test_{k}': v for k, v in test_stats.items()},
