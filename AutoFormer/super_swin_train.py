@@ -359,8 +359,8 @@ def main(args):
         retrain_config = {'layer_num': cfg.RETRAIN.DEPTH, 'embed_dim': [cfg.RETRAIN.EMBED_DIM]*cfg.RETRAIN.DEPTH,
                           'num_heads': cfg.RETRAIN.NUM_HEADS,'mlp_ratio': cfg.RETRAIN.MLP_RATIO}
     if args.eval:
-        test_stats = evaluate(data_loader_test, model, device,  mode = args.mode, retrain_config=retrain_config)
-        print(f"Accuracy of the network on the {len(test_set)} test images: {test_stats['acc1']:.1f}%")
+        test_stats = evaluate(data_loader_test, model, device,  mode = args.mode, retrain_config=retrain_config, scaling=args.scale)
+        print(f"PSNR of the network on the {len(test_set)} test images: {test_stats['psnr']:.1f}%")
         return
 
     print("Start training")

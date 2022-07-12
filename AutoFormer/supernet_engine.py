@@ -131,7 +131,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 @torch.no_grad()
-def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', retrain_config=None, sampler=sample_configs_swinir, opt=None):
+def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', retrain_config=None, sampler=sample_configs_swinir):
     criterion = torch.nn.L1Loss()
 
     metric_logger = utils.MetricLogger(delimiter="  ")
@@ -162,7 +162,7 @@ def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', r
             with torch.cuda.amp.autocast():
                 # print(images.shape)
                 output = model(images)
-                # print(images.shape ,output.shape, target.shape)
+                print(images.shape, output.shape, target.shape)
                 # loss = criterion(output, target)
         else:
             output = model(images)
@@ -174,6 +174,9 @@ def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', r
         # acc1, acc5 = accuracy(output, target, topk=(1, 5))
         # print(acc1, acc5)
         # quit()
+        _, _, h_old, w_old = images.shape
+
+        H_img = H_img[:h_old * scaling, :w_old * scaling, ...]  # crop gt
         current_psnr = util.calculate_psnr(E_img, H_img, border=2)
 
         batch_size = images.shape[0]
