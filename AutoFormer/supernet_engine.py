@@ -10,6 +10,7 @@ from lib import utils
 import random
 import utils.utils_image as util
 import time
+from data.dataset_sr import DatasetSR
 
 
 def sample_configs(choices):
@@ -37,7 +38,7 @@ def sample_configs_swinir(choices):
     config['mlp_ratio'] = [random.choice(choices['mlp_ratio']) for _ in range(rstb_num)]
 
     config['rstb_num'] = rstb_num
-    print(f'Sampled config: {config}')
+    # print(f'Sampled config: {config}')
     return config
 
 def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
@@ -130,7 +131,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 @torch.no_grad()
-def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', retrain_config=None, sampler=sample_configs_swinir):
+def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', retrain_config=None, sampler=sample_configs_swinir, opt=None):
     criterion = torch.nn.L1Loss()
 
     metric_logger = utils.MetricLogger(delimiter="  ")
@@ -154,12 +155,14 @@ def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', r
 
     for images, target in metric_logger.log_every(data_loader, 5, header):
         images = images.to(device, non_blocking=True)
+        # images = DatasetSR(opt)
         target = target.to(device, non_blocking=True)
         # compute output
         if amp:
             with torch.cuda.amp.autocast():
+                # print(images.shape)
                 output = model(images)
-                print(output.shape, target.shape)
+                # print(images.shape ,output.shape, target.shape)
                 # loss = criterion(output, target)
         else:
             output = model(images)
@@ -168,7 +171,6 @@ def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', r
         
         E_img = util.tensor2uint(output)
         H_img = util.tensor2uint(target)
-        print(E_img.shape, H_img.shape)
         # acc1, acc5 = accuracy(output, target, topk=(1, 5))
         # print(acc1, acc5)
         # quit()
