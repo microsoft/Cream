@@ -6,7 +6,9 @@ import datetime
 
 import torch
 import torch.distributed as dist
-
+from loguru import logger 
+import sys
+logger.add(sys.stdout, level = 'DEBUG')
 
 class SmoothedValue(object):
     """Track a series of values and provide access to smoothed values over a
@@ -207,6 +209,7 @@ def save_on_master(*args, **kwargs):
 
 
 def init_distributed_mode(args):
+    print(os.environ)
     if 'OMPI_COMM_WORLD_RANK' in os.environ:
         args.rank = int(os.environ.get('OMPI_COMM_WORLD_RANK'))
         args.world_size = int(os.environ.get('OMPI_COMM_WORLD_SIZE'))
@@ -224,10 +227,10 @@ def init_distributed_mode(args):
         return
 
     args.distributed = True
-
+    logger.debug(f'gpu devices:{args.gpu}')
     torch.cuda.set_device(args.gpu)
     args.dist_backend = 'nccl'
-    print('| distributed init (rank {}): {}'.format(
+    logger.debug('| distributed init (rank {}): {}'.format(
         args.rank, args.dist_url), flush=True)
     torch.distributed.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                          world_size=args.world_size, rank=args.rank)

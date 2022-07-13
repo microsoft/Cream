@@ -9,6 +9,9 @@ from timm.utils import accuracy, ModelEma
 from lib import utils
 import random
 import time
+from loguru import logger
+
+logger.add(sys.stdout, level='DEBUG')
 
 def sample_configs(choices):
 
@@ -42,9 +45,9 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     if mode == 'retrain':
         config = retrain_config
         model_module = unwrap_model(model)
-        print(config)
+        logger.debug(config)
         model_module.set_sample_config(config=config)
-        print(model_module.get_sampled_params_numel(config))
+        logger.debug(model_module.get_sampled_params_numel(config))
 
     for samples, targets in metric_logger.log_every(data_loader, print_freq, header):
         samples = samples.to(device, non_blocking=True)
@@ -52,7 +55,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
         # sample random config
         if mode == 'super':
-            print(choices)
+            logger.debug(choices)
             config = sample_configs(choices=choices)
             model_module = unwrap_model(model)
             model_module.set_sample_config(config=config)
@@ -86,7 +89,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         loss_value = loss.item()
 
         if not math.isfinite(loss_value):
-            print("Loss is {}, stopping training".format(loss_value))
+            logger.debug("Loss is {}, stopping training".format(loss_value))
             sys.exit(1)
 
         optimizer.zero_grad()
@@ -109,7 +112,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
-    print("Averaged stats:", metric_logger)
+    logger.debug("Averaged stats:", metric_logger)
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 @torch.no_grad()
@@ -131,9 +134,9 @@ def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', r
         model_module.set_sample_config(config=config)
 
 
-    print("sampled model config: {}".format(config))
+    logger.debug("sampled model config: {}".format(config))
     parameters = model_module.get_sampled_params_numel(config)
-    print("sampled model parameters: {}".format(parameters))
+    logger.debug("sampled model parameters: {}".format(parameters))
 
     for images, target in metric_logger.log_every(data_loader, 10, header):
         images = images.to(device, non_blocking=True)
@@ -155,7 +158,7 @@ def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', r
         metric_logger.meters['acc5'].update(acc5.item(), n=batch_size)
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
-    print('* Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f} loss {losses.global_avg:.3f}'
+    logger.debug('* Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f} loss {losses.global_avg:.3f}'
           .format(top1=metric_logger.acc1, top5=metric_logger.acc5, losses=metric_logger.loss))
 
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}

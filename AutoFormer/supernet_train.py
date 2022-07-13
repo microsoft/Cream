@@ -1,4 +1,5 @@
 import argparse
+import os
 import datetime
 import numpy as np
 import time
@@ -6,6 +7,8 @@ import torch
 import torch.backends.cudnn as cudnn
 import json
 import yaml
+import sys
+from loguru import logger
 from pathlib import Path
 from timm.data import Mixup
 from timm.models import create_model
@@ -20,7 +23,7 @@ from lib import utils
 from lib.config import cfg, update_config_from_file
 from model.vision_transformer.supernet_transformer import Vision_TransformerSuper
 
-
+logger.add(sys.stdout, level='DEBUG')
 def get_args_parser():
     parser = argparse.ArgumentParser('AutoFormer training and evaluation script', add_help=False)
     parser.add_argument('--batch-size', default=64, type=int)
@@ -188,7 +191,7 @@ def main(args):
     utils.init_distributed_mode(args)
     update_config_from_file(args.cfg)
 
-    print(args)
+    logger.debug(f"args:{args}")
     args_text = yaml.safe_dump(args.__dict__, default_flow_style=False)
 
     device = torch.device(args.device)
@@ -250,8 +253,8 @@ def main(args):
             prob=args.mixup_prob, switch_prob=args.mixup_switch_prob, mode=args.mixup_mode,
             label_smoothing=args.smoothing, num_classes=args.nb_classes)
 
-    print(f"Creating SuperVisionTransformer")
-    print(cfg)
+    logger.debug("Creating SuperVisionTransformer")
+    logger.debug(f"cfg:{cfg}")
     model = Vision_TransformerSuper(img_size=args.input_size,
                                     patch_size=args.patch_size,
                                     embed_dim=cfg.SUPERNET.EMBED_DIM, depth=cfg.SUPERNET.DEPTH,
@@ -284,12 +287,11 @@ def main(args):
 
     model_without_ddp = model
     if args.distributed:
-
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=True)
         model_without_ddp = model.module
 
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print('number of params:', n_parameters)
+    logger.debug(f'number of params:{n_parameters}')
 
     linear_scaled_lr = args.lr * args.batch_size * utils.get_world_size() / 512.0
     args.lr = linear_scaled_lr
@@ -336,10 +338,10 @@ def main(args):
                           'num_heads': cfg.RETRAIN.NUM_HEADS,'mlp_ratio': cfg.RETRAIN.MLP_RATIO}
     if args.eval:
         test_stats = evaluate(data_loader_val, model, device,  mode = args.mode, retrain_config=retrain_config)
-        print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
+        logger.debug(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
         return
 
-    print("Start training")
+    logger.debug("Start training")
     start_time = time.time()
     max_accuracy = 0.0
 
@@ -371,9 +373,9 @@ def main(args):
                 }, checkpoint_path)
 
         test_stats = evaluate(data_loader_val, model, device, amp=args.amp, choices=choices, mode = args.mode, retrain_config=retrain_config)
-        print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
+        logger.debug(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
         max_accuracy = max(max_accuracy, test_stats["acc1"])
-        print(f'Max accuracy: {max_accuracy:.2f}%')
+        logger.debug(f'Max accuracy: {max_accuracy:.2f}%')
 
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
                      **{f'test_{k}': v for k, v in test_stats.items()},
@@ -386,7 +388,7 @@ def main(args):
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
-    print('Training time {}'.format(total_time_str))
+    logger.debug('Training time {}'.format(total_time_str))
 
 
 if __name__ == '__main__':

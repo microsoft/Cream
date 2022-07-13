@@ -1,19 +1,21 @@
 import random
-
+import sys
 import numpy as np
 import time
 import torch
 import torch.backends.cudnn as cudnn
 from pathlib import Path
-
+from loguru import logger
 from lib.datasets import build_dataset
 from lib import utils
 from supernet_engine import evaluate
-from model.supernet_transformer import Vision_TransformerSuper
+from model.vision_transformer.supernet_transformer import Vision_TransformerSuper
 import argparse
 import os
 import yaml
 from lib.config import cfg, update_config_from_file
+
+logger.add(sys.stdout, level='DEBUG')
 
 def decode_cand_tuple(cand_tuple):
     depth = cand_tuple[0]
@@ -59,7 +61,7 @@ class EvolutionSearcher(object):
         info['epoch'] = self.epoch
         checkpoint_path = os.path.join(self.output_dir, "checkpoint-{}.pth.tar".format(self.epoch))
         torch.save(info, checkpoint_path)
-        print('save checkpoint to', checkpoint_path)
+        logger.debug(f'save checkpoint to:{checkpoint_path}')
 
     def load_checkpoint(self):
         if not os.path.exists(self.checkpoint_path):
@@ -71,7 +73,7 @@ class EvolutionSearcher(object):
         self.keep_top_k = info['keep_top_k']
         self.epoch = info['epoch']
 
-        print('load checkpoint from', self.checkpoint_path)
+        logger.debug(f'load checkpoint from:{self.checkpoint_path}')
         return True
 
     def is_legal(self, cand):
@@ -91,14 +93,14 @@ class EvolutionSearcher(object):
         info['params'] =  n_parameters / 10.**6
 
         if info['params'] > self.parameters_limits:
-            print('parameters limit exceed')
+            logger.debug('parameters limit exceed')
             return False
 
         if info['params'] < self.min_parameters_limits:
-            print('under minimum parameters limit')
+            logger.debug('under minimum parameters limit')
             return False
 
-        print("rank:", utils.get_rank(), cand, info['params'])
+        logger.debug(f"rank:{utils.get_rank()}, {cand}, {info['params']}")
         eval_stats = evaluate(self.val_loader, self.model, self.device, amp=self.args.amp, mode='retrain', retrain_config=sampled_config)
         test_stats = evaluate(self.test_loader, self.model, self.device, amp=self.args.amp, mode='retrain', retrain_config=sampled_config)
 
@@ -111,7 +113,7 @@ class EvolutionSearcher(object):
 
     def update_top_k(self, candidates, *, k, key, reverse=True):
         assert k in self.keep_top_k
-        print('select ......')
+        logger.debug('select ......')
         t = self.keep_top_k[k]
         t += candidates
         t.sort(key=key, reverse=reverse)
@@ -141,19 +143,19 @@ class EvolutionSearcher(object):
         return tuple(cand_tuple)
 
     def get_random(self, num):
-        print('random select ........')
+        logger.debug('random select ........')
         cand_iter = self.stack_random_cand(self.get_random_cand)
         while len(self.candidates) < num:
             cand = next(cand_iter)
             if not self.is_legal(cand):
                 continue
             self.candidates.append(cand)
-            print('random {}/{}'.format(len(self.candidates), num))
-        print('random_num = {}'.format(len(self.candidates)))
+            logger.debug('random {}/{}'.format(len(self.candidates), num))
+        logger.debug('random_num = {}'.format(len(self.candidates)))
 
     def get_mutation(self, k, mutation_num, m_prob, s_prob):
         assert k in self.keep_top_k
-        print('mutation ......')
+        logger.debug('mutation ......')
         res = []
         iter = 0
         max_iters = mutation_num * 10
@@ -204,14 +206,14 @@ class EvolutionSearcher(object):
             if not self.is_legal(cand):
                 continue
             res.append(cand)
-            print('mutation {}/{}'.format(len(res), mutation_num))
+            logger.debug('mutation {}/{}'.format(len(res), mutation_num))
 
-        print('mutation_num = {}'.format(len(res)))
+        logger.debug('mutation_num = {}'.format(len(res)))
         return res
 
     def get_crossover(self, k, crossover_num):
         assert k in self.keep_top_k
-        print('crossover ......')
+        logger.debug('crossover ......')
         res = []
         iter = 0
         max_iters = 10 * crossover_num
@@ -234,13 +236,13 @@ class EvolutionSearcher(object):
             if not self.is_legal(cand):
                 continue
             res.append(cand)
-            print('crossover {}/{}'.format(len(res), crossover_num))
+            logger.debug('crossover {}/{}'.format(len(res), crossover_num))
 
-        print('crossover_num = {}'.format(len(res)))
+        logger.debug('crossover_num = {}'.format(len(res)))
         return res
 
     def search(self):
-        print(
+        logger.debug(
             'population_num = {} select_num = {} mutation_num = {} crossover_num = {} random_num = {} max_epochs = {}'.format(
                 self.population_num, self.select_num, self.mutation_num, self.crossover_num,
                 self.population_num - self.mutation_num - self.crossover_num, self.max_epochs))
@@ -250,7 +252,7 @@ class EvolutionSearcher(object):
         self.get_random(self.population_num)
 
         while self.epoch < self.max_epochs:
-            print('epoch = {}'.format(self.epoch))
+            logger.debug('epoch = {}'.format(self.epoch))
 
             self.memory.append([])
             for cand in self.candidates:
@@ -261,11 +263,11 @@ class EvolutionSearcher(object):
             self.update_top_k(
                 self.candidates, k=50, key=lambda x: self.vis_dict[x]['acc'])
 
-            print('epoch = {} : top {} result'.format(
+            logger.debug('epoch = {} : top {} result'.format(
                 self.epoch, len(self.keep_top_k[50])))
             tmp_accuracy = []
             for i, cand in enumerate(self.keep_top_k[50]):
-                print('No.{} {} Top-1 val acc = {}, Top-1 test acc = {}, params = {}'.format(
+                logger.debug('No.{} {} Top-1 val acc = {}, Top-1 test acc = {}, params = {}'.format(
                     i + 1, cand, self.vis_dict[cand]['acc'], self.vis_dict[cand]['test_acc'], self.vis_dict[cand]['params']))
                 tmp_accuracy.append(self.vis_dict[cand]['acc'])
             self.top_accuracies.append(tmp_accuracy)
@@ -420,7 +422,7 @@ def get_args_parser():
     # Dataset parameters
     parser.add_argument('--data-path', default='/datasets01_101/imagenet_full_size/061417/', type=str,
                         help='dataset path')
-    parser.add_argument('--data-set', default='IMNET', choices=['CIFAR', 'IMNET', 'INAT', 'INAT19', 'EVO_IMNET'],
+    parser.add_argument('--data-set', default='IMNET', choices=['CIFAR100', 'IMNET', 'INAT', 'INAT19', 'EVO_IMNET'],
                         type=str, help='Image Net dataset path')
     parser.add_argument('--inat-category', default='name',
                         choices=['kingdom', 'phylum', 'class', 'order', 'supercategory', 'family', 'genus', 'name'],
@@ -461,7 +463,7 @@ def main(args):
 
     device = torch.device(args.device)
 
-    print(args)
+    logger.debug(args)
     args_text = yaml.safe_dump(args.__dict__, default_flow_style=False)
     # save config for later experiments
     with open(os.path.join(args.output_dir, "config.yaml"), 'w') as f:
@@ -484,7 +486,7 @@ def main(args):
         global_rank = utils.get_rank()
         if args.dist_eval:
             if len(dataset_val) % num_tasks != 0:
-                print(
+                logger.debug(
                     'Warning: Enabling distributed evaluation with an eval dataset not divisible by process number. '
                     'This will slightly alter validation results as extra duplicate entries are added to achieve '
                     'equal num of samples per-process.')
@@ -511,8 +513,8 @@ def main(args):
         pin_memory=args.pin_mem, drop_last=False
     )
 
-    print(f"Creating SuperVisionTransformer")
-    print(cfg)
+    logger.debug(f"Creating SuperVisionTransformer")
+    logger.debug(cfg)
     model = Vision_TransformerSuper(img_size=args.input_size,
                                     patch_size=args.patch_size,
                                     embed_dim=cfg.SUPERNET.EMBED_DIM, depth=cfg.SUPERNET.DEPTH,
@@ -533,14 +535,14 @@ def main(args):
 
 
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print('number of params:', n_parameters)
+    logger.debug('number of params:{n_parameters}')
     if args.resume:
         if args.resume.startswith('https'):
             checkpoint = torch.hub.load_state_dict_from_url(
                 args.resume, map_location='cpu', check_hash=True)
         else:
             checkpoint = torch.load(args.resume, map_location='cpu')
-        print("resume from checkpoint: {}".format(args.resume))
+        logger.debug("resume from checkpoint: {}".format(args.resume))
         model_without_ddp.load_state_dict(checkpoint['model'])
 
     choices = {'num_heads': cfg.SEARCH_SPACE.NUM_HEADS, 'mlp_ratio': cfg.SEARCH_SPACE.MLP_RATIO,
@@ -552,7 +554,7 @@ def main(args):
 
     searcher.search()
 
-    print('total searching time = {:.2f} hours'.format(
+    logger.debug('total searching time = {:.2f} hours'.format(
         (time.time() - t) / 3600))
 
 
