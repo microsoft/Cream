@@ -8,7 +8,9 @@ from timm.data import Mixup
 from timm.utils import accuracy, ModelEma
 from lib import utils
 import random
+import utils.utils_image as util
 import time
+from data.dataset_sr import DatasetSR
 
 from loguru import logger
 logger.add(sys.stdout, level='DEBUG')
@@ -38,6 +40,7 @@ def sample_configs_swinir(choices):
     config['mlp_ratio'] = [random.choice(choices['mlp_ratio']) for _ in range(rstb_num)]
 
     config['rstb_num'] = rstb_num
+
     logger.debug(f'Sampled config: {config}')
     return config
 
@@ -47,7 +50,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     model_ema: Optional[ModelEma] = None, mixup_fn: Optional[Mixup] = None,
                     amp: bool = True, teacher_model: torch.nn.Module = None,
                     teach_loss: torch.nn.Module = None, choices=None, mode='super', retrain_config=None,
-                    sampler=sample_configs):
+                    sampler=sample_configs_swinir):
     model.train()
     criterion.train()
 
@@ -131,8 +134,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 @torch.no_grad()
-def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', retrain_config=None, sampler=sample_configs):
-    criterion = torch.nn.CrossEntropyLoss()
+def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', retrain_config=None, sampler=sample_configs_swinir):
+    criterion = torch.nn.L1Loss()
 
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Test:'
@@ -153,24 +156,35 @@ def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', r
     parameters = model_module.get_sampled_params_numel(config)
     logger.debug(f"sampled model parameters: {parameters}")
 
-    for images, target in metric_logger.log_every(data_loader, 10, header):
+
+    for images, target in metric_logger.log_every(data_loader, 5, header):
         images = images.to(device, non_blocking=True)
+        # images = DatasetSR(opt)
         target = target.to(device, non_blocking=True)
         # compute output
         if amp:
             with torch.cuda.amp.autocast():
+                # print(images.shape)
                 output = model(images)
-                loss = criterion(output, target)
+                print(images.shape, output.shape, target.shape)
+                # loss = criterion(output, target)
         else:
             output = model(images)
-            loss = criterion(output, target)
+            # loss = criterion(output, target)
+        
+        
+        E_img = util.tensor2uint(output)
+        H_img = util.tensor2uint(target)
+        # acc1, acc5 = accuracy(output, target, topk=(1, 5))
+        # print(acc1, acc5)
+        # quit()
+        _, _, h_old, w_old = images.shape
 
-        acc1, acc5 = accuracy(output, target, topk=(1, 5))
+        H_img = H_img[:h_old * scaling, :w_old * scaling, ...]  # crop gt
+        current_psnr = util.calculate_psnr(E_img, H_img, border=2)
 
         batch_size = images.shape[0]
-        metric_logger.update(loss=loss.item())
-        metric_logger.meters['acc1'].update(acc1.item(), n=batch_size)
-        metric_logger.meters['acc5'].update(acc5.item(), n=batch_size)
+        metric_logger.meters['psnr'].update(current_psnr, n=batch_size)
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     logger.debug('* Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f} loss {losses.global_avg:.3f}'

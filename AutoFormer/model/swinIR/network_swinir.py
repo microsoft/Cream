@@ -1134,10 +1134,8 @@ class SwinIR(nn.Module):
     def forward(self, x):
         H, W = x.shape[2:]
         x = self.check_image_size(x)
-
         self.mean = self.mean.type_as(x)
         x = (x - self.mean) * self.img_range
-
         if self.upsampler == 'pixelshuffle':
             # for classical SR
             x = F.conv2d(x,
@@ -1156,6 +1154,7 @@ class SwinIR(nn.Module):
                          stride=1,
                          padding=self.conv_first.padding,
                          dilation=self.conv_first.dilation)
+
             forward_x = self.forward_features(x)
             dfe_x = F.conv2d(forward_x,
                              self.conv_after_body_sample_weight,
@@ -1166,7 +1165,6 @@ class SwinIR(nn.Module):
                              )
             dfe_x = dfe_x + x
             x = self.upsample(dfe_x)
-
         elif self.upsampler == 'nearest+conv':
             # for real-world SR
             x = F.conv2d(x,
@@ -1191,7 +1189,6 @@ class SwinIR(nn.Module):
             x = x + self.conv_last(res)
 
         x = x / self.img_range + self.mean
-
         return x[:, :, :H * self.upscale, :W * self.upscale]
 
     def flops(self):

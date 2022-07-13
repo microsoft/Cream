@@ -68,7 +68,7 @@ class DatasetSR(data.Dataset):
         # ------------------------------------
         # if train, get L/H patch pair
         # ------------------------------------
-        if self.opt['phase'] == 'train':
+        if self.opt['phase'] == 'train' or self.opt['phase'] == 'test':
 
             H, W, C = img_L.shape
 
@@ -98,8 +98,7 @@ class DatasetSR(data.Dataset):
 
         if L_path is None:
             L_path = H_path
-
+        # print(img_L.shape, img_H.shape)
         return img_L, img_H
-
     def __len__(self):
         return len(self.paths_H)

@@ -32,9 +32,9 @@ def get_args_parser():
     parser.add_argument('--batch-size', default=16, type=int)
     parser.add_argument('--epochs', default=300, type=int)
     # config file
-    parser.add_argument('--cfg',help='experiment configure file name',required=True,type=str)
+    parser.add_argument('--cfg',help='experiment configure file name',type=str, default='/home/ajesh/Projects/DL-lab/Main-Project/AutoFormer/AutoFormer/experiments/supernet-swinir/supernet-T.yaml')
 
-    parser.add_argument('--opt-doc', type=str, default='experiments/train_swinir_sr_lightweight.json', help='Path to option JSON file for SwinIR.')
+    parser.add_argument('--opt-doc', type=str, default='/home/ajesh/Projects/DL-lab/Main-Project/AutoFormer/AutoFormer/experiments/train_swinir_sr_lightweight.json', help='Path to option JSON file for SwinIR.')
     # custom parameters
     parser.add_argument('--platform', default='pai', type=str, choices=['itp', 'pai', 'aml'],
                         help='Name of model to train')
@@ -84,35 +84,35 @@ def get_args_parser():
                         help='weight decay (default: 0)')
 
     # Learning rate schedule parameters
-    parser.add_argument('--sched', default='multistep', type=str, metavar='SCHEDULER',
+    parser.add_argument('--sched', default='step', type=str, metavar='SCHEDULER',
                         help='MultiStepLR (default: "multistep"')
     parser.add_argument('--lr', type=float, default=2e-4, metavar='LR',
                         help='learning rate (default: 2e-4)')
     # parser.add_argument('--lr-noise', type=float, nargs='+', default=None, metavar='pct, pct',
     #                     help='learning rate noise on/off epoch percentages')
     # parser.add_argument('--lr-noise-pct', type=float, default=0.67, metavar='PERCENT',
-    #                     help='learning rate noise limit percent (default: 0.67)')
+    #                     help='learning rate noise limiThis should bet percent (default: 0.67)')
     # parser.add_argument('--lr-noise-std', type=float, default=1.0, metavar='STDDEV',
     #                     help='learning rate noise std-dev (default: 1.0)')
-    # parser.add_argument('--warmup-lr', type=float, default=1e-6, metavar='LR',
-    #                     help='warmup learning rate (default: 1e-6)')
+    parser.add_argument('--warmup-lr', type=float, default=0, metavar='LR',
+                        help='warmup learning rate (default: 1e-6)')
     # parser.add_argument('--min-lr', type=float, default=1e-5, metavar='LR',
     #                     help='lower lr bound for cyclic schedulers that hit 0 (1e-5)')
     # parser.add_argument('--lr-power', type=float, default=1.0,
     #                     help='power of the polynomial lr scheduler')
 
-    # parser.add_argument('--decay-epochs', type=float, default=30, metavar='N',
-    #                     help='epoch interval to decay LR')
-    # parser.add_argument('--warmup-epochs', type=int, default=5, metavar='N',
-    #                     help='epochs to warmup LR, if scheduler supports')
+    parser.add_argument('--decay-epochs', type=float, default=50, metavar='N',
+                        help='epoch interval to decay LR')
+    parser.add_argument('--warmup-epochs', type=int, default=0, metavar='N',
+                        help='epochs to warmup LR, if scheduler supports')
     # parser.add_argument('--cooldown-epochs', type=int, default=10, metavar='N',
     #                     help='epochs to cooldown LR at min_lr, after cyclic schedule ends')
     # parser.add_argument('--patience-epochs', type=int, default=10, metavar='N',
     #                     help='patience epochs for Plateau LR scheduler (default: 10')
     parser.add_argument('--decay-rate', '--dr', type=float, default=0.5, metavar='RATE',
                         help='LR decay rate (default: 0.5)')
-    parser.add_argument('--decay-milestones', '--dmile', type=list, default=[250000, 400000, 450000, 475000, 500000], metavar='MILESTONES',
-                        help='LR decay milestones (default: [250000, 400000, 450000, 475000, 500000])')
+    # parser.add_argument('--decay-milestones', '--dmile', type=list, default=[50, 100, 150, 200, 250], metavar='MILESTONES',
+    #                     help='LR decay milestones (default: [50, 100, 150, 200, 250])')
 
     # Augmentation parameters
     parser.add_argument('--color-jitter', type=float, default=0.4, metavar='PCT',
@@ -199,10 +199,12 @@ def main(args):
 
     print(args)
     args_text = yaml.safe_dump(args.__dict__, default_flow_style=False)
+    test_dataset_opt = None
 
     # For reading from .json file, major part of .json can be turned into commandline args
     opt = option.parse(parser.parse_args().opt_doc, is_train=True)
     init_iter_G, init_path_G = option.find_last_checkpoint(opt['path']['models'], net_type='G')
+
     init_iter_E, init_path_E = option.find_last_checkpoint(opt['path']['models'], net_type='E')
     opt['path']['pretrained_netG'] = init_path_G
     opt['path']['pretrained_netE'] = init_path_E
@@ -211,6 +213,7 @@ def main(args):
     current_step = max(init_iter_G, init_iter_E, init_iter_optimizerG)
 
     border = opt['scale']
+    args.scale = border
 
     device = torch.device(args.device)
 
@@ -229,6 +232,7 @@ def main(args):
         if phase == 'train':
             train_set = DatasetSR(dataset_opt)
             print('Dataset [{:s} - {:s}] is created.'.format(train_set.__class__.__name__, dataset_opt['name']))
+            print(dataset_opt)
             train_size = int(math.ceil(len(train_set) / dataset_opt['dataloader_batch_size']))
             if args.distributed:
                 num_tasks = utils.get_world_size()
@@ -245,27 +249,21 @@ def main(args):
                 drop_last=True,
                 shuffle=False,
             )
-        elif phase == 'valid':
-            valid_set = DatasetSR(dataset_opt)
-            if args.distributed:
-                num_tasks = utils.get_world_size()
-                global_rank = utils.get_rank()
-                valid_sampler = DistributedSampler(valid_set, num_replicas=num_tasks, rank=global_rank, shuffle=False)
-            else:
-                valid_sampler = torch.utils.data.SequentialSampler(valid_set)
-            data_loader_val = DataLoader(
-                valid_set, sampler=valid_sampler,
-                batch_size=args.batch_size,
-                num_workers=args.num_workers,
-                pin_memory=args.pin_mem,
-                drop_last=True,
-                shuffle=False,
-            )
-        elif phase == 'test':
-            # TODO: Implement with test code
-            pass
-        else:
-            raise NotImplementedError("Phase [%s] is not recognized." % phase)
+        elif phase == 'valid' and args.mode == 'super':
+            test_set = DatasetSR(dataset_opt)
+            print('Dataset [{:s} - {:s}] is created.'.format(test_set.__class__.__name__, dataset_opt['name']))
+            print(dataset_opt)
+            data_loader_test = DataLoader(test_set, batch_size=1,
+                                     shuffle=False, num_workers=8,
+                                     drop_last=False, pin_memory=True)
+
+        elif phase == 'test' and args.mode == 'retrain':
+            test_set = DatasetSR(dataset_opt)
+            print('Dataset [{:s} - {:s}] is created.'.format(test_set.__class__.__name__, dataset_opt['name']))
+            print(dataset_opt)
+            data_loader_test = DataLoader(test_set, batch_size=1,
+                                     shuffle=False, num_workers=8,
+                                     drop_last=False, pin_memory=True)
 
     # mixup_fn = None
     # mixup_active = args.mixup > 0 or args.cutmix > 0. or args.cutmix_minmax is not None
@@ -361,13 +359,13 @@ def main(args):
         retrain_config = {'layer_num': cfg.RETRAIN.DEPTH, 'embed_dim': [cfg.RETRAIN.EMBED_DIM]*cfg.RETRAIN.DEPTH,
                           'num_heads': cfg.RETRAIN.NUM_HEADS,'mlp_ratio': cfg.RETRAIN.MLP_RATIO}
     if args.eval:
-        test_stats = evaluate(data_loader_val, model, device,  mode = args.mode, retrain_config=retrain_config)
-        print(f"Accuracy of the network on the {len(valid_set)} test images: {test_stats['acc1']:.1f}%")
+        test_stats = evaluate(data_loader_test, model, device,  mode = args.mode, retrain_config=retrain_config, scaling=args.scale)
+        print(f"PSNR of the network on the {len(test_set)} test images: {test_stats['psnr']:.1f}%")
         return
 
     print("Start training")
     start_time = time.time()
-    max_accuracy = 0.0
+    max_psnr = 0.0
 
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
@@ -397,10 +395,9 @@ def main(args):
                     'args': args,
                 }, checkpoint_path)
 
-        test_stats = evaluate(data_loader_val, model, device, amp=args.amp, choices=choices, mode = args.mode, retrain_config=retrain_config)
-        print(f"Accuracy of the network on the {len(valid_set)} test images: {test_stats['acc1']:.1f}%")
-        max_accuracy = max(max_accuracy, test_stats["acc1"])
-        print(f'Max accuracy: {max_accuracy:.2f}%')
+        test_stats = evaluate(data_loader_test, model, device, amp=args.amp, choices=choices, mode = args.mode, retrain_config=retrain_config)
+        max_psnr = max(max_psnr, test_stats["psnr"])
+        print(f'Max psnr: {max_psnr:.2f}%')
 
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
                      **{f'test_{k}': v for k, v in test_stats.items()},
