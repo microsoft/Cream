@@ -153,8 +153,8 @@ def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', r
 
 
     logger.debug(f"sampled model config: {config}")
-    parameters = model_module.get_sampled_params_numel(config)
-    logger.debug(f"sampled model parameters: {parameters}")
+    # parameters = model_module.get_sampled_params_numel(config)
+    # logger.debug(f"sampled model parameters: {parameters}")
 
 
     for images, target in metric_logger.log_every(data_loader, 5, header):
@@ -178,16 +178,18 @@ def evaluate(data_loader, model, device, amp=True, choices=None, mode='super', r
         # acc1, acc5 = accuracy(output, target, topk=(1, 5))
         # print(acc1, acc5)
         # quit()
-        _, _, h_old, w_old = images.shape
+        # _, _, h_old, w_old = images.shape
 
-        H_img = H_img[:h_old * scaling, :w_old * scaling, ...]  # crop gt
+        # H_img = H_img[:h_old * scaling, :w_old * scaling, ...]  # crop gt
         current_psnr = util.calculate_psnr(E_img, H_img, border=2)
 
         batch_size = images.shape[0]
         metric_logger.meters['psnr'].update(current_psnr, n=batch_size)
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
-    logger.debug('* Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f} loss {losses.global_avg:.3f}'
-          .format(top1=metric_logger.acc1, top5=metric_logger.acc5, losses=metric_logger.loss))
+    print('* AVG_PSNR {psnr.global_avg:.3f}'
+          .format(psnr=metric_logger.psnr))
+    # logger.debug('* Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f} loss {losses.global_avg:.3f}'
+    #       .format(top1=metric_logger.acc1, top5=metric_logger.acc5, losses=metric_logger.loss))
 
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
