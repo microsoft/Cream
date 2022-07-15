@@ -966,8 +966,6 @@ class SwinIR(nn.Module):
             self.absolute_pos_embed = nn.Parameter(torch.zeros(1, num_patches, embed_dim))
             trunc_normal_(self.absolute_pos_embed, std=.02)
 
-        self.pos_drop = nn.Dropout(p=drop_rate)
-
         # stochastic depth
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]  # stochastic depth decay rule
 
@@ -1121,7 +1119,7 @@ class SwinIR(nn.Module):
         x = self.patch_embed(x)
         if self.ape:
             x = x + self.absolute_pos_embed
-        x = self.pos_drop(x)
+        x = F.dropout(x, p=self.sample_dropout, training=self.training)
 
         for layer in self.layers:
             x = layer(x, x_size)
