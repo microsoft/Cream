@@ -68,7 +68,8 @@ class DatasetSR(data.Dataset):
         # ------------------------------------
         # if train, get L/H patch pair
         # ------------------------------------
-        if self.opt['phase'] == 'train' or self.opt['phase'] == 'test':
+        # if self.opt['phase'] == 'train' or self.opt['phase'] == 'test':
+        if self.opt['phase'] == 'train':
 
             H, W, C = img_L.shape
 

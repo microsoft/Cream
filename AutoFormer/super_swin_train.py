@@ -233,21 +233,19 @@ def main(args):
             train_set = DatasetSR(dataset_opt)
             print('Dataset [{:s} - {:s}] is created.'.format(train_set.__class__.__name__, dataset_opt['name']))
             print(dataset_opt)
-            train_size = int(math.ceil(len(train_set) / dataset_opt['dataloader_batch_size']))
             if args.distributed:
                 num_tasks = utils.get_world_size()
                 global_rank = utils.get_rank()
                 # train_sampler = DistributedSampler(train_set, num_replicas=num_tasks, rank=global_rank, shuffle=True, drop_last=True, seed=seed)
-                train_sampler = DistributedSampler(train_set, num_replicas=num_tasks, rank=global_rank, shuffle=True, drop_last=True, seed=seed)
+                train_sampler = DistributedSampler(train_set, num_replicas=num_tasks, rank=global_rank, shuffle=dataset_opt['dataloader_shuffle'], drop_last=True, seed=seed)
             else:
                 train_sampler = torch.utils.data.RandomSampler(train_set)
             data_loader_train = DataLoader(
                 train_set, sampler=train_sampler,
-                batch_size=args.batch_size,
-                num_workers=args.num_workers,
+                batch_size=dataset_opt['dataloader_batch_size']//opt['num_gpu'],
+                num_workers=dataset_opt['dataloader_num_workers']//opt['num_gpu'],
                 pin_memory=args.pin_mem,
                 drop_last=True,
-                shuffle=False,
             )
         elif phase == 'valid' and args.mode == 'super':
             test_set = DatasetSR(dataset_opt)
@@ -262,7 +260,7 @@ def main(args):
             print('Dataset [{:s} - {:s}] is created.'.format(test_set.__class__.__name__, dataset_opt['name']))
             print(dataset_opt)
             data_loader_test = DataLoader(test_set, batch_size=1,
-                                     shuffle=False, num_workers=8,
+                                     shuffle=False, num_workers=4,
                                      drop_last=False, pin_memory=True)
 
     # mixup_fn = None
