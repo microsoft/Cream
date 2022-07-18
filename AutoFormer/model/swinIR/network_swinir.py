@@ -84,22 +84,27 @@ class Mlp(nn.Module):
         self.fc1 = LinearSuper(in_features, hidden_features)
         self.act = act_layer()
         self.fc2 = LinearSuper(hidden_features, out_features)
-        self.drop = nn.Dropout(drop)
+        # Note: We'll actually only end up using `sample_drop`. 
+        # `super_drop` is only for recording what was originally passed.
+        self.super_drop = drop
+        self.sample_drop = None
 
     def forward(self, x):
         x = self.fc1(x)
         x = self.act(x)
-        x = self.drop(x)
+        x = F.dropout(x, p=self.sample_drop, training=self.training)
         x = self.fc2(x)
-        x = self.drop(x)
+        x = F.dropout(x, p=self.sample_drop, training=self.training)
         return x
 
     def set_sample_config(self,
                           sample_embed_dim=None,
-                          sample_mlp_ratio=None
+                          sample_mlp_ratio=None,
+                          sample_drop=None,
                           ):
         self.fc1.set_sample_config(int(sample_embed_dim), int(sample_embed_dim * sample_mlp_ratio))
         self.fc2.set_sample_config(int(sample_embed_dim * sample_mlp_ratio), int(sample_embed_dim))
+        self.sample_drop = sample_drop
 
 
 def window_partition(x, window_size):
@@ -431,7 +436,7 @@ class SwinTransformerBlock(nn.Module):
         self.attn.set_sample_config(sample_embed_dim, sample_num_heads)
         self.norm1.set_sample_config(sample_embed_dim)
         self.norm2.set_sample_config(sample_embed_dim)
-        self.mlp.set_sample_config(sample_embed_dim, sample_mlp_ratio)
+        self.mlp.set_sample_config(sample_embed_dim, sample_mlp_ratio, sample_dropout)
 
 
 class PatchMerging(nn.Module):
@@ -966,8 +971,6 @@ class SwinIR(nn.Module):
             self.absolute_pos_embed = nn.Parameter(torch.zeros(1, num_patches, embed_dim))
             trunc_normal_(self.absolute_pos_embed, std=.02)
 
-        self.pos_drop = nn.Dropout(p=drop_rate)
-
         # stochastic depth
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]  # stochastic depth decay rule
 
@@ -1121,7 +1124,7 @@ class SwinIR(nn.Module):
         x = self.patch_embed(x)
         if self.ape:
             x = x + self.absolute_pos_embed
-        x = self.pos_drop(x)
+        x = F.dropout(x, p=self.sample_dropout, training=self.training)
 
         for layer in self.layers:
             x = layer(x, x_size)
