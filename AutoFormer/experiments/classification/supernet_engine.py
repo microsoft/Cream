@@ -6,7 +6,7 @@ import torch
 
 from timm.data import Mixup
 from timm.utils import accuracy, ModelEma
-from lib import utils
+from AutoFormer.lib import utils
 import random
 import time
 from loguru import logger

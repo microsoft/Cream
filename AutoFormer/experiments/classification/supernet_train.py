@@ -15,12 +15,12 @@ from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
 from timm.scheduler import create_scheduler
 from timm.optim import create_optimizer
 from timm.utils import NativeScaler
-from lib.datasets import build_dataset
-from experiments.classification.supernet_engine import train_one_epoch, evaluate
-from lib.samplers import RASampler
-from lib import utils
-from lib.config import cfg, update_config_from_file
-from model.vision_transformer.supernet_transformer import Vision_TransformerSuper
+from AutoFormer.lib.datasets import build_dataset
+from AutoFormer.experiments.classification.supernet_engine import train_one_epoch, evaluate
+from AutoFormer.lib.samplers import RASampler
+from AutoFormer.lib import utils
+from AutoFormer.lib.config import cfg, update_config_from_file
+from AutoFormer.model.vision_transformer.supernet_transformer import Vision_TransformerSuper
 
 logger.add(sys.stdout, level='DEBUG')
 def get_args_parser():
