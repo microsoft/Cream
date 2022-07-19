@@ -1,20 +1,25 @@
 import random
-
+import sys
 import numpy as np
 import time
 import torch
 import torch.backends.cudnn as cudnn
 from pathlib import Path
-
-from lib.datasets import build_dataset
 from lib import utils
 from experiments.super_resolution.supernet_engine import evaluate
 from model.swinIR.network_swinir import SwinIR
+from data.dataset_sr import DatasetSR
+from torch.utils.data.distributed import DistributedSampler
 import argparse
 import os
 import yaml
+from loguru import logger
+from utils import utils_option as option
+from torch.utils.data import DataLoader
 from lib.config import cfg, update_config_from_file
 import json
+
+logger.add(sys.stdout, level='DEBUG')
 
 def decode_cand_tuple(cand_tuple):
     depth = cand_tuple[0]
@@ -471,76 +476,55 @@ def main(args):
     update_config_from_file(args.cfg)
     utils.init_distributed_mode(args)
 
-    device = torch.device(args.device)
-
     print(args)
     args_text = yaml.safe_dump(args.__dict__, default_flow_style=False)
-    # save config for later experiments_configs
-    with open(os.path.join(args.output_dir, "config.yaml"), 'w') as f:
-        f.write(args_text)
-    # fix the seed for reproducibility
 
+    # For reading from .json file, major part of .json can be turned into commandline args
+    opt = option.parse(parser.parse_args().opt_doc, is_train=True)
+
+    border = opt['scale']
+    args.scale = border
+
+    device = torch.device(args.device)
+
+    # fix the seed for reproducibility
     seed = args.seed + utils.get_rank()
     torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(args.seed)
     cudnn.benchmark = True
 
+    # save config for later experiments_configs
+    with open(os.path.join(args.output_dir, "config.yaml"), 'w') as f:
+        f.write(args_text)
+
+
     args.prefetcher = not args.no_prefetcher
 
-    dataset_val, args.nb_classes = build_dataset(is_train=False, args=args, folder_name="subImageNet")
-    dataset_test, _ = build_dataset(is_train=False, args=args, folder_name="val")
+    for phase, dataset_opt in opt['datasets'].items():
 
-    if args.distributed:
-        num_tasks = utils.get_world_size()
-        global_rank = utils.get_rank()
-        if args.dist_eval:
-            if len(dataset_val) % num_tasks != 0:
-                print(
-                    'Warning: Enabling distributed evaluation with an eval dataset not divisible by process number. '
-                    'This will slightly alter validation results as extra duplicate entries are added to achieve '
-                    'equal num of samples per-process.')
-            sampler_val = torch.utils.data.DistributedSampler(
-                dataset_val, num_replicas=num_tasks, rank=global_rank, shuffle=False)
-            sampler_test = torch.utils.data.DistributedSampler(
-                dataset_test, num_replicas=num_tasks, rank=global_rank, shuffle=False)
-        else:
-            sampler_val = torch.utils.data.SequentialSampler(dataset_val)
-            sampler_test = torch.utils.data.SequentialSampler(dataset_test)
-    else:
-        sampler_val = torch.utils.data.SequentialSampler(dataset_val)
-        sampler_test = torch.utils.data.SequentialSampler(dataset_test)
+        if phase == 'valid':
+            valid_set = DatasetSR(dataset_opt)
+            logger.debug('Dataset [{:s} - {:s}] is created.'.format(test_set.__class__.__name__, dataset_opt['name']))
+            logger.debug(f"dataset opt:{dataset_opt}")
+            data_loader_valid = DataLoader(valid_set, batch_size=1,
+                                          shuffle=False, num_workers=8,
+                                          drop_last=False, pin_memory=True)
 
-    data_loader_test = torch.utils.data.DataLoader(
-        dataset_test, batch_size=int(2 * args.batch_size),
-        sampler=sampler_test, num_workers=args.num_workers,
-        pin_memory=args.pin_mem, drop_last=False
-    )
+        if phase == 'test':
+            test_set = DatasetSR(dataset_opt)
+            logger.debug('Dataset [{:s} - {:s}] is created.'.format(test_set.__class__.__name__, dataset_opt['name']))
+            logger.debug(f"dataset opt:{dataset_opt}")
+            data_loader_test = DataLoader(test_set, batch_size=1,
+                                          shuffle=False, num_workers=4,
+                                          drop_last=False, pin_memory=True)
 
-    data_loader_val = torch.utils.data.DataLoader(
-        dataset_val, batch_size=int(2 * args.batch_size),
-        sampler=sampler_val, num_workers=args.num_workers,
-        pin_memory=args.pin_mem, drop_last=False
-    )
 
-    print(f"Creating SwinTransformer")
+
+
+    print(f"Creating SwinIRTransformer")
     print(cfg)
-    # model = SwinIR(img_size=,
-    #                                 patch_size=args.patch_size,
-    #                                 embed_dim=cfg.SUPERNET.EMBED_DIM, depth=cfg.SUPERNET.DEPTH,
-    #                                 num_heads=cfg.SUPERNET.NUM_HEADS,mlp_ratio=cfg.SUPERNET.MLP_RATIO,
-    #                                 qkv_bias=True, drop_rate=args.drop,
-    #                                 drop_path_rate=args.drop_path,
-    #                                 #Todo: figure out usage of gp
-    #                                 #gp=args.gp
-    #
-    #                                 )
-    # Todo: assume equal num_head ~ open for discussion
-
-    model = SwinIR(upscale=args.scale, in_chans=3, img_size=args.input_size, window_size=8,
-                   img_range=1., depths=[cfg.SUPERNET.DEPTH] * 4,
-                   embed_dim=cfg.SUPERNET.EMBED_DIM, num_heads=[cfg.SUPERNET.NUM_HEADS] * 4,
-                   mlp_ratio=cfg.SUPERNET.MLP_RATIO, upsampler='pixelshuffledirect', resi_connection='1conv')
+    opt_net = opt['netG']
     model = SwinIR(img_size=opt_net['img_size'],
                    window_size=opt_net['window_size'],
                    depths= cfg.SUPERNET.DEPTHS,
@@ -571,7 +555,7 @@ def main(args):
                'stl_num': cfg.SEARCH_SPACE.STL_NUM }
 
     t = time.time()
-    searcher = EvolutionSearcher(args, device, model, model_without_ddp, choices, data_loader_val, data_loader_test,
+    searcher = EvolutionSearcher(args, device, model, model_without_ddp, choices, data_loader_valid, data_loader_test,
                                  args.output_dir)
 
     searcher.search()
