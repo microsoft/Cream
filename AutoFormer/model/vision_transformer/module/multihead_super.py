@@ -3,7 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 from .Linear_super import LinearSuper
 from .qkv_super import qkv_super
-from AutoFormer.model.vision_transformer.utils import trunc_normal_
+from model.vision_transformer.utils import trunc_normal_
 
 def softmax(x, dim, onnx_trace=False):
     if onnx_trace:

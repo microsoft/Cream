@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from AutoFormer.model.vision_transformer.utils import to_2tuple
+from model.vision_transformer.utils import to_2tuple
 import numpy as np
 
 class PatchembedSuper(nn.Module):
