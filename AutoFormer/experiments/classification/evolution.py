@@ -8,7 +8,7 @@ from pathlib import Path
 from loguru import logger
 from lib.datasets import build_dataset
 from lib import utils
-from supernet_imagenet_engine import evaluate
+from experiments.classification.supernet_engine import evaluate
 from model.vision_transformer.supernet_transformer import Vision_TransformerSuper
 import argparse
 import os
@@ -471,10 +471,10 @@ def main(args):
 
     logger.debug(args)
     args_text = yaml.safe_dump(args.__dict__, default_flow_style=False)
-    # save config for later experiments
+    # save config for later experiments_configs
 
     #self.output_dir = args.output_dir
-    with open(os.path.join(args.output_dir, "config.yaml"), 'w') as f:
+    with open(os.path.join(args.output_dir, "../../config.yaml"), 'w') as f:
         f.write(args_text)
     # fix the seed for reproducibility
 

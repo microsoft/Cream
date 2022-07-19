@@ -3,23 +3,16 @@ import datetime
 import numpy as np
 import time
 import torch
-import math
 import torch.backends.cudnn as cudnn
 import json
 import yaml
 from pathlib import Path
-from timm.data import Mixup
-from timm.models import create_model
-from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
 from timm.scheduler import create_scheduler
 from timm.optim import create_optimizer
 from timm.utils import NativeScaler
-from lib.datasets import build_dataset
-from supernet_engine import train_one_epoch, evaluate, sample_configs_swinir
-from lib.samplers import RASampler
+from experiments.super_resolution.supernet_engine import train_one_epoch, evaluate, sample_configs_swinir
 from lib import utils
 from lib.config import cfg, update_config_from_file
-from model.vision_transformer.supernet_transformer import Vision_TransformerSuper
 from utils import utils_option as option
 # from models.model_plain import ModelPlain
 from torch.utils.data import DataLoader
@@ -32,9 +25,11 @@ def get_args_parser():
     parser.add_argument('--batch-size', default=16, type=int)
     parser.add_argument('--epochs', default=300, type=int)
     # config file
+
     parser.add_argument('--cfg',help='experiment configure file name',type=str, default='./experiments/supernet-swinir/supernet-T.yaml')
 
     parser.add_argument('--opt-doc', type=str, default='./experiments/train_swinir_sr_lightweight.json', help='Path to option JSON file for SwinIR.')
+
     # custom parameters
     parser.add_argument('--platform', default='pai', type=str, choices=['itp', 'pai', 'aml'],
                         help='Name of model to train')
@@ -333,7 +328,7 @@ def main(args):
 
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
-    # save config for later experiments
+    # save config for later experiments_configs
     with open(output_dir / "config.yaml", 'w') as f:
         f.write(args_text)
     if args.resume:

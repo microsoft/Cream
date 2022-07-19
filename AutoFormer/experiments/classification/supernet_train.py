@@ -1,5 +1,4 @@
 import argparse
-import os
 import datetime
 import numpy as np
 import time
@@ -17,7 +16,7 @@ from timm.scheduler import create_scheduler
 from timm.optim import create_optimizer
 from timm.utils import NativeScaler
 from lib.datasets import build_dataset
-from supernet_imagenet_engine import train_one_epoch, evaluate
+from experiments.classification.supernet_engine import train_one_epoch, evaluate
 from lib.samplers import RASampler
 from lib import utils
 from lib.config import cfg, update_config_from_file
@@ -29,7 +28,7 @@ def get_args_parser():
     parser.add_argument('--batch-size', default=64, type=int)
     parser.add_argument('--epochs', default=300, type=int)
     # config file
-    parser.add_argument('--cfg',help='experiment configure file name',required=True,type=str)
+    parser.add_argument('--cfg', help='experiment configure file name', required=True, type=str)
 
     # custom parameters
     parser.add_argument('--platform', default='pai', type=str, choices=['itp', 'pai', 'aml'],
@@ -39,7 +38,7 @@ def get_args_parser():
     parser.add_argument('--relative_position', action='store_true')
     parser.add_argument('--gp', action='store_true')
     parser.add_argument('--change_qkv', action='store_true')
-    parser.add_argument('--max_relative_position', type=int, default=14, help='max distance in relative position embedding')
+    parser.add_argument('--max_relative_position', type=int, default=14, help= 'max distance in relative position embedding')
 
     # Model parameters
     parser.add_argument('--model', default='', type=str, metavar='MODEL',
@@ -313,7 +312,7 @@ def main(args):
 
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
-    # save config for later experiments
+    # save config for later experiments_configs
     with open(output_dir / "config.yaml", 'w') as f:
         f.write(args_text)
     if args.resume:
@@ -337,7 +336,7 @@ def main(args):
         retrain_config = {'layer_num': cfg.RETRAIN.DEPTH, 'embed_dim': [cfg.RETRAIN.EMBED_DIM]*cfg.RETRAIN.DEPTH,
                           'num_heads': cfg.RETRAIN.NUM_HEADS,'mlp_ratio': cfg.RETRAIN.MLP_RATIO}
     if args.eval:
-        test_stats = evaluate(data_loader_val, model, device,  mode = args.mode, retrain_config=retrain_config)
+        test_stats = evaluate(data_loader_val, model, device, mode=args.mode, retrain_config=retrain_config)
         logger.debug(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
         return
 

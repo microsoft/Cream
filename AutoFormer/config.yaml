@@ -1,7 +1,7 @@
 aa: rand-m9-mstd0.5-inc1
 amp: true
 batch_size: 64
-cfg: ./experiments/imagenet_supernet/supernet-T.yaml
+cfg: ./experiments_configs/classification/supernet-T.yaml
 change_qkv: true
 clip_grad: null
 color_jitter: 0.4

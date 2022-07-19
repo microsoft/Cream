@@ -8,8 +8,8 @@ from pathlib import Path
 
 from lib.datasets import build_dataset
 from lib import utils
-from supernet_engine import evaluate
-from .network_swinir import SwinIR
+from experiments.super_resolution.supernet_engine import evaluate
+from model.swinIR.network_swinir import SwinIR
 import argparse
 import os
 import yaml
@@ -470,7 +470,7 @@ def main(args):
 
     print(args)
     args_text = yaml.safe_dump(args.__dict__, default_flow_style=False)
-    # save config for later experiments
+    # save config for later experiments_configs
     with open(os.path.join(args.output_dir, "config.yaml"), 'w') as f:
         f.write(args_text)
     # fix the seed for reproducibility
