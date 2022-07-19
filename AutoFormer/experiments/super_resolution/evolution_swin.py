@@ -14,7 +14,7 @@ import argparse
 import os
 import yaml
 from lib.config import cfg, update_config_from_file
-
+import json
 
 def decode_cand_tuple(cand_tuple):
     depth = cand_tuple[0]
@@ -273,6 +273,11 @@ class EvolutionSearcher(object):
                     i + 1, cand, self.vis_dict[cand]['acc'], self.vis_dict[cand]['test_acc'],
                     self.vis_dict[cand]['params']))
                 tmp_accuracy.append(self.vis_dict[cand]['acc'])
+                with open('swinir_search.json', 'a+')as f:
+                    json.dump({'epoch': self.epoch, 'rank': i+1, 'val_acc_1': self.vis_dict[cand]['acc'],
+                               'test_acc_1': self.vis_dict[cand]['test_acc'], 'params': self.vis_dict[cand]['params'], 'cand': cand}, f)
+
+                    f.write("\n")
             self.top_accuracies.append(tmp_accuracy)
 
             mutation = self.get_mutation(
@@ -536,6 +541,13 @@ def main(args):
                    img_range=1., depths=[cfg.SUPERNET.DEPTH] * 4,
                    embed_dim=cfg.SUPERNET.EMBED_DIM, num_heads=[cfg.SUPERNET.NUM_HEADS] * 4,
                    mlp_ratio=cfg.SUPERNET.MLP_RATIO, upsampler='pixelshuffledirect', resi_connection='1conv')
+    model = SwinIR(img_size=opt_net['img_size'],
+                   window_size=opt_net['window_size'],
+                   depths= cfg.SUPERNET.DEPTHS,
+                   embed_dim= cfg.SUPERNET.EMBED_DIM,
+                   num_heads= cfg.SUPERNET.NUM_HEADS,
+                   mlp_ratio= cfg.SUPERNET.MLP_RATIO,
+                   upsampler=opt_net['upsampler'])
 
     model.to(device)
     model_without_ddp = model
@@ -555,7 +567,8 @@ def main(args):
         model_without_ddp.load_state_dict(checkpoint['model'])
 
     choices = {'num_heads': cfg.SEARCH_SPACE.NUM_HEADS, 'mlp_ratio': cfg.SEARCH_SPACE.MLP_RATIO,
-               'embed_dim': cfg.SEARCH_SPACE.EMBED_DIM, 'depth': cfg.SEARCH_SPACE.DEPTH}
+               'embed_dim': cfg.SEARCH_SPACE.EMBED_DIM, 'rstb_num': cfg.SEARCH_SPACE.RSTB_NUM,
+               'stl_num': cfg.SEARCH_SPACE.STL_NUM }
 
     t = time.time()
     searcher = EvolutionSearcher(args, device, model, model_without_ddp, choices, data_loader_val, data_loader_test,

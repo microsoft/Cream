@@ -53,6 +53,7 @@ if __name__ == "__main__":
     print(data_df)
 
     epochs = data_df['epoch']
+    num_params = data_df['params']
     test_acc1 = data_df['test_acc_1']
 
     plt.xlabel('Epochs')
@@ -63,4 +64,14 @@ if __name__ == "__main__":
 
     plt.tight_layout()
     plt.savefig(f'test_acc_for_top_50_every_epoch.pdf', dpi=450)
+    plt.show()
+
+    plt.xlabel('Params')
+    plt.ylabel('Test accuracy')
+    print(num_params)
+    print(test_acc1)
+    plt.scatter(num_params, test_acc1, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(f'acc_vs_params_for_highperf_cand.pdf', dpi=450)
     plt.show()

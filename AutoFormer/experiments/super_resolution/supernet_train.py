@@ -20,15 +20,18 @@ from data.dataset_sr import DatasetSR
 from torch.utils.data.distributed import DistributedSampler
 from model.swinIR.network_swinir import SwinIR
 
+
 def get_args_parser():
     parser = argparse.ArgumentParser('AutoFormer training and evaluation script', add_help=False)
     parser.add_argument('--batch-size', default=16, type=int)
     parser.add_argument('--epochs', default=300, type=int)
     # config file
 
-    parser.add_argument('--cfg',help='experiment configure file name',type=str, default='./experiments/supernet-swinir/supernet-T.yaml')
+    parser.add_argument('--cfg', help='experiment configure file name', type=str,
+                        default='./experiments/supernet-swinir/supernet-T.yaml')
 
-    parser.add_argument('--opt-doc', type=str, default='./experiments/train_swinir_sr_lightweight.json', help='Path to option JSON file for SwinIR.')
+    parser.add_argument('--opt-doc', type=str, default='./experiments/train_swinir_sr_lightweight.json',
+                        help='Path to option JSON file for SwinIR.')
 
     # custom parameters
     parser.add_argument('--platform', default='pai', type=str, choices=['itp', 'pai', 'aml'],
@@ -38,7 +41,8 @@ def get_args_parser():
     parser.add_argument('--relative_position', action='store_true')
     parser.add_argument('--gp', action='store_true')
     parser.add_argument('--change_qkv', action='store_true')
-    parser.add_argument('--max_relative_position', type=int, default=14, help='max distance in relative position embedding')
+    parser.add_argument('--max_relative_position', type=int, default=14,
+                        help='max distance in relative position embedding')
 
     # Model parameters
     parser.add_argument('--model', default='', type=str, metavar='MODEL',
@@ -122,7 +126,6 @@ def get_args_parser():
     parser.add_argument('--repeated-aug', action='store_true')
     parser.add_argument('--no-repeated-aug', action='store_false', dest='repeated_aug')
 
-
     parser.set_defaults(repeated_aug=True)
 
     # * Random Erase params
@@ -184,28 +187,18 @@ def get_args_parser():
     parser.add_argument('--no-amp', action='store_false', dest='amp')
     parser.set_defaults(amp=True)
 
-
     return parser
 
-def main(args):
 
+def main(args):
     utils.init_distributed_mode(args)
     update_config_from_file(args.cfg)
 
     print(args)
     args_text = yaml.safe_dump(args.__dict__, default_flow_style=False)
-    test_dataset_opt = None
 
     # For reading from .json file, major part of .json can be turned into commandline args
     opt = option.parse(parser.parse_args().opt_doc, is_train=True)
-    #init_iter_G, init_path_G = option.find_last_checkpoint(opt['path']['models'], net_type='G')
-
-    #init_iter_E, init_path_E = option.find_last_checkpoint(opt['path']['models'], net_type='E')
-    #opt['path']['pretrained_netG'] = init_path_G
-    #opt['path']['pretrained_netE'] = init_path_E
-    #init_iter_optimizerG, init_path_optimizerG = option.find_last_checkpoint(opt['path']['models'], net_type='optimizerG')
-    #opt['path']['pretrained_optimizerG'] = init_path_optimizerG
-    #current_step = max(init_iter_G, init_iter_E, init_iter_optimizerG)
 
     border = opt['scale']
     args.scale = border
@@ -216,12 +209,8 @@ def main(args):
     seed = args.seed + utils.get_rank()
     torch.manual_seed(seed)
     np.random.seed(seed)
-    #random.seed(seed)
+    # random.seed(seed)
     cudnn.benchmark = True
-
-    # Method only specific to DIV2K - Need to change
-    # dataset_train, args.nb_classes = build_dataset(is_train=True, args=args)
-    # dataset_val, _ = build_dataset(is_train=False, args=args)
 
     for phase, dataset_opt in opt['datasets'].items():
         if phase == 'train':
@@ -232,13 +221,14 @@ def main(args):
                 num_tasks = utils.get_world_size()
                 global_rank = utils.get_rank()
                 # train_sampler = DistributedSampler(train_set, num_replicas=num_tasks, rank=global_rank, shuffle=True, drop_last=True, seed=seed)
-                train_sampler = DistributedSampler(train_set, num_replicas=num_tasks, rank=global_rank, shuffle=dataset_opt['dataloader_shuffle'], drop_last=True, seed=seed)
+                train_sampler = DistributedSampler(train_set, num_replicas=num_tasks, rank=global_rank,
+                                                   shuffle=dataset_opt['dataloader_shuffle'], drop_last=True, seed=seed)
             else:
                 train_sampler = torch.utils.data.RandomSampler(train_set)
             data_loader_train = DataLoader(
                 train_set, sampler=train_sampler,
-                batch_size=dataset_opt['dataloader_batch_size']//opt['num_gpu'],
-                num_workers=dataset_opt['dataloader_num_workers']//opt['num_gpu'],
+                batch_size=dataset_opt['dataloader_batch_size'] // opt['num_gpu'],
+                num_workers=dataset_opt['dataloader_num_workers'] // opt['num_gpu'],
                 pin_memory=args.pin_mem,
                 drop_last=True,
             )
@@ -247,52 +237,33 @@ def main(args):
             print('Dataset [{:s} - {:s}] is created.'.format(test_set.__class__.__name__, dataset_opt['name']))
             print(dataset_opt)
             data_loader_test = DataLoader(test_set, batch_size=1,
-                                     shuffle=False, num_workers=8,
-                                     drop_last=False, pin_memory=True)
+                                          shuffle=False, num_workers=8,
+                                          drop_last=False, pin_memory=True)
 
         elif phase == 'test' and args.mode == 'retrain':
             test_set = DatasetSR(dataset_opt)
             print('Dataset [{:s} - {:s}] is created.'.format(test_set.__class__.__name__, dataset_opt['name']))
             print(dataset_opt)
             data_loader_test = DataLoader(test_set, batch_size=1,
-                                     shuffle=False, num_workers=4,
-                                     drop_last=False, pin_memory=True)
-
-    # mixup_fn = None
-    # mixup_active = args.mixup > 0 or args.cutmix > 0. or args.cutmix_minmax is not None
-    # if mixup_active:
-    #     mixup_fn = Mixup(
-    #         mixup_alpha=args.mixup, cutmix_alpha=args.cutmix, cutmix_minmax=args.cutmix_minmax,
-    #         prob=args.mixup_prob, switch_prob=args.mixup_switch_prob, mode=args.mixup_mode,
-    #         label_smoothing=args.smoothing, num_classes=args.nb_classes)
+                                          shuffle=False, num_workers=4,
+                                          drop_last=False, pin_memory=True)
 
     print(f"Creating SwinIRTransformer")
     print(cfg)
     opt_net = opt['netG']
     model = SwinIR(img_size=opt_net['img_size'],
                    window_size=opt_net['window_size'],
-                   depths= cfg.SUPERNET.DEPTHS, 
-                   embed_dim= cfg.SUPERNET.EMBED_DIM, 
-                   num_heads= cfg.SUPERNET.NUM_HEADS, 
-                   mlp_ratio= cfg.SUPERNET.MLP_RATIO,
+                   depths=cfg.SUPERNET.DEPTHS,
+                   embed_dim=cfg.SUPERNET.EMBED_DIM,
+                   num_heads=cfg.SUPERNET.NUM_HEADS,
+                   mlp_ratio=cfg.SUPERNET.MLP_RATIO,
                    upsampler=opt_net['upsampler'])
 
     choices = {'num_heads': cfg.SEARCH_SPACE.NUM_HEADS, 'mlp_ratio': cfg.SEARCH_SPACE.MLP_RATIO,
                'embed_dim': cfg.SEARCH_SPACE.EMBED_DIM, 'rstb_num': cfg.SEARCH_SPACE.RSTB_NUM,
-               'stl_num': cfg.SEARCH_SPACE.STL_NUM }
+               'stl_num': cfg.SEARCH_SPACE.STL_NUM}
 
     model.to(device)
-    # if args.teacher_model:
-    #     teacher_model = create_model(
-    #         args.teacher_model,
-    #         pretrained=True,
-    #         num_classes=args.nb_classes,
-    #     )
-    #     teacher_model.to(device
-    #     teacher_loss = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
-    # else:
-    #     teacher_model = None
-    #     teacher_loss = None
 
     teacher_model = None
     teacher_loss = None
@@ -300,7 +271,6 @@ def main(args):
 
     model_without_ddp = model
     if args.distributed:
-
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=True)
         model_without_ddp = model.module
 
@@ -315,14 +285,6 @@ def main(args):
 
     # TODO: Adapt criterion based on the arg in json file 
     criterion = torch.nn.L1Loss()
-
-    # if args.mixup > 0.:
-    #     # smoothing is handled with mixup label transform
-    #     criterion = SoftTargetCrossEntropy()
-    # elif args.smoothing:
-    #     criterion = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
-    # else:
-    #     criterion = torch.nn.CrossEntropyLoss()
 
     output_dir = Path(args.output_dir)
 
@@ -349,10 +311,11 @@ def main(args):
 
     retrain_config = None
     if args.mode == 'retrain' and "RETRAIN" in cfg:
-        retrain_config = {'layer_num': cfg.RETRAIN.DEPTH, 'embed_dim': [cfg.RETRAIN.EMBED_DIM]*cfg.RETRAIN.DEPTH,
-                          'num_heads': cfg.RETRAIN.NUM_HEADS,'mlp_ratio': cfg.RETRAIN.MLP_RATIO}
+        retrain_config = {'layer_num': cfg.RETRAIN.DEPTH, 'embed_dim': [cfg.RETRAIN.EMBED_DIM] * cfg.RETRAIN.DEPTH,
+                          'num_heads': cfg.RETRAIN.NUM_HEADS, 'mlp_ratio': cfg.RETRAIN.MLP_RATIO}
     if args.eval:
-        test_stats = evaluate(data_loader_test, model, device,  mode = args.mode, retrain_config=retrain_config, scaling=args.scale)
+        test_stats = evaluate(data_loader_test, model, device, mode=args.mode, retrain_config=retrain_config,
+                              scaling=args.scale)
         print(f"PSNR of the network on the {len(test_set)} test images: {test_stats['psnr']:.1f}%")
         return
 
@@ -370,7 +333,7 @@ def main(args):
             args.clip_grad, model_ema, None,
             amp=args.amp, teacher_model=teacher_model,
             teach_loss=teacher_loss,
-            choices=choices, mode = args.mode, retrain_config=retrain_config,
+            choices=choices, mode=args.mode, retrain_config=retrain_config,
             sampler=sample_configs_swinir,
         )
 
@@ -388,7 +351,8 @@ def main(args):
                     'args': args,
                 }, checkpoint_path)
 
-        test_stats = evaluate(data_loader_test, model, device, amp=args.amp, choices=choices, mode = args.mode, retrain_config=retrain_config)
+        test_stats = evaluate(data_loader_test, model, device, amp=args.amp, choices=choices, mode=args.mode,
+                              retrain_config=retrain_config)
         max_psnr = max(max_psnr, test_stats["psnr"])
         print(f'Max psnr: {max_psnr:.2f}%')
 

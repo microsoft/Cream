@@ -22,6 +22,7 @@ from AutoFormer.lib import utils
 from AutoFormer.lib.config import cfg, update_config_from_file
 from AutoFormer.model.vision_transformer.supernet_transformer import Vision_TransformerSuper
 
+
 logger.add(sys.stdout, level='DEBUG')
 def get_args_parser():
     parser = argparse.ArgumentParser('AutoFormer training and evaluation script', add_help=False)
