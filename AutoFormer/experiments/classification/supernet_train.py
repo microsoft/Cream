@@ -28,7 +28,7 @@ def get_args_parser():
     parser.add_argument('--batch-size', default=64, type=int)
     parser.add_argument('--epochs', default=300, type=int)
     # config file
-    parser.add_argument('--cfg',help='experiment configure file name',required=True,type=str)
+    parser.add_argument('--cfg', help='experiment configure file name', required=True, type=str)
 
     # custom parameters
     parser.add_argument('--platform', default='pai', type=str, choices=['itp', 'pai', 'aml'],
@@ -38,7 +38,7 @@ def get_args_parser():
     parser.add_argument('--relative_position', action='store_true')
     parser.add_argument('--gp', action='store_true')
     parser.add_argument('--change_qkv', action='store_true')
-    parser.add_argument('--max_relative_position', type=int, default=14, help='max distance in relative position embedding')
+    parser.add_argument('--max_relative_position', type=int, default=14, help= 'max distance in relative position embedding')
 
     # Model parameters
     parser.add_argument('--model', default='', type=str, metavar='MODEL',
@@ -336,7 +336,7 @@ def main(args):
         retrain_config = {'layer_num': cfg.RETRAIN.DEPTH, 'embed_dim': [cfg.RETRAIN.EMBED_DIM]*cfg.RETRAIN.DEPTH,
                           'num_heads': cfg.RETRAIN.NUM_HEADS,'mlp_ratio': cfg.RETRAIN.MLP_RATIO}
     if args.eval:
-        test_stats = evaluate(data_loader_val, model, device,  mode = args.mode, retrain_config=retrain_config)
+        test_stats = evaluate(data_loader_val, model, device, mode=args.mode, retrain_config=retrain_config)
         logger.debug(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
         return
 

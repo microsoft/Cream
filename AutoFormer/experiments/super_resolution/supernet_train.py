@@ -10,7 +10,7 @@ from pathlib import Path
 from timm.scheduler import create_scheduler
 from timm.optim import create_optimizer
 from timm.utils import NativeScaler
-from experiments.super_resolution.supernet_swin_engine import train_one_epoch, evaluate, sample_configs_swinir
+from experiments.super_resolution.supernet_engine import train_one_epoch, evaluate, sample_configs_swinir
 from lib import utils
 from lib.config import cfg, update_config_from_file
 from utils import utils_option as option

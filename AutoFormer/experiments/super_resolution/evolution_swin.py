@@ -8,8 +8,8 @@ from pathlib import Path
 
 from lib.datasets import build_dataset
 from lib import utils
-from experiments.super_resolution.supernet_swin_engine import evaluate
-from .network_swinir import SwinIR
+from experiments.super_resolution.supernet_engine import evaluate
+from model.swinIR.network_swinir import SwinIR
 import argparse
 import os
 import yaml
