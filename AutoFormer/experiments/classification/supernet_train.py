@@ -3,10 +3,11 @@ import datetime
 import numpy as np
 import time
 import torch
-import math
 import torch.backends.cudnn as cudnn
 import json
 import yaml
+import sys
+from loguru import logger
 from pathlib import Path
 from timm.data import Mixup
 from timm.models import create_model
@@ -15,26 +16,20 @@ from timm.scheduler import create_scheduler
 from timm.optim import create_optimizer
 from timm.utils import NativeScaler
 from lib.datasets import build_dataset
-from supernet_engine import train_one_epoch, evaluate, sample_configs_swinir
+from experiments.classification.supernet_engine import train_one_epoch, evaluate
 from lib.samplers import RASampler
 from lib import utils
 from lib.config import cfg, update_config_from_file
 from model.vision_transformer.supernet_transformer import Vision_TransformerSuper
-from utils import utils_option as option
-# from models.model_plain import ModelPlain
-from torch.utils.data import DataLoader
-from data.dataset_sr import DatasetSR
-from torch.utils.data.distributed import DistributedSampler
-from model.swinIR.network_swinir import SwinIR
 
+logger.add(sys.stdout, level='DEBUG')
 def get_args_parser():
     parser = argparse.ArgumentParser('AutoFormer training and evaluation script', add_help=False)
-    parser.add_argument('--batch-size', default=16, type=int)
+    parser.add_argument('--batch-size', default=64, type=int)
     parser.add_argument('--epochs', default=300, type=int)
     # config file
-    parser.add_argument('--cfg',help='experiment configure file name',type=str, default='/home/ajesh/Projects/DL-lab/Main-Project/AutoFormer/AutoFormer/experiments/supernet-swinir/supernet-T.yaml')
+    parser.add_argument('--cfg',help='experiment configure file name',required=True,type=str)
 
-    parser.add_argument('--opt-doc', type=str, default='/home/ajesh/Projects/DL-lab/Main-Project/AutoFormer/AutoFormer/experiments/train_swinir_sr_lightweight.json', help='Path to option JSON file for SwinIR.')
     # custom parameters
     parser.add_argument('--platform', default='pai', type=str, choices=['itp', 'pai', 'aml'],
                         help='Name of model to train')
@@ -50,8 +45,8 @@ def get_args_parser():
                         help='Name of model to train')
     # AutoFormer config
     parser.add_argument('--mode', type=str, default='super', choices=['super', 'retrain'], help='mode of AutoFormer')
-    parser.add_argument('--input-size', default=64, type=int)
-    parser.add_argument('--patch_size', default=8, type=int)
+    parser.add_argument('--input-size', default=224, type=int)
+    parser.add_argument('--patch_size', default=16, type=int)
 
     parser.add_argument('--drop', type=float, default=0.0, metavar='PCT',
                         help='Dropout rate (default: 0.)')
@@ -70,49 +65,47 @@ def get_args_parser():
     parser.add_argument('--no_abs_pos', action='store_true')
 
     # Optimizer parameters
-    parser.add_argument('--opt', default='adam', type=str, metavar='OPTIMIZER',
-                        help='Optimizer (default: "adam"')
-    # parser.add_argument('--opt-eps', default=1e-8, type=float, metavar='EPSILON',
-    #                     help='Optimizer Epsilon (default: 1e-8)')
-    # parser.add_argument('--opt-betas', default=None, type=float, nargs='+', metavar='BETA',
-    #                     help='Optimizer Betas (default: None, use opt default)')
+    parser.add_argument('--opt', default='adamw', type=str, metavar='OPTIMIZER',
+                        help='Optimizer (default: "adamw"')
+    parser.add_argument('--opt-eps', default=1e-8, type=float, metavar='EPSILON',
+                        help='Optimizer Epsilon (default: 1e-8)')
+    parser.add_argument('--opt-betas', default=None, type=float, nargs='+', metavar='BETA',
+                        help='Optimizer Betas (default: None, use opt default)')
     parser.add_argument('--clip-grad', type=float, default=None, metavar='NORM',
                         help='Clip gradient norm (default: None, no clipping)')
-    parser.add_argument('--momentum', type=float, default=0.999, metavar='M',
-                        help='SGD momentum (default: 0.999)')
-    parser.add_argument('--weight-decay', type=float, default=0,
-                        help='weight decay (default: 0)')
+    parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
+                        help='SGD momentum (default: 0.9)')
+    parser.add_argument('--weight-decay', type=float, default=0.05,
+                        help='weight decay (default: 0.05)')
 
     # Learning rate schedule parameters
-    parser.add_argument('--sched', default='step', type=str, metavar='SCHEDULER',
-                        help='MultiStepLR (default: "multistep"')
-    parser.add_argument('--lr', type=float, default=2e-4, metavar='LR',
-                        help='learning rate (default: 2e-4)')
-    # parser.add_argument('--lr-noise', type=float, nargs='+', default=None, metavar='pct, pct',
-    #                     help='learning rate noise on/off epoch percentages')
-    # parser.add_argument('--lr-noise-pct', type=float, default=0.67, metavar='PERCENT',
-    #                     help='learning rate noise limiThis should bet percent (default: 0.67)')
-    # parser.add_argument('--lr-noise-std', type=float, default=1.0, metavar='STDDEV',
-    #                     help='learning rate noise std-dev (default: 1.0)')
-    parser.add_argument('--warmup-lr', type=float, default=0, metavar='LR',
+    parser.add_argument('--sched', default='cosine', type=str, metavar='SCHEDULER',
+                        help='LR scheduler (default: "cosine"')
+    parser.add_argument('--lr', type=float, default=5e-4, metavar='LR',
+                        help='learning rate (default: 5e-4)')
+    parser.add_argument('--lr-noise', type=float, nargs='+', default=None, metavar='pct, pct',
+                        help='learning rate noise on/off epoch percentages')
+    parser.add_argument('--lr-noise-pct', type=float, default=0.67, metavar='PERCENT',
+                        help='learning rate noise limit percent (default: 0.67)')
+    parser.add_argument('--lr-noise-std', type=float, default=1.0, metavar='STDDEV',
+                        help='learning rate noise std-dev (default: 1.0)')
+    parser.add_argument('--warmup-lr', type=float, default=1e-6, metavar='LR',
                         help='warmup learning rate (default: 1e-6)')
-    # parser.add_argument('--min-lr', type=float, default=1e-5, metavar='LR',
-    #                     help='lower lr bound for cyclic schedulers that hit 0 (1e-5)')
-    # parser.add_argument('--lr-power', type=float, default=1.0,
-    #                     help='power of the polynomial lr scheduler')
+    parser.add_argument('--min-lr', type=float, default=1e-5, metavar='LR',
+                        help='lower lr bound for cyclic schedulers that hit 0 (1e-5)')
+    parser.add_argument('--lr-power', type=float, default=1.0,
+                        help='power of the polynomial lr scheduler')
 
-    parser.add_argument('--decay-epochs', type=float, default=50, metavar='N',
+    parser.add_argument('--decay-epochs', type=float, default=30, metavar='N',
                         help='epoch interval to decay LR')
-    parser.add_argument('--warmup-epochs', type=int, default=0, metavar='N',
+    parser.add_argument('--warmup-epochs', type=int, default=5, metavar='N',
                         help='epochs to warmup LR, if scheduler supports')
-    # parser.add_argument('--cooldown-epochs', type=int, default=10, metavar='N',
-    #                     help='epochs to cooldown LR at min_lr, after cyclic schedule ends')
-    # parser.add_argument('--patience-epochs', type=int, default=10, metavar='N',
-    #                     help='patience epochs for Plateau LR scheduler (default: 10')
-    parser.add_argument('--decay-rate', '--dr', type=float, default=0.5, metavar='RATE',
-                        help='LR decay rate (default: 0.5)')
-    # parser.add_argument('--decay-milestones', '--dmile', type=list, default=[50, 100, 150, 200, 250], metavar='MILESTONES',
-    #                     help='LR decay milestones (default: [50, 100, 150, 200, 250])')
+    parser.add_argument('--cooldown-epochs', type=int, default=10, metavar='N',
+                        help='epochs to cooldown LR at min_lr, after cyclic schedule ends')
+    parser.add_argument('--patience-epochs', type=int, default=10, metavar='N',
+                        help='patience epochs for Plateau LR scheduler (default: 10')
+    parser.add_argument('--decay-rate', '--dr', type=float, default=0.1, metavar='RATE',
+                        help='LR decay rate (default: 0.1)')
 
     # Augmentation parameters
     parser.add_argument('--color-jitter', type=float, default=0.4, metavar='PCT',
@@ -155,9 +148,9 @@ def get_args_parser():
                         help='How to apply mixup/cutmix params. Per "batch", "pair", or "elem"')
 
     # Dataset parameters
-    parser.add_argument('--data-path', default='./data/imagenet/', type=str,
+    parser.add_argument('--data-path', default='./data/cifar-100/', type=str,
                         help='dataset path')
-    parser.add_argument('--data-set', default='IMNET', choices=['CIFAR', 'IMNET', 'INAT', 'INAT19'],
+    parser.add_argument('--data-set', default='CIFAR', choices=['CIFAR100', 'IMNET', 'INAT', 'INAT19'],
                         type=str, help='Image Net dataset path')
     parser.add_argument('--inat-category', default='name',
                         choices=['kingdom', 'phylum', 'class', 'order', 'supercategory', 'family', 'genus', 'name'],
@@ -165,7 +158,7 @@ def get_args_parser():
 
     parser.add_argument('--output_dir', default='./',
                         help='path where to save, empty for no saving')
-    parser.add_argument('--device', default='cuda',
+    parser.add_argument('--device', default='cuda:0',
                         help='device to use for training / testing')
     parser.add_argument('--seed', default=0, type=int)
     parser.add_argument('--resume', default='', help='resume from checkpoint')
@@ -197,23 +190,8 @@ def main(args):
     utils.init_distributed_mode(args)
     update_config_from_file(args.cfg)
 
-    print(args)
+    logger.debug(f"args:{args}")
     args_text = yaml.safe_dump(args.__dict__, default_flow_style=False)
-    test_dataset_opt = None
-
-    # For reading from .json file, major part of .json can be turned into commandline args
-    opt = option.parse(parser.parse_args().opt_doc, is_train=True)
-    init_iter_G, init_path_G = option.find_last_checkpoint(opt['path']['models'], net_type='G')
-
-    init_iter_E, init_path_E = option.find_last_checkpoint(opt['path']['models'], net_type='E')
-    opt['path']['pretrained_netG'] = init_path_G
-    opt['path']['pretrained_netE'] = init_path_E
-    init_iter_optimizerG, init_path_optimizerG = option.find_last_checkpoint(opt['path']['models'], net_type='optimizerG')
-    opt['path']['pretrained_optimizerG'] = init_path_optimizerG
-    current_step = max(init_iter_G, init_iter_E, init_iter_optimizerG)
-
-    border = opt['scale']
-    args.scale = border
 
     device = torch.device(args.device)
 
@@ -224,93 +202,95 @@ def main(args):
     # random.seed(seed)
     cudnn.benchmark = True
 
-    # Method only specific to DIV2K - Need to change
-    # dataset_train, args.nb_classes = build_dataset(is_train=True, args=args)
-    # dataset_val, _ = build_dataset(is_train=False, args=args)
+    dataset_train, args.nb_classes = build_dataset(is_train=True, args=args)
+    dataset_val, _ = build_dataset(is_train=False, args=args)
 
-    for phase, dataset_opt in opt['datasets'].items():
-        if phase == 'train':
-            train_set = DatasetSR(dataset_opt)
-            print('Dataset [{:s} - {:s}] is created.'.format(train_set.__class__.__name__, dataset_opt['name']))
-            print(dataset_opt)
-            if args.distributed:
-                num_tasks = utils.get_world_size()
-                global_rank = utils.get_rank()
-                # train_sampler = DistributedSampler(train_set, num_replicas=num_tasks, rank=global_rank, shuffle=True, drop_last=True, seed=seed)
-                train_sampler = DistributedSampler(train_set, num_replicas=num_tasks, rank=global_rank, shuffle=dataset_opt['dataloader_shuffle'], drop_last=True, seed=seed)
-            else:
-                train_sampler = torch.utils.data.RandomSampler(train_set)
-            data_loader_train = DataLoader(
-                train_set, sampler=train_sampler,
-                batch_size=dataset_opt['dataloader_batch_size']//opt['num_gpu'],
-                num_workers=dataset_opt['dataloader_num_workers']//opt['num_gpu'],
-                pin_memory=args.pin_mem,
-                drop_last=True,
+    if args.distributed:
+        num_tasks = utils.get_world_size()
+        global_rank = utils.get_rank()
+        if args.repeated_aug:
+            sampler_train = RASampler(
+                dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
             )
-        elif phase == 'valid' and args.mode == 'super':
-            test_set = DatasetSR(dataset_opt)
-            print('Dataset [{:s} - {:s}] is created.'.format(test_set.__class__.__name__, dataset_opt['name']))
-            print(dataset_opt)
-            data_loader_test = DataLoader(test_set, batch_size=1,
-                                     shuffle=False, num_workers=8,
-                                     drop_last=False, pin_memory=True)
+        else:
+            sampler_train = torch.utils.data.DistributedSampler(
+                dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
+            )
+        if args.dist_eval:
+            if len(dataset_val) % num_tasks != 0:
+                print(
+                    'Warning: Enabling distributed evaluation with an eval dataset not divisible by process number. '
+                    'This will slightly alter validation results as extra duplicate entries are added to achieve '
+                    'equal num of samples per-process.')
+            sampler_val = torch.utils.data.DistributedSampler(
+                dataset_val, num_replicas=num_tasks, rank=global_rank, shuffle=False)
+        else:
+            sampler_val = torch.utils.data.SequentialSampler(dataset_val)
+    else:
+        sampler_val = torch.utils.data.SequentialSampler(dataset_val)
+        sampler_train = torch.utils.data.RandomSampler(dataset_train)
 
-        elif phase == 'test' and args.mode == 'retrain':
-            test_set = DatasetSR(dataset_opt)
-            print('Dataset [{:s} - {:s}] is created.'.format(test_set.__class__.__name__, dataset_opt['name']))
-            print(dataset_opt)
-            data_loader_test = DataLoader(test_set, batch_size=1,
-                                     shuffle=False, num_workers=4,
-                                     drop_last=False, pin_memory=True)
+    data_loader_train = torch.utils.data.DataLoader(
+        dataset_train, sampler=sampler_train,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+        pin_memory=args.pin_mem,
+        drop_last=True,
+    )
 
-    # mixup_fn = None
-    # mixup_active = args.mixup > 0 or args.cutmix > 0. or args.cutmix_minmax is not None
-    # if mixup_active:
-    #     mixup_fn = Mixup(
-    #         mixup_alpha=args.mixup, cutmix_alpha=args.cutmix, cutmix_minmax=args.cutmix_minmax,
-    #         prob=args.mixup_prob, switch_prob=args.mixup_switch_prob, mode=args.mixup_mode,
-    #         label_smoothing=args.smoothing, num_classes=args.nb_classes)
+    data_loader_val = torch.utils.data.DataLoader(
+        dataset_val, batch_size=int(2 * args.batch_size),
+        sampler=sampler_val, num_workers=args.num_workers,
+        pin_memory=args.pin_mem, drop_last=False
+    )
 
-    print(f"Creating SwinIRTransformer")
-    print(cfg)
-    opt_net = opt['netG']
-    model = SwinIR(img_size=opt_net['img_size'],
-                   window_size=opt_net['window_size'],
-                   depths= cfg.SUPERNET.DEPTHS, 
-                   embed_dim= cfg.SUPERNET.EMBED_DIM, 
-                   num_heads= cfg.SUPERNET.NUM_HEADS, 
-                   mlp_ratio= cfg.SUPERNET.MLP_RATIO,
-                   upsampler=opt_net['upsampler'])
+    mixup_fn = None
+    mixup_active = args.mixup > 0 or args.cutmix > 0. or args.cutmix_minmax is not None
+    if mixup_active:
+        mixup_fn = Mixup(
+            mixup_alpha=args.mixup, cutmix_alpha=args.cutmix, cutmix_minmax=args.cutmix_minmax,
+            prob=args.mixup_prob, switch_prob=args.mixup_switch_prob, mode=args.mixup_mode,
+            label_smoothing=args.smoothing, num_classes=args.nb_classes)
+
+    logger.debug("Creating SuperVisionTransformer")
+    logger.debug(f"cfg:{cfg}")
+    model = Vision_TransformerSuper(img_size=args.input_size,
+                                    patch_size=args.patch_size,
+                                    embed_dim=cfg.SUPERNET.EMBED_DIM, depth=cfg.SUPERNET.DEPTH,
+                                    num_heads=cfg.SUPERNET.NUM_HEADS,mlp_ratio=cfg.SUPERNET.MLP_RATIO,
+                                    qkv_bias=True, drop_rate=args.drop,
+                                    drop_path_rate=args.drop_path,
+                                    gp=args.gp,
+                                    num_classes=args.nb_classes,
+                                    max_relative_position=args.max_relative_position,
+                                    relative_position=args.relative_position,
+                                    change_qkv=args.change_qkv, abs_pos=not args.no_abs_pos)
 
     choices = {'num_heads': cfg.SEARCH_SPACE.NUM_HEADS, 'mlp_ratio': cfg.SEARCH_SPACE.MLP_RATIO,
-               'embed_dim': cfg.SEARCH_SPACE.EMBED_DIM, 'rstb_num': cfg.SEARCH_SPACE.RSTB_NUM,
-               'stl_num': cfg.SEARCH_SPACE.STL_NUM }
+               'embed_dim': cfg.SEARCH_SPACE.EMBED_DIM , 'depth': cfg.SEARCH_SPACE.DEPTH}
 
     model.to(device)
-    # if args.teacher_model:
-    #     teacher_model = create_model(
-    #         args.teacher_model,
-    #         pretrained=True,
-    #         num_classes=args.nb_classes,
-    #     )
-    #     teacher_model.to(device
-    #     teacher_loss = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
-    # else:
-    #     teacher_model = None
-    #     teacher_loss = None
+    if args.teacher_model:
+        teacher_model = create_model(
+            args.teacher_model,
+            pretrained=True,
+            num_classes=args.nb_classes,
+        )
+        teacher_model.to(device)
+        teacher_loss = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
+    else:
+        teacher_model = None
+        teacher_loss = None
 
-    teacher_model = None
-    teacher_loss = None
     model_ema = None
 
     model_without_ddp = model
     if args.distributed:
-
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=True)
         model_without_ddp = model.module
 
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print('number of params:', n_parameters)
+    logger.debug(f'number of params:{n_parameters}')
 
     linear_scaled_lr = args.lr * args.batch_size * utils.get_world_size() / 512.0
     args.lr = linear_scaled_lr
@@ -318,22 +298,21 @@ def main(args):
     loss_scaler = NativeScaler()
     lr_scheduler, _ = create_scheduler(args, optimizer)
 
-    # TODO: Adapt criterion based on the arg in json file 
-    criterion = torch.nn.L1Loss()
+    # criterion = LabelSmoothingCrossEntropy()
 
-    # if args.mixup > 0.:
-    #     # smoothing is handled with mixup label transform
-    #     criterion = SoftTargetCrossEntropy()
-    # elif args.smoothing:
-    #     criterion = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
-    # else:
-    #     criterion = torch.nn.CrossEntropyLoss()
+    if args.mixup > 0.:
+        # smoothing is handled with mixup label transform
+        criterion = SoftTargetCrossEntropy()
+    elif args.smoothing:
+        criterion = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
+    else:
+        criterion = torch.nn.CrossEntropyLoss()
 
     output_dir = Path(args.output_dir)
 
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
-    # save config for later experiments
+    # save config for later experiments_configs
     with open(output_dir / "config.yaml", 'w') as f:
         f.write(args_text)
     if args.resume:
@@ -357,13 +336,13 @@ def main(args):
         retrain_config = {'layer_num': cfg.RETRAIN.DEPTH, 'embed_dim': [cfg.RETRAIN.EMBED_DIM]*cfg.RETRAIN.DEPTH,
                           'num_heads': cfg.RETRAIN.NUM_HEADS,'mlp_ratio': cfg.RETRAIN.MLP_RATIO}
     if args.eval:
-        test_stats = evaluate(data_loader_test, model, device,  mode = args.mode, retrain_config=retrain_config, scaling=args.scale)
-        print(f"PSNR of the network on the {len(test_set)} test images: {test_stats['psnr']:.1f}%")
+        test_stats = evaluate(data_loader_val, model, device,  mode = args.mode, retrain_config=retrain_config)
+        logger.debug(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
         return
 
-    print("Start training")
+    logger.debug("Start training")
     start_time = time.time()
-    max_psnr = 0.0
+    max_accuracy = 0.0
 
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
@@ -372,11 +351,10 @@ def main(args):
         train_stats = train_one_epoch(
             model, criterion, data_loader_train,
             optimizer, device, epoch, loss_scaler,
-            args.clip_grad, model_ema, None,
+            args.clip_grad, model_ema, mixup_fn,
             amp=args.amp, teacher_model=teacher_model,
             teach_loss=teacher_loss,
             choices=choices, mode = args.mode, retrain_config=retrain_config,
-            sampler=sample_configs_swinir,
         )
 
         lr_scheduler.step(epoch)
@@ -393,9 +371,10 @@ def main(args):
                     'args': args,
                 }, checkpoint_path)
 
-        test_stats = evaluate(data_loader_test, model, device, amp=args.amp, choices=choices, mode = args.mode, retrain_config=retrain_config)
-        max_psnr = max(max_psnr, test_stats["psnr"])
-        print(f'Max psnr: {max_psnr:.2f}%')
+        test_stats = evaluate(data_loader_val, model, device, amp=args.amp, choices=choices, mode = args.mode, retrain_config=retrain_config)
+        logger.debug(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
+        max_accuracy = max(max_accuracy, test_stats["acc1"])
+        logger.debug(f'Max accuracy: {max_accuracy:.2f}%')
 
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
                      **{f'test_{k}': v for k, v in test_stats.items()},
@@ -408,7 +387,7 @@ def main(args):
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
-    print('Training time {}'.format(total_time_str))
+    logger.debug('Training time {}'.format(total_time_str))
 
 
 if __name__ == '__main__':
