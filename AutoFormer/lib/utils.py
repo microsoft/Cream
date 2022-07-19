@@ -209,7 +209,9 @@ def save_on_master(*args, **kwargs):
 
 
 def init_distributed_mode(args):
-    print(os.environ)
+    logger.debug(f"os environ:{os.environ}")
+    logger.debug(f"current device:{torch.cuda.current_device()}")
+    logger.debug(f'device count:{torch.cuda.device_count()}')
     if 'OMPI_COMM_WORLD_RANK' in os.environ:
         args.rank = int(os.environ.get('OMPI_COMM_WORLD_RANK'))
         args.world_size = int(os.environ.get('OMPI_COMM_WORLD_SIZE'))

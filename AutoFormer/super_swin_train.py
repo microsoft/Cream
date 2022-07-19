@@ -32,9 +32,9 @@ def get_args_parser():
     parser.add_argument('--batch-size', default=16, type=int)
     parser.add_argument('--epochs', default=300, type=int)
     # config file
-    parser.add_argument('--cfg',help='experiment configure file name',type=str, default='/home/ajesh/Projects/DL-lab/Main-Project/AutoFormer/AutoFormer/experiments/supernet-swinir/supernet-T.yaml')
+    parser.add_argument('--cfg',help='experiment configure file name',type=str, default='./experiments/supernet-swinir/supernet-T.yaml')
 
-    parser.add_argument('--opt-doc', type=str, default='/home/ajesh/Projects/DL-lab/Main-Project/AutoFormer/AutoFormer/experiments/train_swinir_sr_lightweight.json', help='Path to option JSON file for SwinIR.')
+    parser.add_argument('--opt-doc', type=str, default='./experiments/train_swinir_sr_lightweight.json', help='Path to option JSON file for SwinIR.')
     # custom parameters
     parser.add_argument('--platform', default='pai', type=str, choices=['itp', 'pai', 'aml'],
                         help='Name of model to train')
@@ -163,16 +163,16 @@ def get_args_parser():
                         choices=['kingdom', 'phylum', 'class', 'order', 'supercategory', 'family', 'genus', 'name'],
                         type=str, help='semantic granularity')
 
-    parser.add_argument('--output_dir', default='./',
+    parser.add_argument('--output_dir', default='./output_swinir_final_split',
                         help='path where to save, empty for no saving')
-    parser.add_argument('--device', default='cuda',
+    parser.add_argument('--device', default='cuda:0',
                         help='device to use for training / testing')
     parser.add_argument('--seed', default=0, type=int)
     parser.add_argument('--resume', default='', help='resume from checkpoint')
     parser.add_argument('--start_epoch', default=0, type=int, metavar='N',
                         help='start epoch')
     parser.add_argument('--eval', action='store_true', help='Perform evaluation only')
-    parser.add_argument('--num_workers', default=10, type=int)
+    parser.add_argument('--num_workers', default=8, type=int)
     parser.add_argument('--dist-eval', action='store_true', default=False, help='Enabling distributed evaluation')
     parser.add_argument('--pin-mem', action='store_true',
                         help='Pin CPU memory in DataLoader for more efficient (sometimes) transfer to GPU.')
@@ -203,14 +203,14 @@ def main(args):
 
     # For reading from .json file, major part of .json can be turned into commandline args
     opt = option.parse(parser.parse_args().opt_doc, is_train=True)
-    init_iter_G, init_path_G = option.find_last_checkpoint(opt['path']['models'], net_type='G')
+    #init_iter_G, init_path_G = option.find_last_checkpoint(opt['path']['models'], net_type='G')
 
-    init_iter_E, init_path_E = option.find_last_checkpoint(opt['path']['models'], net_type='E')
-    opt['path']['pretrained_netG'] = init_path_G
-    opt['path']['pretrained_netE'] = init_path_E
-    init_iter_optimizerG, init_path_optimizerG = option.find_last_checkpoint(opt['path']['models'], net_type='optimizerG')
-    opt['path']['pretrained_optimizerG'] = init_path_optimizerG
-    current_step = max(init_iter_G, init_iter_E, init_iter_optimizerG)
+    #init_iter_E, init_path_E = option.find_last_checkpoint(opt['path']['models'], net_type='E')
+    #opt['path']['pretrained_netG'] = init_path_G
+    #opt['path']['pretrained_netE'] = init_path_E
+    #init_iter_optimizerG, init_path_optimizerG = option.find_last_checkpoint(opt['path']['models'], net_type='optimizerG')
+    #opt['path']['pretrained_optimizerG'] = init_path_optimizerG
+    #current_step = max(init_iter_G, init_iter_E, init_iter_optimizerG)
 
     border = opt['scale']
     args.scale = border
@@ -221,7 +221,7 @@ def main(args):
     seed = args.seed + utils.get_rank()
     torch.manual_seed(seed)
     np.random.seed(seed)
-    # random.seed(seed)
+    #random.seed(seed)
     cudnn.benchmark = True
 
     # Method only specific to DIV2K - Need to change

@@ -1,7 +1,7 @@
 {
   "task": "swinir_sr_lightweight_x2"     //  classical image sr for x2/x3/x4. root/task/images-models-options
   , "model": "plain" // "plain" | "plain2" if two inputs
-  , "gpu_ids": [0,1]
+  , "gpu_ids": [0,1,2,3,4,5,6,7]
   , "dist": true
 
   , "scale": 2       // 2 | 3 | 4
@@ -17,34 +17,34 @@
     "train": {
       "name": "train_dataset"           // just name
       , "dataset_type": "sr"         // "dncnn" | "dnpatch" | "fdncnn" | "ffdnet" | "sr" | "srmd" | "dpsr" | "plain" | "plainpatch" | "jpeg"
-      , "dataroot_H": "/home/ajesh/Projects/DL-lab/Main-Project/AutoFormer/AutoFormer/trainsets/train/trainH"// path of H training dataset. DIV2K (800 training images)
-      , "dataroot_L": "/home/ajesh/Projects/DL-lab/Main-Project/AutoFormer/AutoFormer/trainsets/train/trainL"              // path of L training dataset
+      , "dataroot_H": "/work/dlclarge1/sharmaa-dltrans/AutoFormer/AutoFormer/trainsets/train/trainH"// path of H training dataset. DIV2K (800 training images)
+      , "dataroot_L": "/work/dlclarge1/sharmaa-dltrans/AutoFormer/AutoFormer/trainsets/train/trainL"              // path of L training dataset
 
       , "H_size": 128                 // 128/192/256/512.
 
       , "dataloader_shuffle": true
       , "dataloader_num_workers": 8
-      , "dataloader_batch_size": 16      // Total batch size =8x8=64 in SwinIR
+      , "dataloader_batch_size": 128    // Total batch size =8x8=64 in SwinIR
     },
     "test": {
       "name": "test_dataset"           // just name
       , "dataset_type": "sr"         // "dncnn" | "dnpatch" | "fdncnn" | "ffdnet" | "sr" | "srmd" | "dpsr" | "plain" | "plainpatch" | "jpeg"
-      , "dataroot_H": "/home/ajesh/Projects/DL-lab/Main-Project/AutoFormer/AutoFormer/testsets/Set14/original"// path of H training dataset. DIV2K (800 training images)
-      , "dataroot_L": "/home/ajesh/Projects/DL-lab/Main-Project/AutoFormer/AutoFormer/testsets/Set14/LRbicx2"       // path of L training dataset
+      , "dataroot_H": "/work/dlclarge1/sharmaa-dltrans/AutoFormer/AutoFormer/testsets/Set14/original"// path of H training dataset. DIV2K (800 training images)
+      , "dataroot_L": "/work/dlclarge1/sharmaa-dltrans/AutoFormer/AutoFormer/testsets/Set14/LRbicx2"       // path of L training dataset
       , "H_size": 96
       , "dataloader_shuffle": true
-      , "dataloader_num_workers": 1
-      , "dataloader_batch_size": 1    
+      , "dataloader_num_workers": 8
+      , "dataloader_batch_size": 128    
     },
     "valid": {
       "name": "valid_dataset"           // just name
       , "dataset_type": "sr"         // "dncnn" | "dnpatch" | "fdncnn" | "ffdnet" | "sr" | "srmd" | "dpsr" | "plain" | "plainpatch" | "jpeg"
-      , "dataroot_H": "/home/ajesh/Projects/DL-lab/Main-Project/AutoFormer/AutoFormer/trainsets/valid/validH"// path of H training dataset. DIV2K (800 training images)
-      , "dataroot_L": "/home/ajesh/Projects/DL-lab/Main-Project/AutoFormer/AutoFormer/trainsets/valid/validL"       // path of L training dataset
+      , "dataroot_H": "/work/dlclarge1/sharmaa-dltrans/AutoFormer/AutoFormer/trainsets/valid/validH"// path of H training dataset. DIV2K (800 training images)
+      , "dataroot_L": "/work/dlclarge1/sharmaa-dltrans/AutoFormer/AutoFormer/trainsets/valid/validL"       // path of L training dataset
       , "H_size": 96
       , "dataloader_shuffle": true
-      , "dataloader_num_workers": 1
-      , "dataloader_batch_size": 1
+      , "dataloader_num_workers": 8
+      , "dataloader_batch_size": 128
     }
   }
 
