@@ -8,13 +8,13 @@ from pathlib import Path
 from loguru import logger
 from lib.datasets import build_dataset
 from lib import utils
-from supernet_engine import evaluate
+from supernet_imagenet_engine import evaluate
 from model.vision_transformer.supernet_transformer import Vision_TransformerSuper
 import argparse
 import os
 import yaml
 from lib.config import cfg, update_config_from_file
-
+import json
 logger.add(sys.stdout, level='DEBUG')
 
 def decode_cand_tuple(cand_tuple):
@@ -270,6 +270,12 @@ class EvolutionSearcher(object):
                 logger.debug('No.{} {} Top-1 val acc = {}, Top-1 test acc = {}, params = {}'.format(
                     i + 1, cand, self.vis_dict[cand]['acc'], self.vis_dict[cand]['test_acc'], self.vis_dict[cand]['params']))
                 tmp_accuracy.append(self.vis_dict[cand]['acc'])
+                
+                with open('cifar100_search.json', 'a+')as f:
+                    json.dump({'epoch': self.epoch, 'rank': i+1, 'val_acc_1': self.vis_dict[cand]['acc'],
+                               'test_acc_1': self.vis_dict[cand]['test_acc'], 'params': self.vis_dict[cand]['params'], 'cand': cand}, f)
+
+                    f.write("\n")
             self.top_accuracies.append(tmp_accuracy)
 
             mutation = self.get_mutation(
@@ -466,6 +472,8 @@ def main(args):
     logger.debug(args)
     args_text = yaml.safe_dump(args.__dict__, default_flow_style=False)
     # save config for later experiments
+
+    #self.output_dir = args.output_dir
     with open(os.path.join(args.output_dir, "config.yaml"), 'w') as f:
         f.write(args_text)
     # fix the seed for reproducibility
