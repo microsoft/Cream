@@ -10,15 +10,15 @@ from pathlib import Path
 from timm.scheduler import create_scheduler
 from timm.optim import create_optimizer
 from timm.utils import NativeScaler
-from experiments.super_resolution.supernet_engine import train_one_epoch, evaluate, sample_configs_swinir
-from lib import utils
-from lib.config import cfg, update_config_from_file
-from utils import utils_option as option
+from AutoFormer.experiments.super_resolution.supernet_engine import train_one_epoch, evaluate, sample_configs_swinir
+from AutoFormer.lib import utils
+from AutoFormer.lib.config import cfg, update_config_from_file
+from AutoFormer.utils import utils_option as option
 # from models.model_plain import ModelPlain
 from torch.utils.data import DataLoader
-from data.dataset_sr import DatasetSR
+from AutoFormer.data.dataset_sr import DatasetSR
 from torch.utils.data.distributed import DistributedSampler
-from model.swinIR.network_swinir import SwinIR
+from AutoFormer.model.swinIR.network_swinir import SwinIR
 
 
 def get_args_parser():

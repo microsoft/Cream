@@ -6,11 +6,11 @@ import torch
 
 from timm.data import Mixup
 from timm.utils import accuracy, ModelEma
-from lib import utils
+from AutoFormer.lib import utils
 import random
-import utils.utils_image as util
+import AutoFormer.utils.utils_image as util
 import time
-from data.dataset_sr import DatasetSR
+from AutoFormer.data.dataset_sr import DatasetSR
 
 from loguru import logger
 logger.add(sys.stdout, level='DEBUG')
