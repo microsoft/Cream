@@ -1,8 +1,7 @@
 {
   "task": "swinir_sr_lightweight_x2"     //  classical image sr for x2/x3/x4. root/task/images-models-options
   , "model": "plain" // "plain" | "plain2" if two inputs
-  // , "gpu_ids": [0,1,2,3,4,5,6,7]
-  , "gpu_ids": [0]
+  , "gpu_ids": [0,1,2,3,4,5,6,7]
   , "dist": true
 
   , "scale": 4       // 2 | 3 | 4
@@ -25,7 +24,7 @@
 
       , "dataloader_shuffle": true
       , "dataloader_num_workers": 8
-      , "dataloader_batch_size": 1    // Total batch size =8x8=64 in SwinIR
+      , "dataloader_batch_size": 128    // Total batch size =8x8=64 in SwinIR
     },
     "test": {
       "name": "test_dataset"           // just name
@@ -35,7 +34,7 @@
       , "H_size": 96
       , "dataloader_shuffle": true
       , "dataloader_num_workers": 8
-      , "dataloader_batch_size": 1  
+      , "dataloader_batch_size": 128    
     },
     "valid": {
       "name": "valid_dataset"           // just name
@@ -45,7 +44,7 @@
       , "H_size": 96
       , "dataloader_shuffle": true
       , "dataloader_num_workers": 8
-      , "dataloader_batch_size": 1
+      , "dataloader_batch_size": 128
     }
   }
 
