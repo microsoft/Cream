@@ -11,100 +11,12 @@ import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from AutoFormer.lib.utils import calc_dropout
-from AutoFormer.model.vision_transformer.module.Linear_super import LinearSuper
+from AutoFormer.model.swinIR.module import WindowAttention, Conv2DSuper, Mlp, LayerNormSuper
 import logging
 
 logger = logging.getLogger('swinIR_model')
 
 
-class Conv2DSuper(nn.Module):
-    def __init__(self,
-                in_channels: int, out_channels: int,
-                kernel_size: int,
-                stride: Union[int, Tuple],
-                padding: Union[int, Tuple, str],
-                *args,
-                **kwargs
-                ):
-        super().__init__()
-        self.conv = nn.Conv2d(
-            in_channels,
-            out_channels,
-            kernel_size,
-            stride,
-            padding,
-            *args,
-            **kwargs
-        )
-        # This check is assuming we want to preserve output size when we sample later
-        # And that we don't want to crop images to be able to do so.
-        # One other way to implement this if we want to preserve output size but allow cropping is:
-        # Create a mask to multiply with the weight before passing on to F.conv2d.
-        # So instead of sampling a smaller weight, we keep its size (kernel_size-wise) but set outer edges to 0.
-        if padding < kernel_size // 2:
-            raise ValueError(f"Padding {padding} too small for kernel_size: {kernel_size}. Won't allow decreasing further.")
-
-        self.super_in_channels = in_channels
-        self.super_out_channels = out_channels
-        self.super_kernel_size = kernel_size
-        self.super_stride = stride
-        self.super_padding = padding
-
-    def set_sample_config(self, in_channels=None, out_channels=None, kernel_size=None):
-        # conv.weight is of shape (output_channels, input_channels/group, kernel_size[0], kernel_size[1])
-        self.sample_out_channels = self.conv.weight.shape[0] if out_channels is None else out_channels
-        self.sample_in_channels = self.conv.weight.shape[1] if in_channels is None else in_channels
-        self.sample_kernel_size = self.conv.weight.shape[2] if kernel_size is None else kernel_size
-
-        # We want to pick out the middle part
-        # So we figure out k_i, the point from where to begin the slicing
-        k_i = (self.super_kernel_size - self.sample_kernel_size) // 2
-
-        self.conv_sample_weight = self.conv.weight[:self.sample_out_channels,
-                                                   :self.sample_in_channels,
-                                                   k_i: k_i + self.sample_kernel_size,
-                                                   k_i: k_i + self.sample_kernel_size]
-        self.conv_sample_bias = self.conv.bias[:self.sample_out_channels, ...]
-
-        self.sample_padding = self.super_padding - k_i
-
-    def forward(self, x):
-        return F.conv2d(x,
-                        self.conv_sample_weight, self.conv_sample_bias,
-                        stride=self.super_stride,
-                        padding=self.sample_padding,
-                        )
-
-
-class Mlp(nn.Module):
-    def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
-        super().__init__()
-        out_features = out_features or in_features
-        hidden_features = hidden_features or in_features
-        self.fc1 = LinearSuper(in_features, hidden_features)
-        self.act = act_layer()
-        self.fc2 = LinearSuper(hidden_features, out_features)
-        # Note: We'll actually only end up using `sample_drop`. 
-        # `super_drop` is only for recording what was originally passed.
-        self.super_drop = drop
-        self.sample_drop = None
-
-    def forward(self, x):
-        x = self.fc1(x)
-        x = self.act(x)
-        x = F.dropout(x, p=self.sample_drop, training=self.training)
-        x = self.fc2(x)
-        x = F.dropout(x, p=self.sample_drop, training=self.training)
-        return x
-
-    def set_sample_config(self,
-                          sample_embed_dim=None,
-                          sample_mlp_ratio=None,
-                          sample_drop=None,
-                          ):
-        self.fc1.set_sample_config(int(sample_embed_dim), int(sample_embed_dim * sample_mlp_ratio))
-        self.fc2.set_sample_config(int(sample_embed_dim * sample_mlp_ratio), int(sample_embed_dim))
-        self.sample_drop = sample_drop
 
 
 def window_partition(x, window_size):
@@ -137,147 +49,6 @@ def window_reverse(windows, window_size, H, W):
     x = windows.view(B, H // window_size, W // window_size, window_size, window_size, -1)
     x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
     return x
-
-
-class LayerNormSuper(nn.Module):
-    """Applies Layer Normalization with ability to sample weights
-
-    For now only supports one dimensional `normalization_shape`
-    unlike `nn.LayerNorm`
-    """
-
-    def __init__(self, normalized_dim: int):
-        super(LayerNormSuper, self).__init__()
-
-        self.normalized_dim = normalized_dim
-        self.norm = nn.LayerNorm(normalized_shape=normalized_dim)
-
-        self.sample_normalized_dim = normalized_dim
-        self.sample_weight = None
-        self.sample_bias = None
-
-    def set_sample_config(self, normalized_dim):
-        self.sample_normalized_dim = normalized_dim
-        self.sample_weight = self.norm.weight[:normalized_dim]
-        self.sample_bias = self.norm.bias[:normalized_dim]
-
-    def forward(self, x: torch.Tensor):
-        return F.layer_norm(x,
-                            tuple((self.sample_normalized_dim,)),
-                            self.sample_weight, self.sample_bias, self.norm.eps)
-
-
-class WindowAttention(nn.Module):
-    r""" Window based multi-head self attention (W-MSA) module with relative position bias.
-    It supports both of shifted and non-shifted window.
-
-    Args:
-        dim (int): Number of input channels.
-        window_size (tuple[int]): The height and width of the window.
-        num_heads (int): Number of attention heads.
-        qkv_bias (bool, optional):  If True, add a learnable bias to query, key, value. Default: True
-        qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set
-        attn_drop (float, optional): Dropout ratio of attention weight. Default: 0.0
-        proj_drop (float, optional): Dropout ratio of output. Default: 0.0
-    """
-
-    def __init__(self, dim, window_size, num_heads, qkv_bias=True, qk_scale=None, attn_drop=0., proj_drop=0.):
-
-        super().__init__()
-        self.dim = dim
-        self.window_size = window_size  # Wh, Ww
-        self.num_heads = num_heads
-        head_dim = dim // num_heads
-        self.scale = qk_scale or head_dim ** -0.5
-
-        # define a parameter table of relative position bias
-        self.relative_position_bias_table = nn.Parameter(
-            torch.zeros((2 * window_size[0] - 1) * (2 * window_size[1] - 1), num_heads))  # 2*Wh-1 * 2*Ww-1, nH
-        trunc_normal_(self.relative_position_bias_table, std=.02)
-        self.sample_relative_position_bias_table = None
-
-        # get pair-wise relative position index for each token inside the window
-        coords_h = torch.arange(self.window_size[0])
-        coords_w = torch.arange(self.window_size[1])
-        coords = torch.stack(torch.meshgrid([coords_h, coords_w]))  # 2, Wh, Ww
-        coords_flatten = torch.flatten(coords, 1)  # 2, Wh*Ww
-        relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]  # 2, Wh*Ww, Wh*Ww
-        relative_coords = relative_coords.permute(1, 2, 0).contiguous()  # Wh*Ww, Wh*Ww, 2
-        relative_coords[:, :, 0] += self.window_size[0] - 1  # shift to start from 0
-        relative_coords[:, :, 1] += self.window_size[1] - 1
-        relative_coords[:, :, 0] *= 2 * self.window_size[1] - 1
-        relative_position_index = relative_coords.sum(-1)  # Wh*Ww, Wh*Ww
-        self.register_buffer("relative_position_index", relative_position_index)
-
-        self.qkv = LinearSuper(dim, dim * 3, bias=qkv_bias)
-        self.attn_drop = nn.Dropout(attn_drop)
-        self.proj = LinearSuper(dim, dim)
-
-        self.proj_drop = nn.Dropout(proj_drop)
-
-        self.softmax = nn.Softmax(dim=-1)
-
-        self.sample_num_heads = None
-        self.sample_embed_dim = None
-
-    def set_sample_config(self, sample_embed_dim, sample_num_heads):
-        self.sample_num_heads = sample_num_heads
-        self.sample_embed_dim = sample_embed_dim
-        self.sample_scale = (sample_embed_dim // self.sample_num_heads) ** -0.5
-        self.sample_relative_position_bias_table = self.relative_position_bias_table[:, :self.sample_num_heads]
-
-        self.qkv.set_sample_config(sample_embed_dim, sample_embed_dim * 3)
-        self.proj.set_sample_config(sample_embed_dim, sample_embed_dim)
-
-    def forward(self, x, mask=None):
-        """
-        Args:
-            x: input features with shape of (num_windows*B, N, C)
-            mask: (0/-inf) mask with shape of (num_windows, Wh*Ww, Wh*Ww) or None
-        """
-        B_, N, C = x.shape
-        qkv = self.qkv(x).reshape(B_, N, 3, self.sample_num_heads, C // self.sample_num_heads).permute(2, 0, 3, 1, 4)
-        q, k, v = qkv[0], qkv[1], qkv[2]  # make torchscript happy (cannot use tensor as tuple)
-
-        q = q * self.sample_scale
-        attn = (q @ k.transpose(-2, -1))
-
-        relative_position_bias = self.sample_relative_position_bias_table[self.relative_position_index.view(-1)].view(
-            self.window_size[0] * self.window_size[1], self.window_size[0] * self.window_size[1], -1)  # Wh*Ww,Wh*Ww,nH
-        relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()  # nH, Wh*Ww, Wh*Ww
-        attn = attn + relative_position_bias.unsqueeze(0)
-
-        if mask is not None:
-            nW = mask.shape[0]
-            attn = attn.view(B_ // nW, nW, self.sample_num_heads, N, N) + mask.unsqueeze(1).unsqueeze(0)
-            attn = attn.view(-1, self.sample_num_heads, N, N)
-            attn = self.softmax(attn)
-        else:
-            attn = self.softmax(attn)
-
-        attn = self.attn_drop(attn)
-
-        x = (attn @ v).transpose(1, 2).reshape(B_, N, C)
-        x = self.proj(x)
-        x = self.proj_drop(x)
-        return x
-
-    def extra_repr(self) -> str:
-        return f'dim={self.dim}, window_size={self.window_size}, num_heads={self.num_heads}'
-
-    def flops(self, N):
-        # calculate flops for 1 window with token length of N
-        flops = 0
-        # qkv = self.qkv(x)
-        flops += N * self.dim * 3 * self.dim
-        # attn = (q @ k.transpose(-2, -1))
-        flops += self.num_heads * N * (self.dim // self.num_heads) * N
-        #  x = (attn @ v)
-        flops += self.num_heads * N * N * (self.dim // self.num_heads)
-        # x = self.proj(x)
-        flops += N * self.dim * self.dim
-        return flops
-
 
 class SwinTransformerBlock(nn.Module):
     r""" Swin Transformer Block.
@@ -437,6 +208,11 @@ class SwinTransformerBlock(nn.Module):
         self.norm1.set_sample_config(sample_embed_dim)
         self.norm2.set_sample_config(sample_embed_dim)
         self.mlp.set_sample_config(sample_embed_dim, sample_mlp_ratio, sample_dropout)
+
+    def calc_sampled_param_num(self):
+        # all submodules are calculated in their respective classes
+        return 0
+
 
 
 class PatchMerging(nn.Module):
