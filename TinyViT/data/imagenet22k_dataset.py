@@ -20,7 +20,8 @@ class IN22KDataset(torch.utils.data.Dataset):
         self.fname_format = fname_format
 
         info_fname = os.path.join(data_root, 'in22k_image_names.txt')
-        assert os.path.isfile(info_fname), f'IN22k-List filelist: {info_fname} does not exist'
+        assert os.path.isfile(
+            info_fname), f'IN22k-List filelist: {info_fname} does not exist'
 
         folders = defaultdict(list)
         with open(info_fname, 'r') as f:
@@ -70,7 +71,7 @@ class IN22KDataset(torch.utils.data.Dataset):
 
 if __name__ == '__main__':
     data_root = './ImageNet-22k'
-    transform = lambda x: x
+    def transform(x): return x
     fname_format = 'imagenet22k/{}.JPEG'
     dataset = IN22KDataset(data_root, transform, fname_format, debug=True)
     for img, target in dataset:
