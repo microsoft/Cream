@@ -1,0 +1,24 @@
+MODEL:
+  NAME: TinyViT-21M-22k-distill
+  TYPE: tiny_vit
+
+  DROP_PATH_RATE: 0.1
+
+  TINY_VIT:
+    DEPTHS: [ 2, 2, 6, 2 ]
+    NUM_HEADS: [ 3, 6, 12, 18 ]
+    WINDOW_SIZES: [ 7, 7, 14, 7 ] 
+    EMBED_DIMS: [96, 192, 384, 576]
+
+TRAIN:
+  EPOCHS: 90
+  BASE_LR: 2.5e-4
+  WARMUP_EPOCHS: 5
+  WEIGHT_DECAY: 0.01
+
+DATA:
+  DATASET: imagenet22k
+
+AUG:
+  MIXUP: 0.0
+  CUTMIX: 0.0

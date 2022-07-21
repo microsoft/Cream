@@ -1,0 +1,11 @@
+MODEL:
+  NAME: TinyViT-11M-1k
+  TYPE: tiny_vit
+
+  DROP_PATH_RATE: 0.1
+
+  TINY_VIT:
+    DEPTHS: [ 2, 2, 6, 2 ]
+    NUM_HEADS: [ 2, 4, 8, 14 ]
+    WINDOW_SIZES: [ 7, 7, 14, 7 ] 
+    EMBED_DIMS: [64, 128, 256, 448]
