@@ -5,18 +5,18 @@ import time
 import torch
 import torch.backends.cudnn as cudnn
 from pathlib import Path
-from lib import utils
-from experiments.super_resolution.supernet_engine import evaluate
-from model.swinIR.network_swinir import SwinIR
-from data.dataset_sr import DatasetSR
+from AutoFormer.lib import utils
+from AutoFormer.experiments.super_resolution.supernet_engine import evaluate
+from AutoFormer.model.swinIR.network_swinir import SwinIR
+from AutoFormer.data.dataset_sr import DatasetSR
 from torch.utils.data.distributed import DistributedSampler
 import argparse
 import os
 import yaml
 from loguru import logger
-from utils import utils_option as option
+from AutoFormer.utils import utils_option as option
 from torch.utils.data import DataLoader
-from lib.config import cfg, update_config_from_file
+from AutoFormer.lib.config import cfg, update_config_from_file
 import json
 
 logger.add(sys.stdout, level='DEBUG')
