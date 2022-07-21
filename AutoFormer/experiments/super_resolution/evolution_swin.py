@@ -28,7 +28,7 @@ def decode_cand_tuple(cand_tuple):
 
 class EvolutionSearcher(object):
 
-    def __init__(self, args, device, model, model_without_ddp, choices, val_loader, test_loader, output_dir):
+    def __init__(self, args, device, model, model_without_ddp, choices, val_loader, output_dir):
         self.device = device
         self.model = model
         self.model_without_ddp = model_without_ddp
@@ -42,7 +42,6 @@ class EvolutionSearcher(object):
         self.parameters_limits = args.param_limits
         self.min_parameters_limits = args.min_param_limits
         self.val_loader = val_loader
-        self.test_loader = test_loader
         self.output_dir = output_dir
         self.s_prob = args.s_prob
         self.memory = []
@@ -66,7 +65,7 @@ class EvolutionSearcher(object):
         info['epoch'] = self.epoch
         checkpoint_path = os.path.join(self.output_dir, "checkpoint-{}.pth.tar".format(self.epoch))
         torch.save(info, checkpoint_path)
-        print('save checkpoint to', checkpoint_path)
+        logger.debug(f'save checkpoint to:{checkpoint_path}')
 
     def load_checkpoint(self):
         if not os.path.exists(self.checkpoint_path):
@@ -78,7 +77,7 @@ class EvolutionSearcher(object):
         self.keep_top_k = info['keep_top_k']
         self.epoch = info['epoch']
 
-        print('load checkpoint from', self.checkpoint_path)
+        logger.debug(f'load checkpoint from:{self.checkpoint_path}')
         return True
 
     def is_legal(self, cand):
@@ -98,21 +97,21 @@ class EvolutionSearcher(object):
         info['params'] = n_parameters / 10. ** 6
 
         if info['params'] > self.parameters_limits:
-            print('parameters limit exceed')
+            logger.debug('parameters limit exceed')
             return False
 
         if info['params'] < self.min_parameters_limits:
-            print('under minimum parameters limit')
+            logger.debug('under minimum parameters limit')
             return False
 
-        print("rank:", utils.get_rank(), cand, info['params'])
+        logger.debug(f"rank:{utils.get_rank()},cand:{cand},params:{info['params']}")
         eval_stats = evaluate(self.val_loader, self.model, self.device, amp=self.args.amp, mode='retrain',
                               retrain_config=sampled_config)
-        test_stats = evaluate(self.test_loader, self.model, self.device, amp=self.args.amp, mode='retrain',
-                              retrain_config=sampled_config)
+        # test_stats = evaluate(self.val_loader, self.model, self.device, amp=self.args.amp, mode='retrain',
+        #                       retrain_config=sampled_config)
 
         info['acc'] = eval_stats['acc1']
-        info['test_acc'] = test_stats['acc1']
+        #info['test_acc'] = test_stats['acc1']
 
         info['visited'] = True
 
@@ -120,7 +119,7 @@ class EvolutionSearcher(object):
 
     def update_top_k(self, candidates, *, k, key, reverse=True):
         assert k in self.keep_top_k
-        print('select ......')
+        logger.debug('select ......')
         t = self.keep_top_k[k]
         t += candidates
         t.sort(key=key, reverse=reverse)
@@ -150,19 +149,19 @@ class EvolutionSearcher(object):
         return tuple(cand_tuple)
 
     def get_random(self, num):
-        print('random select ........')
+        logger.debug('random select ........')
         cand_iter = self.stack_random_cand(self.get_random_cand)
         while len(self.candidates) < num:
             cand = next(cand_iter)
             if not self.is_legal(cand):
                 continue
             self.candidates.append(cand)
-            print('random {}/{}'.format(len(self.candidates), num))
-        print('random_num = {}'.format(len(self.candidates)))
+            logger.debug(f'random {len(self.candidates)}/{num}')
+        logger.debug(f'random_num = {len(self.candidates)}')
 
     def get_mutation(self, k, mutation_num, m_prob, s_prob):
         assert k in self.keep_top_k
-        print('mutation ......')
+        logger.debug('mutation ......')
         res = []
         iter = 0
         max_iters = mutation_num * 10
@@ -213,14 +212,14 @@ class EvolutionSearcher(object):
             if not self.is_legal(cand):
                 continue
             res.append(cand)
-            print('mutation {}/{}'.format(len(res), mutation_num))
+            logger.debug(f'mutation {len(res)}/{mutation_num}')
 
-        print('mutation_num = {}'.format(len(res)))
+        logger.debug(f'mutation_num = {len(res)}')
         return res
 
     def get_crossover(self, k, crossover_num):
         assert k in self.keep_top_k
-        print('crossover ......')
+        logger.debug('crossover ......')
         res = []
         iter = 0
         max_iters = 10 * crossover_num
@@ -243,23 +242,25 @@ class EvolutionSearcher(object):
             if not self.is_legal(cand):
                 continue
             res.append(cand)
-            print('crossover {}/{}'.format(len(res), crossover_num))
+            logger.debug(f'crossover {len(res)}/{crossover_num}')
 
-        print('crossover_num = {}'.format(len(res)))
+        print('crossover_num = {len(res)}')
         return res
 
     def search(self):
-        print(
-            'population_num = {} select_num = {} mutation_num = {} crossover_num = {} random_num = {} max_epochs = {}'.format(
-                self.population_num, self.select_num, self.mutation_num, self.crossover_num,
-                self.population_num - self.mutation_num - self.crossover_num, self.max_epochs))
+        logger.debug(f'population_num = {self.population_num}'
+                     f' select_num = {self.select_num}'
+                     f' mutation_num = {self.mutation_num}'
+                     f' crossover_num = {self.crossover_num}'
+                     f' random_num = {self.population_num - self.mutation_num - self.crossover_num}'
+                     f' max_epochs = {self.max_epochs}')
 
         # self.load_checkpoint()
 
         self.get_random(self.population_num)
 
         while self.epoch < self.max_epochs:
-            print('epoch = {}'.format(self.epoch))
+            logger.debug('epoch = {self.epoch}')
 
             self.memory.append([])
             for cand in self.candidates:
@@ -270,17 +271,15 @@ class EvolutionSearcher(object):
             self.update_top_k(
                 self.candidates, k=50, key=lambda x: self.vis_dict[x]['acc'])
 
-            print('epoch = {} : top {} result'.format(
-                self.epoch, len(self.keep_top_k[50])))
+            logger.debug(f'epoch = {self.epoch} : top {len(self.keep_top_k[50])} result')
             tmp_accuracy = []
             for i, cand in enumerate(self.keep_top_k[50]):
-                print('No.{} {} Top-1 val acc = {}, Top-1 test acc = {}, params = {}'.format(
-                    i + 1, cand, self.vis_dict[cand]['acc'], self.vis_dict[cand]['test_acc'],
-                    self.vis_dict[cand]['params']))
+                logger.debug(f'No.{i+1} {cand} Top-1 val acc = { self.vis_dict[cand]["acc"]},'
+                             f' params = {self.vis_dict[cand]["params"]}')
                 tmp_accuracy.append(self.vis_dict[cand]['acc'])
                 with open('swinir_search.json', 'a+')as f:
                     json.dump({'epoch': self.epoch, 'rank': i+1, 'val_acc_1': self.vis_dict[cand]['acc'],
-                               'test_acc_1': self.vis_dict[cand]['test_acc'], 'params': self.vis_dict[cand]['params'], 'cand': cand}, f)
+                               'params': self.vis_dict[cand]['params'], 'cand': cand}, f)
 
                     f.write("\n")
             self.top_accuracies.append(tmp_accuracy)
@@ -316,6 +315,8 @@ def get_args_parser():
 
     # config file
     parser.add_argument('--cfg', help='experiment configure file name', required=True, type=str)
+    parser.add_argument('--opt-doc', type=str, default='.AutoFormer/experiments_configs/supernet-swinir/train_swinir_sr_lightweight.json',
+                        help='Path to option JSON file for SwinIR.')
 
     # custom parameters
     parser.add_argument('--platform', default='pai', type=str, choices=['itp', 'pai', 'aml'],
@@ -501,29 +502,17 @@ def main(args):
 
     args.prefetcher = not args.no_prefetcher
 
-    for phase, dataset_opt in opt['datasets'].items():
+    #for phase, dataset_opt in opt['datasets'].items():
 
-        if phase == 'valid':
-            valid_set = DatasetSR(dataset_opt)
-            logger.debug('Dataset [{:s} - {:s}] is created.'.format(test_set.__class__.__name__, dataset_opt['name']))
-            logger.debug(f"dataset opt:{dataset_opt}")
-            data_loader_valid = DataLoader(valid_set, batch_size=1,
+        # if phase == 'valid':
+    valid_set = DatasetSR(opt['datasets']['valid'])
+    logger.debug(f"dataset opt:{opt['datasets']['valid']}")
+    data_loader_valid = DataLoader(valid_set, batch_size=1,
                                           shuffle=False, num_workers=8,
                                           drop_last=False, pin_memory=True)
 
-        if phase == 'test':
-            test_set = DatasetSR(dataset_opt)
-            logger.debug('Dataset [{:s} - {:s}] is created.'.format(test_set.__class__.__name__, dataset_opt['name']))
-            logger.debug(f"dataset opt:{dataset_opt}")
-            data_loader_test = DataLoader(test_set, batch_size=1,
-                                          shuffle=False, num_workers=4,
-                                          drop_last=False, pin_memory=True)
-
-
-
-
-    print(f"Creating SwinIRTransformer")
-    print(cfg)
+    logger.debug(f"Creating SwinIRTransformer")
+    logger.debug(cfg)
     opt_net = opt['netG']
     model = SwinIR(img_size=opt_net['img_size'],
                    window_size=opt_net['window_size'],
@@ -540,14 +529,14 @@ def main(args):
         model_without_ddp = model.module
 
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print('number of params:', n_parameters)
+    logger.debug(f'number of params:{n_parameters}')
     if args.resume:
         if args.resume.startswith('https'):
             checkpoint = torch.hub.load_state_dict_from_url(
                 args.resume, map_location='cpu', check_hash=True)
         else:
             checkpoint = torch.load(args.resume, map_location='cpu')
-        print("resume from checkpoint: {}".format(args.resume))
+        logger.debug("resume from checkpoint: {args.resume}")
         model_without_ddp.load_state_dict(checkpoint['model'])
 
     choices = {'num_heads': cfg.SEARCH_SPACE.NUM_HEADS, 'mlp_ratio': cfg.SEARCH_SPACE.MLP_RATIO,
@@ -555,12 +544,12 @@ def main(args):
                'stl_num': cfg.SEARCH_SPACE.STL_NUM }
 
     t = time.time()
-    searcher = EvolutionSearcher(args, device, model, model_without_ddp, choices, data_loader_valid, data_loader_test,
+    searcher = EvolutionSearcher(args, device, model, model_without_ddp, choices, data_loader_valid,
                                  args.output_dir)
 
     searcher.search()
 
-    print('total searching time = {:.2f} hours'.format(
+    logger.debug('total searching time = {:.2f} hours'.format(
         (time.time() - t) / 3600))
 
 
