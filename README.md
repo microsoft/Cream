@@ -1,13 +1,4 @@
 
-# Neural Architecture Design and Search
-
-Note: Please `cd` into the `AutoFormer` directory to run AutoFormer related scripts. 
-
-***This is a collection of our AutoML-NAS work***
-
-> [**AutoFormer**](./AutoFormer) (```@ICCV'21```): **AutoFormer: Searching Transformers for Visual Recognition**
-
-## Works
 
 ### [AutoFormer](./AutoFormer)
 

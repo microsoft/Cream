@@ -1,0 +1,11 @@
+MODEL:
+  TYPE:
+    clip_vit_large14_224
+
+DATA:
+  MEAN_AND_STD_TYPE: clip
+  DATASET: imagenet22k
+
+AUG:
+  MIXUP: 0.0
+  CUTMIX: 0.0
