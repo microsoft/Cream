@@ -2,7 +2,7 @@
 # TinyViT Utils
 # Copyright (c) 2022 Microsoft
 # Licensed under The MIT License [see LICENSE for details]
-# Based on the code: Swin Transformer written
+# Based on the code: Swin Transformer
 #   (https://github.com/microsoft/swin-transformer)
 # Add `LRSchedulerWrapper` and `divide_param_groups_by_lr_scale`
 # ---------------------------------------------------------------
