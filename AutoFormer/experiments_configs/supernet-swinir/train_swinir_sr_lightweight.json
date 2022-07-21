@@ -4,7 +4,7 @@
   , "gpu_ids": [0,1,2,3,4,5,6,7]
   , "dist": true
 
-  , "scale": 2       // 2 | 3 | 4
+  , "scale": 4       // 2 | 3 | 4
   , "n_channels": 3  // broadcast to "datasets", 1 for grayscale, 3 for color
 
   , "path": {
@@ -29,7 +29,7 @@
     "test": {
       "name": "test_dataset"           // just name
       , "dataset_type": "sr"         // "dncnn" | "dnpatch" | "fdncnn" | "ffdnet" | "sr" | "srmd" | "dpsr" | "plain" | "plainpatch" | "jpeg"
-      , "dataroot_H": "/work/dlclarge1/sharmaa-dltrans/AutoFormer/AutoFormer/testsets/Set14/original"// path of H training dataset. DIV2K (800 training images)
+      , "dataroot_H": "/work/dlclarge1/sharmaa-dltrans/AutoFormer/AutoFormer/Set14/original"// path of H training dataset. DIV2K (800 training images)
       , "dataroot_L": "/work/dlclarge1/sharmaa-dltrans/AutoFormer/AutoFormer/testsets/Set14/LRbicx2"       // path of L training dataset
       , "H_size": 96
       , "dataloader_shuffle": true
@@ -50,7 +50,7 @@
 
   , "netG": {
     "net_type": "swinir" 
-    , "upscale": 2                   // 2 | 3  | 4
+    , "upscale": 4                   // 2 | 3  | 4
     , "in_chans": 3
     , "img_size": 64
     , "window_size": 8

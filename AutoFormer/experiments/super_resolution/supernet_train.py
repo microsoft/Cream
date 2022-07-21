@@ -10,15 +10,15 @@ from pathlib import Path
 from timm.scheduler import create_scheduler
 from timm.optim import create_optimizer
 from timm.utils import NativeScaler
-from experiments.super_resolution.supernet_engine import train_one_epoch, evaluate, sample_configs_swinir
-from lib import utils
-from lib.config import cfg, update_config_from_file
-from utils import utils_option as option
+from AutoFormer.experiments.super_resolution.supernet_engine import train_one_epoch, evaluate, sample_configs_swinir
+from AutoFormer.lib import utils
+from AutoFormer.lib.config import cfg, update_config_from_file
+from AutoFormer.utils import utils_option as option
 # from models.model_plain import ModelPlain
 from torch.utils.data import DataLoader
-from data.dataset_sr import DatasetSR
+from AutoFormer.data.dataset_sr import DatasetSR
 from torch.utils.data.distributed import DistributedSampler
-from model.swinIR.network_swinir import SwinIR
+from AutoFormer.model.swinIR.network_swinir import SwinIR
 
 
 def get_args_parser():
@@ -28,9 +28,9 @@ def get_args_parser():
     # config file
 
     parser.add_argument('--cfg', help='experiment configure file name', type=str,
-                        default='./experiments/supernet-swinir/supernet-T.yaml')
+                        default='./experiments_configs/supernet-swinir/supernet-T.yaml')
 
-    parser.add_argument('--opt-doc', type=str, default='./experiments/train_swinir_sr_lightweight.json',
+    parser.add_argument('--opt-doc', type=str, default='./experiments_configs/supernet-swinir/train_swinir_sr_lightweight.json',
                         help='Path to option JSON file for SwinIR.')
 
     # custom parameters
@@ -84,7 +84,7 @@ def get_args_parser():
 
     # Learning rate schedule parameters
     parser.add_argument('--sched', default='step', type=str, metavar='SCHEDULER',
-                        help='MultiStepLR (default: "multistep"')
+                        help='step (default: "step"')
     parser.add_argument('--lr', type=float, default=2e-4, metavar='LR',
                         help='learning rate (default: 2e-4)')
     # parser.add_argument('--lr-noise', type=float, nargs='+', default=None, metavar='pct, pct',
@@ -257,7 +257,8 @@ def main(args):
                    embed_dim=cfg.SUPERNET.EMBED_DIM,
                    num_heads=cfg.SUPERNET.NUM_HEADS,
                    mlp_ratio=cfg.SUPERNET.MLP_RATIO,
-                   upsampler=opt_net['upsampler'])
+                   upsampler=opt_net['upsampler'],
+                   upscale=border)
 
     choices = {'num_heads': cfg.SEARCH_SPACE.NUM_HEADS, 'mlp_ratio': cfg.SEARCH_SPACE.MLP_RATIO,
                'embed_dim': cfg.SEARCH_SPACE.EMBED_DIM, 'rstb_num': cfg.SEARCH_SPACE.RSTB_NUM,
