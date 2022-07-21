@@ -130,7 +130,8 @@ def build_dataset(is_train, config):
         nb_classes = 1000
     elif config.DATA.DATASET == 'imagenet22k':
         if is_train:
-            dataset = IN22KDataset(data_root=config.DATA.DATA_PATH, transform=transform, fname_format=config.DATA.FNAME_FORMAT, debug=config.DATA.DEBUG)
+            dataset = IN22KDataset(data_root=config.DATA.DATA_PATH, transform=transform,
+                                   fname_format=config.DATA.FNAME_FORMAT, debug=config.DATA.DEBUG)
             nb_classes = 21841
         else:
             # load ImageNet-1k validation set
@@ -141,7 +142,8 @@ def build_dataset(is_train, config):
             '''
             old_data_path = config.DATA.DATA_PATH
             config.defrost()
-            config.DATA.DATA_PATH = os.path.normpath(os.path.join(old_data_path, '../ImageNet'))
+            config.DATA.DATA_PATH = os.path.normpath(
+                os.path.join(old_data_path, '../ImageNet'))
             config.DATA.DATASET = 'imagenet'
             dataset, nb_classes = build_dataset(is_train=False, config=config)
             config.DATA.DATA_PATH = old_data_path
