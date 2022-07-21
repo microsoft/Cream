@@ -22,6 +22,7 @@ import json
 logger.add(sys.stdout, level='DEBUG')
 
 def decode_cand_tuple(cand_tuple):
+    logger.debug(f'cand tuple:{cand_tuple}')
     depth = cand_tuple[0]
     return depth, list(cand_tuple[1:depth + 1]), list(cand_tuple[depth + 1: 2 * depth + 1]), cand_tuple[-1]
 
@@ -74,6 +75,7 @@ class EvolutionSearcher(object):
         self.memory = info['memory']
         self.candidates = info['candidates']
         self.vis_dict = info['vis_dict']
+        logger.debug(f'vis dict:{self.vis_dict}')
         self.keep_top_k = info['keep_top_k']
         self.epoch = info['epoch']
 
@@ -136,16 +138,25 @@ class EvolutionSearcher(object):
                 yield cand
 
     def get_random_cand(self):
+        '''
+        Generate random configuration:
+        Example: 'stl_num': 2, 'embed_dim': [60, 60, 60, 60], 'num_heads': [5, 5, 5, 5], 'mlp_ratio': [1.5, 1.5, 2,1.0],
+        'rstb_num': 4
+        #
+        Returns:
+            Tuple: Sampled configuration
+        '''
 
         cand_tuple = list()
-        dimensions = ['mlp_ratio', 'num_heads']
-        depth = random.choice(self.choices['depth'])
-        cand_tuple.append(depth)
+        dimensions = ['mlp_ratio', 'num_heads','embed_dim']
+
+        rstb_num = random.choice(self.choices['rstb_num'])
+        cand_tuple.append(rstb_num)
         for dimension in dimensions:
-            for i in range(depth):
+            for i in range(rstb_num):
                 cand_tuple.append(random.choice(self.choices[dimension]))
 
-        cand_tuple.append(random.choice(self.choices['embed_dim']))
+        cand_tuple.append(random.choice(self.choices['stl_num']))
         return tuple(cand_tuple)
 
     def get_random(self, num):
@@ -520,7 +531,8 @@ def main(args):
                    embed_dim= cfg.SUPERNET.EMBED_DIM,
                    num_heads= cfg.SUPERNET.NUM_HEADS,
                    mlp_ratio= cfg.SUPERNET.MLP_RATIO,
-                   upsampler=opt_net['upsampler'])
+                   upsampler=opt_net['upsampler'],
+                   upscale=border)
 
     model.to(device)
     model_without_ddp = model
