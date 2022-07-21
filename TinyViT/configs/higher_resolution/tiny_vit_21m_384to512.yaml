@@ -1,0 +1,27 @@
+MODEL:
+  NAME: TinyViT-21M-384to512
+  TYPE: tiny_vit
+
+  DROP_PATH_RATE: 0.1
+
+  TINY_VIT:
+    DEPTHS: [ 2, 2, 6, 2 ]
+    NUM_HEADS: [ 3, 6, 12, 18 ]
+    WINDOW_SIZES: [ 16, 16, 32, 16 ] 
+    EMBED_DIMS: [96, 192, 384, 576]
+DATA:
+  IMG_SIZE: 512
+TRAIN:
+  EPOCHS: 30
+  WARMUP_EPOCHS: 5
+  WEIGHT_DECAY: 1e-8
+  BASE_LR: 2e-05
+  WARMUP_LR: 2e-08
+  MIN_LR: 2e-07
+  EVAL_BN_WHEN_TRAINING: True
+TEST:
+  CROP: False
+
+AUG:
+  MIXUP: 0.0
+  CUTMIX: 0.0

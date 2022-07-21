@@ -3,6 +3,8 @@
 
 ***This is a collection of our AutoML-NAS work***
 
+> [**TinyViT**](./TinyViT) (```@ECCV'22```): **TinyViT: Fast Pretraining Distillation for Small Vision Transformers**
+
 > [**MiniViT**](./MiniViT) (```@CVPR'22```): **MiniViT: Compressing Vision Transformers with Weight Multiplexing**
 
 > [**CDARTS**](./CDARTS) (```@TPAMI'22```): **Cyclic Differentiable Architecture Search**
@@ -23,6 +25,7 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 
 ## News
 - :sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com
+- :boom: Jul, 2022: Code for [**TinyViT**](./TinyViT) is now released.
 - :boom: Apr, 2022: Code for [**MiniViT**](./MiniViT) is now released.
 - :boom: Mar, 2022: [**MiniViT**](https://arxiv.org/pdf/2204.07154.pdf) has been accepted by CVPR'22.
 - :boom: Feb, 2022: Code for [**CDARTS**](./CDARTS) is now released.
@@ -38,6 +41,13 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 - :boom: Oct, 2020: [**Cream**](./Cream) was accepted to NeurIPS'20
 
 ## Works
+
+### [TinyViT](./TinyViT)
+TinyViT is a new family of tiny and efficient vision transformers pretrained on large-scale datasets with out proposed fast distillation framework. The central idea is to transfer knowledge from large pretrained models to small ones, while enabling small models to get the dividends of massive pretraining data. More specifically, we apply distillation during pretraining for knowledge transfer. The logits of large teacher models are sparsified and stored in disk in advance to save the memory cost and computation overheads.
+<div align="center">
+    <img width="80%" alt="TinyViT overview" src="./TinyViT/.figure/framework.png"/>
+</div>
+
 ### [MiniViT](./MiniViT)
 MiniViT is a new compression framework that achieves parameter reduction in vision transformers while retaining the same performance. The central idea of MiniViT is to multiplex the weights of consecutive transformer blocks. Specifically, we make the weights shared across layers, while imposing a transformation on the weights to increase diversity. Weight distillation over self-attention is also applied to transfer knowledge from large-scale ViT models to weight-multiplexed compact models.
 <div align="center">

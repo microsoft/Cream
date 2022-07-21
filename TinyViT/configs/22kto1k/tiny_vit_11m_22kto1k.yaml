@@ -1,0 +1,24 @@
+MODEL:
+  NAME: TinyViT-11M-22kto1k
+  TYPE: tiny_vit
+
+  DROP_PATH_RATE: 0.0
+
+  TINY_VIT:
+    DEPTHS: [ 2, 2, 6, 2 ]
+    NUM_HEADS: [ 2, 4, 8, 14 ]
+    WINDOW_SIZES: [ 7, 7, 14, 7 ] 
+    EMBED_DIMS: [64, 128, 256, 448]
+
+TRAIN:
+  EPOCHS: 30
+  WARMUP_EPOCHS: 5
+  BASE_LR: 2.5e-4
+  WEIGHT_DECAY: 1e-8
+  MIN_LR: 1e-5
+  LAYER_LR_DECAY: 0.8
+  EVAL_BN_WHEN_TRAINING: True
+
+AUG:
+  MIXUP: 0.0
+  CUTMIX: 0.0
