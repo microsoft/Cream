@@ -483,8 +483,7 @@ class TinyViT(nn.Module):
                           input_resolution=(patches_resolution[0] // (2 ** i_layer),
                                             patches_resolution[1] // (2 ** i_layer)),
                           depth=depths[i_layer],
-                          drop_path=dpr[sum(depths[:i_layer])
-                                            :sum(depths[:i_layer + 1])],
+                          drop_path=dpr[sum(depths[:i_layer]):sum(depths[:i_layer + 1])],
                           downsample=PatchMerging if (
                               i_layer < self.num_layers - 1) else None,
                           use_checkpoint=use_checkpoint,
@@ -585,15 +584,15 @@ class TinyViT(nn.Module):
         return x
 
 
-_checkpoint_url_prefix = \
-    'https://github.com/wkcn/TinyViT-model-zoo/releases/download/1.0/'
-_provided_checkpoints = set([
-    'tiny_vit_5m_224',
-    'tiny_vit_11m_224',
-    'tiny_vit_21m_224',
-    'tiny_vit_21m_384',
-    'tiny_vit_21m_512',
-])
+_checkpoint_url_format = \
+    'https://github.com/wkcn/TinyViT-model-zoo/releases/download/checkpoints/{}.pth'
+_provided_checkpoints = {
+    'tiny_vit_5m_224': 'tiny_vit_5m_22kto1k_distill',
+    'tiny_vit_11m_224': 'tiny_vit_11m_22kto1k_distill',
+    'tiny_vit_21m_224': 'tiny_vit_21m_22kto1k_distill',
+    'tiny_vit_21m_384': 'tiny_vit_21m_22kto1k_384_distill',
+    'tiny_vit_21m_512': 'tiny_vit_21m_22kto1k_512_distill',
+}
 
 
 def register_tiny_vit_model(fn):
@@ -606,7 +605,8 @@ def register_tiny_vit_model(fn):
             model_name = fn.__name__
             assert model_name in _provided_checkpoints, \
                 f'Sorry that the checkpoint `{model_name}` is not provided yet.'
-            url = _checkpoint_url_prefix + model_name + '.pth'
+            url = _checkpoint_url_format.format(
+                _provided_checkpoints[model_name])
             checkpoint = torch.hub.load_state_dict_from_url(
                 url=url,
                 map_location='cpu', check_hash=False,
