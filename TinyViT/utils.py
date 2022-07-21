@@ -144,8 +144,6 @@ def load_pretrained(config, model, logger):
                     mode='bicubic')
                 state_dict[k] = relative_position_bias_table_pretrained_resized.view(
                     nH2, L2)
-                index_k = k.replace("attention_biases", "attention_bias_idxs")
-                state_dict[index_k] = model_state_dict[index_k]
 
     # bicubic interpolate absolute_pos_embed if not match
     absolute_pos_embed_keys = [
