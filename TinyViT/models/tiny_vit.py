@@ -1,5 +1,5 @@
 # --------------------------------------------------------
-# TinyViT Model Architectureh
+# TinyViT Model Architecture
 # Copyright (c) 2022 Microsoft
 # Adapted from LeViT and Swin Transformer
 #   LeViT: (https://github.com/facebookresearch/levit)
