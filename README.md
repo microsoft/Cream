@@ -27,7 +27,7 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 - :sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com
 - :boom: Jul, 2022: Code for [**TinyViT**](./TinyViT) is now released.
 - :boom: Apr, 2022: Code for [**MiniViT**](./MiniViT) is now released.
-- :boom: Mar, 2022: [**MiniViT**](https://arxiv.org/pdf/2204.07154.pdf) has been accepted by CVPR'22.
+- :boom: Mar, 2022: [**MiniViT**](https://openaccess.thecvf.com/content/CVPR2022/html/Zhang_MiniViT_Compressing_Vision_Transformers_With_Weight_Multiplexing_CVPR_2022_paper.html) has been accepted by CVPR'22.
 - :boom: Feb, 2022: Code for [**CDARTS**](./CDARTS) is now released.
 - :boom: Feb, 2022: [**CDARTS**](./CDARTS) has been accepted by TPAMI'22.
 - :boom: Jan, 2022: Code for [**AutoFormerV2**](./AutoFormerV2) is now released.
@@ -35,7 +35,7 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 - :boom: Aug, 2021: Code for [**AutoFormer**](./AutoFormer) is now released.
 - :boom: July, 2021: [**iRPE code**](./iRPE) (**with CUDA Acceleration**) is now released. Paper is [here](https://openaccess.thecvf.com/content/ICCV2021/html/Wu_Rethinking_and_Improving_Relative_Position_Encoding_for_Vision_Transformer_ICCV_2021_paper.html).
 - :boom: July, 2021: [**iRPE**](https://openaccess.thecvf.com/content/ICCV2021/html/Wu_Rethinking_and_Improving_Relative_Position_Encoding_for_Vision_Transformer_ICCV_2021_paper.html) has been accepted by ICCV'21.
-- :boom: July, 2021: [**AutoFormer**](https://arxiv.org/abs/2107.00651) has been accepted by ICCV'21.
+- :boom: July, 2021: [**AutoFormer**](https://openaccess.thecvf.com/content/ICCV2021/html/Chen_AutoFormer_Searching_Transformers_for_Visual_Recognition_ICCV_2021_paper.html) has been accepted by ICCV'21.
 - :boom: July, 2021: [**AutoFormer**](./AutoFormer) is now available on [arXiv](https://arxiv.org/abs/2107.00651).
 - :boom: Oct, 2020: Code for [**Cream**](./Cream) is now released.
 - :boom: Oct, 2020: [**Cream**](./Cream) was accepted to NeurIPS'20
@@ -95,11 +95,13 @@ In this work, we present a simple yet effective architecture distillation method
 
 ## Bibtex
 ```bibtex
-@article{MiniViT,
-  title={MiniViT: Compressing Vision Transformers with Weight Multiplexing},
-  author={Zhang, Jinnian and Peng, Houwen and Wu, Kan and Liu, Mengchen and Xiao, Bin and Fu, Jianlong and Yuan, Lu},
-  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-  year={2022}
+@InProceedings{MiniViT,
+    title     = {MiniViT: Compressing Vision Transformers With Weight Multiplexing},
+    author    = {Zhang, Jinnian and Peng, Houwen and Wu, Kan and Liu, Mengchen and Xiao, Bin and Fu, Jianlong and Yuan, Lu},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    month     = {June},
+    year      = {2022},
+    pages     = {12145-12154}
 }
 
 @article{CDARTS,
@@ -117,19 +119,21 @@ In this work, we present a simple yet effective architecture distillation method
 }
 
 @InProceedings{iRPE,
-    author    = {Wu, Kan and Peng, Houwen and Chen, Minghao and Fu, Jianlong and Chao, Hongyang},
     title     = {Rethinking and Improving Relative Position Encoding for Vision Transformer},
+    author    = {Wu, Kan and Peng, Houwen and Chen, Minghao and Fu, Jianlong and Chao, Hongyang},
     booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
     month     = {October},
     year      = {2021},
     pages     = {10033-10041}
 }
 
-@article{AutoFormer,
-  title={AutoFormer: Searching Transformers for Visual Recognition},
-  author={Chen, Minghao and Peng, Houwen and Fu, Jianlong and Ling, Haibin},
-  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
-  year={2021}
+@InProceedings{AutoFormer,
+    title     = {AutoFormer: Searching Transformers for Visual Recognition},
+    author    = {Chen, Minghao and Peng, Houwen and Fu, Jianlong and Ling, Haibin},
+    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
+    month     = {October},
+    year      = {2021},
+    pages     = {12270-12280}
 }
 
 @article{Cream,

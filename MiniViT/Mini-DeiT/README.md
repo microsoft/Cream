@@ -107,11 +107,13 @@ python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py --model 
 
 If this repo is helpful for you, please consider to cite it. Thank you! :)
 ```bibtex
-@article{MiniViT,
-  title={MiniViT: Compressing Vision Transformers with Weight Multiplexing},
-  author={Zhang, Jinnian and Peng, Houwen and Wu, Kan and Liu, Mengchen and Xiao, Bin and Fu, Jianlong and Yuan, Lu},
-  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-  year={2022}
+@InProceedings{MiniViT,
+    title     = {MiniViT: Compressing Vision Transformers With Weight Multiplexing},
+    author    = {Zhang, Jinnian and Peng, Houwen and Wu, Kan and Liu, Mengchen and Xiao, Bin and Fu, Jianlong and Yuan, Lu},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    month     = {June},
+    year      = {2022},
+    pages     = {12145-12154}
 }
 ```
 

@@ -109,11 +109,13 @@ python -m torch.distributed.launch --nproc_per_node=8 --use_env supernet_train.p
 
 If this repo is helpful for you, please consider to cite it. Thank you! :)
 ```bibtex
-@article{AutoFormer,
-  title={AutoFormer: Searching Transformers for Visual Recognition},
-  author={Chen, Minghao and Peng, Houwen and Fu, Jianlong and Ling, Haibin},
-  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
-  year={2021}
+@InProceedings{AutoFormer,
+    title     = {AutoFormer: Searching Transformers for Visual Recognition},
+    author    = {Chen, Minghao and Peng, Houwen and Fu, Jianlong and Ling, Haibin},
+    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
+    month     = {October},
+    year      = {2021},
+    pages     = {12270-12280}
 }
 ```
 
