@@ -2,9 +2,9 @@
 
 :sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com.
 
-**This is an official implementation of [MiniViT](https://arxiv.org/pdf/2204.07154.pdf), including Mini-DeiT and Mini-Swin.**
+**This is an official implementation of [MiniViT](https://openaccess.thecvf.com/content/CVPR2022/html/Zhang_MiniViT_Compressing_Vision_Transformers_With_Weight_Multiplexing_CVPR_2022_paper.html), including Mini-DeiT and Mini-Swin.**
 
-**[CVPR'2022]** - [MiniViT: Compressing Vision Transformers with Weight Multiplexing](https://arxiv.org/pdf/2204.07154.pdf)
+**[CVPR'2022]** - [MiniViT: Compressing Vision Transformers with Weight Multiplexing](https://openaccess.thecvf.com/content/CVPR2022/html/Zhang_MiniViT_Compressing_Vision_Transformers_With_Weight_Multiplexing_CVPR_2022_paper.html)
 
 MiniViT is a new compression framework that achieves parameter reduction in vision transformers while retaining the same performance. The central idea of MiniViT is to multiplex the weights of consecutive transformer blocks. Specifically, we make the weights shared across layers, while imposing a transformation on the weights to increase diversity. Weight distillation over self-attention is also applied to transfer knowledge from large-scale ViT models to weight-multiplexed compact models.
 
@@ -47,10 +47,12 @@ Mini-Swin-B | 47M | 384x384 | 85.5 | 97.6 | [model](https://github.com/DominickZ
 
 If this repo is helpful for you, please consider to cite it. Thank you! :)
 ```bibtex
-@article{MiniViT,
-  title={MiniViT: Compressing Vision Transformers with Weight Multiplexing},
-  author={Zhang, Jinnian and Peng, Houwen and Wu, Kan and Liu, Mengchen and Xiao, Bin and Fu, Jianlong and Yuan, Lu},
-  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-  year={2022}
+@InProceedings{MiniViT,
+    title     = {MiniViT: Compressing Vision Transformers With Weight Multiplexing},
+    author    = {Zhang, Jinnian and Peng, Houwen and Wu, Kan and Liu, Mengchen and Xiao, Bin and Fu, Jianlong and Yuan, Lu},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    month     = {June},
+    year      = {2022},
+    pages     = {12145-12154}
 }
 ```
