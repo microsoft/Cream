@@ -1,7 +1,7 @@
 
 # Neureal Architecture Design and Search
 
-***This is a collection of our AutoML-NAS work***
+***This is a collection of our NAS and Vision Transformer work***
 
 > [**TinyViT**](./TinyViT) (```@ECCV'22```): **TinyViT: Fast Pretraining Distillation for Small Vision Transformers**
 
