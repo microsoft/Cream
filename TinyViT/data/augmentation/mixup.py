@@ -213,14 +213,14 @@ class Mixup:
     def _mix_pair2(self, x, seeds):
         assert seeds is not None, "seeds must be provided when mode is `pair2` in mixup"
         batch_size = len(x)
-        lam_out = np.ones(batch_size, dtype=np.float32)
+        lam_batch = np.ones(batch_size, dtype=np.float32)
 
         for i in range(0, len(x), 2):
             # for each pair x[i] and x[i + 1]
             seed = int(seeds[i] ^ seeds[i + 1])
             with AugRandomContext(seed=seed):
                 lam, use_cutmix = self._params_per_batch()
-                lam_out[i:i+1] = lam
+                lam_batch[i:i+2] = lam
                 if lam == 1.:
                     continue
                 if use_cutmix:
@@ -232,7 +232,7 @@ class Mixup:
                     # mixup
                     x_flipped = x[i:i+2].flip(0).mul_(1. - lam)
                     x[i:i+2].mul_(lam).add_(x_flipped)
-        return lam_out
+        return torch.tensor(lam_batch, device=x.device, dtype=x.dtype).unsqueeze(1)
 
     def __call__(self, x, target, seeds=None):
         assert len(x) % 2 == 0, 'Batch size should be even when using this'

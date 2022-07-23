@@ -7,7 +7,7 @@ import torch
 from typing import TypeVar, Optional, Iterator
 
 import torch
-from . import Sampler, Dataset
+from torch.utils.data import Sampler, Dataset
 import torch.distributed as dist
 
 
@@ -133,7 +133,7 @@ class MyDistributedSampler(Sampler[T_co]):
         if self.pair:
             indices = indices.view(-1, 2)
         indices = indices[self.rank:self.total_size:self.num_replicas].flatten().tolist()
-        assert len(indices) == self.num_samples or (self.padding and len(indices) == self.num_samples - 1)
+        assert len(indices) == self.num_samples or (not self.padding and len(indices) == self.num_samples - 1)
 
         return iter(indices)
 

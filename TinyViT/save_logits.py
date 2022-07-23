@@ -69,6 +69,8 @@ def parse_option():
                         help='Perform evaluation only')
     parser.add_argument('--check-saved-logits',
                         action='store_true', help='Check saved logits')
+    parser.add_argument('--skip-eval',
+                        action='store_true', help='Skip evaluation')
     parser.add_argument('--throughput', action='store_true',
                         help='Test throughput only')
 
@@ -108,7 +110,7 @@ def main(config):
 
     assert config.MODEL.RESUME
     load_checkpoint(config, model_without_ddp, optimizer, lr_scheduler, logger)
-    if True and not args.check_saved_logits:
+    if not args.skip_eval and not args.check_saved_logits:
         acc1, acc5, loss = validate(config, data_loader_val, model)
         logger.info(
             f"Accuracy of the network on the {len(dataset_val)} test images: top-1 acc: {acc1:.1f}%, top-5 acc: {acc5:.1f}%")
@@ -149,13 +151,20 @@ def save_logits_one_epoch(config, model, data_loader, epoch, mixup_fn):
 
     for idx, ((samples, targets), (keys, seeds)) in enumerate(data_loader):
         samples = samples.cuda(non_blocking=True)
-        # targets = targets.cuda(non_blocking=True)
-        targets = None
+        targets = targets.cuda(non_blocking=True)
 
         if mixup_fn is not None:
             samples, targets = mixup_fn(samples, targets, seeds)
+            original_targets = targets.argmax(dim=1)
+        else:
+            original_targets = targets
 
         outputs = model(samples)
+
+        acc1, acc5 = accuracy(outputs, original_targets, topk=(1, 5))
+        real_batch_size = len(samples)
+        meters['teacher_acc1'].update(acc1.item(), real_batch_size)
+        meters['teacher_acc5'].update(acc5.item(), real_batch_size)
 
         # save teacher logits
         softmax_prob = torch.softmax(outputs, -1)

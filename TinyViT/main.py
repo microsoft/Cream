@@ -516,7 +516,7 @@ def validate(args, config, data_loader, model, num_classes=1000):
 
     acc1_meter.sync()
     acc5_meter.sync()
-    logger.info(f' The number of validation samples is {acc1_meter.count}')
+    logger.info(f' The number of validation samples is {int(acc1_meter.count)}')
     logger.info(f' * Acc@1 {acc1_meter.avg:.3f} Acc@5 {acc5_meter.avg:.3f}')
     return acc1_meter.avg, acc5_meter.avg, loss_meter.avg
 

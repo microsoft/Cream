@@ -98,13 +98,13 @@ def build_loader(config):
     # setup mixup / cutmix
     mixup_fn = None
     if mixup_active:
-        mix_t = Mixup if not config.DISTILL.ENABLED else Mixup_record
+        mixup_t = Mixup if not config.DISTILL.ENABLED else Mixup_record
         if config.DISTILL.ENABLED and config.AUG.MIXUP_MODE != "pair2":
             # change to pair2 mode for saving logits
             config.defrost()
             config.AUG.MIXUP_MODE = 'pair2'
             config.freeze()
-        mixup_fn = Mixup(
+        mixup_fn = mixup_t(
             mixup_alpha=config.AUG.MIXUP, cutmix_alpha=config.AUG.CUTMIX, cutmix_minmax=config.AUG.CUTMIX_MINMAX,
             prob=config.AUG.MIXUP_PROB, switch_prob=config.AUG.MIXUP_SWITCH_PROB, mode=config.AUG.MIXUP_MODE,
             label_smoothing=config.MODEL.LABEL_SMOOTHING, num_classes=config.MODEL.NUM_CLASSES)
