@@ -114,7 +114,7 @@ def main(config):
 
     assert config.MODEL.RESUME
     load_checkpoint(config, model_without_ddp, optimizer, lr_scheduler, logger)
-    if True:
+    if True and not args.check_saved_logits:
         acc1, acc5, loss = validate(config, data_loader_val, model)
         logger.info(
             f"Accuracy of the network on the {len(dataset_val)} test images: top-1 acc: {acc1:.1f}%, top-5 acc: {acc5:.1f}%")
@@ -130,9 +130,9 @@ def main(config):
         data_loader_train.sampler.set_epoch(epoch)
 
         if args.check_saved_logits:
-            check_logits_one_epoch(config, model, data_loader_train, epoch)
+            check_logits_one_epoch(config, model, data_loader_train, epoch, mixup_fn=mixup_fn)
         else:
-            save_logits_one_epoch(config, model, data_loader_train, epoch)
+            save_logits_one_epoch(config, model, data_loader_train, epoch, mixup_fn=mixup_fn)
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
@@ -140,7 +140,7 @@ def main(config):
 
 
 @torch.no_grad()
-def save_logits_one_epoch(config, model, data_loader, epoch):
+def save_logits_one_epoch(config, model, data_loader, epoch, mixup_fn):
     model.eval()
 
     num_steps = len(data_loader)
@@ -155,7 +155,11 @@ def save_logits_one_epoch(config, model, data_loader, epoch):
 
     for idx, ((samples, targets), (keys, seeds)) in enumerate(data_loader):
         samples = samples.cuda(non_blocking=True)
-        targets = targets.cuda(non_blocking=True)
+        # targets = targets.cuda(non_blocking=True)
+        targets = None
+
+        if mixup_fn is not None:
+            samples, targets = mixup_fn(samples, targets, seeds)
 
         outputs = model(samples)
 
@@ -208,7 +212,7 @@ def save_logits_one_epoch(config, model, data_loader, epoch):
 
 
 @torch.no_grad()
-def check_logits_one_epoch(config, model, data_loader, epoch):
+def check_logits_one_epoch(config, model, data_loader, epoch, mixup_fn):
     model.eval()
 
     num_steps = len(data_loader)
@@ -219,9 +223,12 @@ def check_logits_one_epoch(config, model, data_loader, epoch):
     end = time.time()
     topk = config.DISTILL.LOGITS_TOPK
 
-    for idx, ((samples, targets), (saved_logits_index, saved_logits_value)) in enumerate(data_loader):
+    for idx, ((samples, targets), (saved_logits_index, saved_logits_value, seeds)) in enumerate(data_loader):
         samples = samples.cuda(non_blocking=True)
         targets = targets.cuda(non_blocking=True)
+
+        if mixup_fn is not None:
+            samples, targets = mixup_fn(samples, targets, seeds)
 
         outputs = model(samples)
 

@@ -17,6 +17,7 @@ from timm.data import Mixup
 from timm.data import create_transform
 
 from .augmentation import create_transform as create_transform_record
+from .augmentation.mixup import Mixup as Mixup_record
 from .augmentation.dataset_wrapper import DatasetWrapper
 from .imagenet22k_dataset import IN22KDataset
 
@@ -105,6 +106,12 @@ def build_loader(config):
     mixup_fn = None
     mixup_active = config.AUG.MIXUP > 0 or config.AUG.CUTMIX > 0. or config.AUG.CUTMIX_MINMAX is not None
     if mixup_active:
+        mix_t = Mixup if not config.DISTILL.ENABLED else Mixup_record
+        if config.DISTILL.ENABLED and config.AUG.MIXUP_MODE != "pair2":
+            # change to pair2 mode for saving logits
+            config.defrost()
+            config.AUG.MIXUP_MODE = 'pair2'
+            config.freeze()
         mixup_fn = Mixup(
             mixup_alpha=config.AUG.MIXUP, cutmix_alpha=config.AUG.CUTMIX, cutmix_minmax=config.AUG.CUTMIX_MINMAX,
             prob=config.AUG.MIXUP_PROB, switch_prob=config.AUG.MIXUP_SWITCH_PROB, mode=config.AUG.MIXUP_MODE,

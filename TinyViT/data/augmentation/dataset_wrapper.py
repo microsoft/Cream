@@ -42,7 +42,7 @@ class DatasetWrapper(torch.utils.data.Dataset):
         seed, logits_index, logits_value = self._get_saved_logits(key)
         with AugRandomContext(seed=seed):
             item = self.dataset[index]
-        return (item, (logits_index, logits_value))
+        return (item, (logits_index, logits_value, np.int32(seed)))
 
     def _get_saved_logits(self, key: str):
         manager = self.get_manager()
