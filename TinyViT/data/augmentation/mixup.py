@@ -215,7 +215,7 @@ class Mixup:
         batch_size = len(x)
         lam_batch = np.ones(batch_size, dtype=np.float32)
 
-        for i in range(0, len(x), 2):
+        for i in range(0, batch_size, 2):
             # for each pair x[i] and x[i + 1]
             seed = int(seeds[i] ^ seeds[i + 1])
             with AugRandomContext(seed=seed):

@@ -428,7 +428,7 @@ def train_one_epoch_distill_using_saved_logits(args, config, model, criterion, d
 
         torch.cuda.synchronize()
 
-        loss_meter.update(loss.item(), outputs_teacher.size(0))
+        loss_meter.update(loss.item(), real_batch_size)
         norm_meter.update(grad_norm)
         batch_time.update(time.time() - end)
         end = time.time()

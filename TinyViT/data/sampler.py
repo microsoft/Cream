@@ -44,8 +44,8 @@ class MyDistributedSampler(Sampler[T_co]):
             tail of the data to make it evenly divisible across the number of
             replicas. If ``False``, the sampler will add extra indices to make
             the data evenly divisible across the replicas. Default: ``False``.
-        padding: (bool, optional): Whether to pad the dataset. Default: ``True`
-        pair: (bool, optional): Pair output for Mixup. Default: ``False``
+        padding: (bool, optional): Whether to pad the dataset. Default: ``True``.
+        pair: (bool, optional): Pair output for Mixup. Default: ``False``.
 
     .. warning::
         In distributed mode, calling the :meth:`set_epoch` method at
