@@ -126,9 +126,11 @@ def main(config):
         data_loader_train.sampler.set_epoch(epoch)
 
         if args.check_saved_logits:
-            check_logits_one_epoch(config, model, data_loader_train, epoch, mixup_fn=mixup_fn)
+            check_logits_one_epoch(
+                config, model, data_loader_train, epoch, mixup_fn=mixup_fn)
         else:
-            save_logits_one_epoch(config, model, data_loader_train, epoch, mixup_fn=mixup_fn)
+            save_logits_one_epoch(
+                config, model, data_loader_train, epoch, mixup_fn=mixup_fn)
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))

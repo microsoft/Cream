@@ -101,7 +101,8 @@ class MyDistributedSampler(Sampler[T_co]):
                 self.total_size = num_parts * T
             else:
                 self.total_size = (num_parts + has_rest) * T
-        self.num_samples = (self.total_size + self.num_replicas - 1) // self.num_replicas
+        self.num_samples = (
+            self.total_size + self.num_replicas - 1) // self.num_replicas
         self.shuffle = shuffle
         self.seed = seed
 
@@ -120,9 +121,11 @@ class MyDistributedSampler(Sampler[T_co]):
                 padding_size = self.total_size - len(indices)
                 # pad to total_size
                 if padding_size <= len(indices):
-                    indices = torch.cat([indices, indices[:padding_size]], dim=0)
+                    indices = torch.cat(
+                        [indices, indices[:padding_size]], dim=0)
                 else:
-                    repeat_times = (self.total_size + len(indices) - 1) // len(indices)
+                    repeat_times = (self.total_size +
+                                    len(indices) - 1) // len(indices)
                     indices = indices.repeat(repeat_times)[:self.total_size]
         else:
             # remove tail of data to make it evenly divisible.
@@ -132,8 +135,10 @@ class MyDistributedSampler(Sampler[T_co]):
         # subsample
         if self.pair:
             indices = indices.view(-1, 2)
-        indices = indices[self.rank:self.total_size:self.num_replicas].flatten().tolist()
-        assert len(indices) == self.num_samples or (not self.padding and len(indices) == self.num_samples - 1)
+        indices = indices[self.rank:self.total_size:self.num_replicas].flatten(
+        ).tolist()
+        assert len(indices) == self.num_samples or (
+            not self.padding and len(indices) == self.num_samples - 1)
 
         return iter(indices)
 
