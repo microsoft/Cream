@@ -62,12 +62,6 @@ def parse_option():
     parser.add_argument('--batch-size', type=int,
                         help="batch size for single GPU")
     parser.add_argument('--data-path', type=str, help='path to dataset')
-    parser.add_argument('--zip', action='store_true',
-                        help='use zipped dataset instead of folder dataset')
-    parser.add_argument('--cache-mode', type=str, default='part', choices=['no', 'full', 'part'],
-                        help='no: no cache, '
-                             'full: cache all data, '
-                             'part: sharding the dataset into nonoverlapping pieces and only cache one piece')
     parser.add_argument('--pretrained',
                         help='pretrained weight from checkpoint, could be imagenet22k pretrained weight')
     parser.add_argument('--resume', help='resume from checkpoint')
@@ -353,12 +347,18 @@ def train_one_epoch_distill_using_saved_logits(args, config, model, criterion, d
     num_classes = config.MODEL.NUM_CLASSES
     topk = config.DISTILL.LOGITS_TOPK
 
-    for idx, ((samples, original_targets), (logits_index, logits_value)) in enumerate(data_loader):
+    for idx, ((samples, targets), (logits_index, logits_value, seeds)) in enumerate(data_loader):
         normal_global_idx = epoch * NORM_ITER_LEN + \
             (idx * NORM_ITER_LEN // num_steps)
 
         samples = samples.cuda(non_blocking=True)
-        original_targets = original_targets.cuda(non_blocking=True)
+        targets = targets.cuda(non_blocking=True)
+
+        if mixup_fn is not None:
+            samples, targets = mixup_fn(samples, targets, seeds)
+            original_targets = targets.argmax(dim=1)
+        else:
+            original_targets = targets
         meters['data_time'].update(time.time() - data_tic)
 
         outputs = model(samples)
@@ -373,8 +373,6 @@ def train_one_epoch_distill_using_saved_logits(args, config, model, criterion, d
         minor_value = minor_value.repeat_interleave(num_classes, dim=-1)
         outputs_teacher = minor_value.scatter_(-1, logits_index, logits_value)
 
-        targets = outputs_teacher
-
         # compute accuracy
         real_batch_size = len(original_targets)
         acc1, acc5 = accuracy(outputs, original_targets, topk=(1, 5))
@@ -386,7 +384,7 @@ def train_one_epoch_distill_using_saved_logits(args, config, model, criterion, d
         meters['teacher_acc5'].update(teacher_acc5.item(), real_batch_size)
 
         if config.TRAIN.ACCUMULATION_STEPS > 1:
-            loss = criterion(outputs, targets)
+            loss = criterion(outputs, outputs_teacher)
             loss = loss / config.TRAIN.ACCUMULATION_STEPS
             if config.AMP_OPT_LEVEL != "O0":
                 with amp.scale_loss(loss, optimizer) as scaled_loss:
@@ -408,7 +406,7 @@ def train_one_epoch_distill_using_saved_logits(args, config, model, criterion, d
                 optimizer.zero_grad()
                 lr_scheduler.step_update(epoch * num_steps + idx)
         else:
-            loss = criterion(outputs, targets)
+            loss = criterion(outputs, outputs_teacher)
             optimizer.zero_grad()
             if config.AMP_OPT_LEVEL != "O0":
                 with amp.scale_loss(loss, optimizer) as scaled_loss:
@@ -430,7 +428,7 @@ def train_one_epoch_distill_using_saved_logits(args, config, model, criterion, d
 
         torch.cuda.synchronize()
 
-        loss_meter.update(loss.item(), targets.size(0))
+        loss_meter.update(loss.item(), real_batch_size)
         norm_meter.update(grad_norm)
         batch_time.update(time.time() - end)
         end = time.time()
@@ -518,6 +516,8 @@ def validate(args, config, data_loader, model, num_classes=1000):
 
     acc1_meter.sync()
     acc5_meter.sync()
+    logger.info(
+        f' The number of validation samples is {int(acc1_meter.count)}')
     logger.info(f' * Acc@1 {acc1_meter.avg:.3f} Acc@5 {acc5_meter.avg:.3f}')
     return acc1_meter.avg, acc5_meter.avg, loss_meter.avg
 

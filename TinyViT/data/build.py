@@ -17,10 +17,10 @@ from timm.data import Mixup
 from timm.data import create_transform
 
 from .augmentation import create_transform as create_transform_record
+from .augmentation.mixup import Mixup as Mixup_record
 from .augmentation.dataset_wrapper import DatasetWrapper
 from .imagenet22k_dataset import IN22KDataset
-
-from .samplers import SubsetRandomSampler
+from .sampler import MyDistributedSampler
 
 try:
     from timm.data import TimmDatasetTar
@@ -57,16 +57,17 @@ def build_loader(config):
     print(
         f"local rank {config.LOCAL_RANK} / global rank {dist.get_rank()} successfully build val dataset")
 
-    num_tasks = dist.get_world_size()
-    global_rank = dist.get_rank()
-    if config.DATA.ZIP_MODE and config.DATA.CACHE_MODE == 'part':
-        indices = np.arange(dist.get_rank(), len(
-            dataset_train), dist.get_world_size())
-        sampler_train = SubsetRandomSampler(indices)
-    else:
-        sampler_train = torch.utils.data.DistributedSampler(
-            dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
-        )
+    mixup_active = config.AUG.MIXUP > 0 or config.AUG.CUTMIX > 0. or config.AUG.CUTMIX_MINMAX is not None
+
+    sampler_train = MyDistributedSampler(
+        dataset_train, shuffle=True,
+        drop_last=False, padding=True, pair=mixup_active and config.DISTILL.ENABLED,
+    )
+
+    sampler_val = MyDistributedSampler(
+        dataset_val, shuffle=False,
+        drop_last=False, padding=False, pair=False,
+    )
 
     # TinyViT Dataset Wrapper
     if config.DISTILL.ENABLED:
@@ -75,13 +76,6 @@ def build_loader(config):
                                        topk=config.DISTILL.LOGITS_TOPK,
                                        write=config.DISTILL.SAVE_TEACHER_LOGITS,
                                        )
-
-    if config.TEST.SEQUENTIAL:
-        sampler_val = torch.utils.data.SequentialSampler(dataset_val)
-    else:
-        sampler_val = torch.utils.data.distributed.DistributedSampler(
-            dataset_val, shuffle=False
-        )
 
     data_loader_train = torch.utils.data.DataLoader(
         dataset_train, sampler=sampler_train,
@@ -103,9 +97,14 @@ def build_loader(config):
 
     # setup mixup / cutmix
     mixup_fn = None
-    mixup_active = config.AUG.MIXUP > 0 or config.AUG.CUTMIX > 0. or config.AUG.CUTMIX_MINMAX is not None
     if mixup_active:
-        mixup_fn = Mixup(
+        mixup_t = Mixup if not config.DISTILL.ENABLED else Mixup_record
+        if config.DISTILL.ENABLED and config.AUG.MIXUP_MODE != "pair2":
+            # change to pair2 mode for saving logits
+            config.defrost()
+            config.AUG.MIXUP_MODE = 'pair2'
+            config.freeze()
+        mixup_fn = mixup_t(
             mixup_alpha=config.AUG.MIXUP, cutmix_alpha=config.AUG.CUTMIX, cutmix_minmax=config.AUG.CUTMIX_MINMAX,
             prob=config.AUG.MIXUP_PROB, switch_prob=config.AUG.MIXUP_SWITCH_PROB, mode=config.AUG.MIXUP_MODE,
             label_smoothing=config.MODEL.LABEL_SMOOTHING, num_classes=config.MODEL.NUM_CLASSES)

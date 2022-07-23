@@ -31,11 +31,6 @@ _C.DATA.MEAN_AND_STD_TYPE = "default"
 _C.DATA.IMG_SIZE = 224
 # Interpolation to resize image (random, bilinear, bicubic)
 _C.DATA.INTERPOLATION = 'bicubic'
-# Use zipped dataset instead of folder dataset
-# could be overwritten by command line argument
-_C.DATA.ZIP_MODE = False
-# Cache Data in Memory, could be overwritten by command line argument
-_C.DATA.CACHE_MODE = 'part'
 # Pin CPU memory in DataLoader for more efficient (sometimes) transfer to GPU.
 _C.DATA.PIN_MEMORY = True
 # Number of data loading threads
@@ -163,8 +158,6 @@ _C.AUG.MIXUP_MODE = 'batch'
 _C.TEST = CN()
 # Whether to use center crop when testing
 _C.TEST.CROP = True
-# Whether to use SequentialSampler as validation sampler
-_C.TEST.SEQUENTIAL = False
 
 # -----------------------------------------------------------------------------
 # Misc
@@ -217,10 +210,6 @@ def update_config(config, args):
         config.DATA.BATCH_SIZE = args.batch_size
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
-    if args.zip:
-        config.DATA.ZIP_MODE = True
-    if args.cache_mode:
-        config.DATA.CACHE_MODE = args.cache_mode
     if args.pretrained:
         config.MODEL.PRETRAINED = args.pretrained
     if args.resume:

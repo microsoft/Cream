@@ -12,7 +12,7 @@ Hacked together by / Copyright 2020 Ross Wightman
 """
 import numpy as np
 import torch
-from .aug_random import random, np_random
+from .aug_random import AugRandomContext, random, np_random
 
 
 def one_hot(x, num_classes, on_value=1., off_value=0., device='cuda'):
@@ -102,6 +102,7 @@ class Mixup:
         label_smoothing (float): apply label smoothing to the mixed target tensor
         num_classes (int): number of classes for target
     """
+
     def __init__(self, mixup_alpha=1., cutmix_alpha=0., cutmix_minmax=None, prob=1.0, switch_prob=0.5,
                  mode='batch', correct_lam=True, label_smoothing=0.1, num_classes=1000):
         self.mixup_alpha = mixup_alpha
@@ -116,6 +117,8 @@ class Mixup:
         self.label_smoothing = label_smoothing
         self.num_classes = num_classes
         self.mode = mode
+        assert self.mode in ['batch', 'pair', 'elem', 'pair2'], 'Invalid mode: {}'.format(self.mode)
+        assert self.mode in ['pair2'], 'The mode of mixup should be `pair2` when saving logits'
         self.correct_lam = correct_lam  # correct lambda based on clipped area for cutmix
         self.mixup_enabled = True  # set to false to disable mixing (intended tp be set by train loop)
 
@@ -207,27 +210,43 @@ class Mixup:
             x.mul_(lam).add_(x_flipped)
         return lam
 
-    def __call__(self, x, target):
+    def _mix_pair2(self, x, seeds):
+        assert seeds is not None, "seeds must be provided when mode is `pair2` in mixup"
+        batch_size = len(x)
+        lam_batch = np.ones(batch_size, dtype=np.float32)
+
+        for i in range(0, batch_size, 2):
+            # for each pair x[i] and x[i + 1]
+            seed = int(seeds[i] ^ seeds[i + 1])
+            with AugRandomContext(seed=seed):
+                lam, use_cutmix = self._params_per_batch()
+                lam_batch[i:i+2] = lam
+                if lam == 1.:
+                    continue
+                if use_cutmix:
+                    # cutmix
+                    (yl, yh, xl, xh), lam = cutmix_bbox_and_lam(
+                        x[i].shape, lam, ratio_minmax=self.cutmix_minmax, correct_lam=self.correct_lam)
+                    x[i:i+2, :, yl:yh, xl:xh] = x[i:i+2].flip(0)[:, :, yl:yh, xl:xh]
+                else:
+                    # mixup
+                    x_flipped = x[i:i+2].flip(0).mul_(1. - lam)
+                    x[i:i+2].mul_(lam).add_(x_flipped)
+        return torch.tensor(lam_batch, device=x.device, dtype=x.dtype).unsqueeze(1)
+
+    def __call__(self, x, target, seeds=None):
         assert len(x) % 2 == 0, 'Batch size should be even when using this'
         if self.mode == 'elem':
             lam = self._mix_elem(x)
         elif self.mode == 'pair':
             lam = self._mix_pair(x)
+        elif self.mode == 'pair2':
+            lam = self._mix_pair2(x, seeds)
         else:
             lam = self._mix_batch(x)
-        self.output_lam = lam
-        target = mixup_target(target, self.num_classes, lam, self.label_smoothing, x.device)
+        if target is not None:
+            target = mixup_target(target, self.num_classes, lam, self.label_smoothing, x.device)
         return x, target
-
-    def recall(self, target):
-        lam = self.output_lam
-        if target.ndim == 1:
-            target = mixup_target(target, self.num_classes, lam, self.label_smoothing)
-            return target
-        assert target.ndim == 2
-        y1 = target
-        y2 = target.flip(0)
-        return y1 * lam + y2 * (1. - lam)
 
 
 class FastCollateMixup(Mixup):
