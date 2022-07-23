@@ -1,6 +1,8 @@
 MODEL:
-  TYPE:
-    clip_vit_large14_224
+  TYPE: clip_vit_large14_224
+
+TRAIN:
+  EPOCHS: 90
 
 DATA:
   MEAN_AND_STD_TYPE: clip
