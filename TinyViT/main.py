@@ -207,6 +207,12 @@ def main(args, config):
     logger.info('Training time {}'.format(total_time_str))
 
 
+def is_valid_grad_norm(num):
+    if num is None:
+        return False
+    return not bool(torch.isinf(num)) and not bool(torch.isnan(num))
+
+
 def set_bn_state(config, model):
     if config.TRAIN.EVAL_BN_WHEN_TRAINING:
         for m in model.modules():
@@ -266,7 +272,7 @@ def train_one_epoch(args, config, model, criterion, data_loader, optimizer, epoc
         torch.cuda.synchronize()
 
         loss_meter.update(loss.item(), targets.size(0))
-        if grad_norm is not None:  # loss_scaler return None if not update
+        if is_valid_grad_norm(grad_norm):
             norm_meter.update(grad_norm)
         scaler_meter.update(loss_scale_value)
         batch_time.update(time.time() - end)
@@ -372,7 +378,7 @@ def train_one_epoch_distill_using_saved_logits(args, config, model, criterion, d
         torch.cuda.synchronize()
 
         loss_meter.update(loss.item(), real_batch_size)
-        if grad_norm is not None:  # loss_scaler return None if not update
+        if is_valid_grad_norm(grad_norm):
             norm_meter.update(grad_norm)
         scaler_meter.update(loss_scale_value)
         batch_time.update(time.time() - end)
