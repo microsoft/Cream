@@ -25,7 +25,7 @@ from config import get_config
 from models import build_model
 from data import build_loader
 from logger import create_logger
-from utils import load_checkpoint
+from utils import load_checkpoint, NativeScalerWithGradNormCount
 
 from models.remap_layer import RemapLayer
 remap_layer_22kto1k = RemapLayer('./imagenet_1kto22k.txt')
@@ -100,7 +100,8 @@ def main(config):
     lr_scheduler = None
 
     assert config.MODEL.RESUME
-    load_checkpoint(config, model_without_ddp, optimizer, lr_scheduler, logger)
+    loss_scaler = NativeScalerWithGradNormCount()
+    load_checkpoint(config, model_without_ddp, optimizer, lr_scheduler, loss_scaler, logger)
     if not args.skip_eval and not args.check_saved_logits:
         acc1, acc5, loss = validate(config, data_loader_val, model)
         logger.info(
