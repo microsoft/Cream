@@ -2,7 +2,7 @@
 
 In this document, we introduce how to pretrain TinyViT with the proposed fast pretraining distillation.
 
-Note: If the GPU memory is not enough to fit the batch size, you can use `Gradient accumulation stps` by adding the argument `--accumulation-steps <acc_steps>`. For example, the accumulated batch size per GPU is 128 (32 x 4) when passing the arguments `--batch-size 32 --accumulation-steps 4`.
+Note: If the GPU memory is not enough to fit the batch size, you can use `Gradient accumulation steps` by adding the argument `--accumulation-steps <acc_steps>`. For example, the accumulated batch size per GPU is 128 (= 32 x 4) when passing the arguments `--batch-size 32 --accumulation-steps 4`.
 
 ## Pretrain the model on ImageNet-22k with the proposed fast pretraining distillation.
 
