@@ -30,12 +30,6 @@ from utils import load_checkpoint
 from models.remap_layer import RemapLayer
 remap_layer_22kto1k = RemapLayer('./imagenet_1kto22k.txt')
 
-try:
-    # noinspection PyUnresolvedReferences
-    from apex import amp
-except ImportError:
-    amp = None
-
 
 def parse_option():
     parser = argparse.ArgumentParser(
@@ -60,8 +54,7 @@ def parse_option():
                         help="gradient accumulation steps")
     parser.add_argument('--use-checkpoint', action='store_true',
                         help="whether to use gradient checkpointing to save memory")
-    parser.add_argument('--amp-opt-level', type=str, default='O1', choices=['O0', 'O1', 'O2'],
-                        help='mixed precision opt level, if O0, no amp is used')
+    parser.add_argument('--disable_amp', action='store_true', help='Disable pytorch amp')
     parser.add_argument('--output', default='output', type=str, metavar='PATH',
                         help='root of output folder, the full path is <output>/<model_name>/<tag> (default: output)')
     parser.add_argument('--tag', help='tag of experiment')
@@ -95,8 +88,6 @@ def main(config):
 
     logger.info(str(model))
 
-    if config.AMP_OPT_LEVEL != "O0":
-        model = amp.initialize(model, opt_level=config.AMP_OPT_LEVEL)
     model = torch.nn.parallel.DistributedDataParallel(
         model, device_ids=[config.LOCAL_RANK], broadcast_buffers=False)
     model_without_ddp = model.module
@@ -161,7 +152,8 @@ def save_logits_one_epoch(config, model, data_loader, epoch, mixup_fn):
         else:
             original_targets = targets
 
-        outputs = model(samples)
+        with torch.cuda.amp.autocast(enabled=config.AMP_ENABLE):
+            outputs = model(samples)
 
         acc1, acc5 = accuracy(outputs, original_targets, topk=(1, 5))
         real_batch_size = len(samples)
@@ -235,7 +227,8 @@ def check_logits_one_epoch(config, model, data_loader, epoch, mixup_fn):
         if mixup_fn is not None:
             samples, targets = mixup_fn(samples, targets, seeds)
 
-        outputs = model(samples)
+        with torch.cuda.amp.autocast(enabled=config.AMP_ENABLE):
+            outputs = model(samples)
 
         softmax_prob = torch.softmax(outputs, -1)
 
@@ -286,7 +279,8 @@ def validate(config, data_loader, model, num_classes=1000):
         target = target.cuda(non_blocking=True)
 
         # compute output
-        output = model(images)
+        with torch.cuda.amp.autocast(enabled=config.AMP_ENABLE):
+            output = model(images)
 
         if num_classes == 1000:
             output_num_classes = output.size(-1)
@@ -331,9 +325,6 @@ if __name__ == '__main__':
     if not args.check_saved_logits:
         config.DISTILL.SAVE_TEACHER_LOGITS = True
     config.freeze()
-
-    if config.AMP_OPT_LEVEL != "O0":
-        assert amp is not None, "amp not installed!"
 
     if 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:
         rank = int(os.environ["RANK"])

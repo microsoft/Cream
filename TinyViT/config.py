@@ -98,7 +98,7 @@ _C.TRAIN.CLIP_GRAD = 5.0
 _C.TRAIN.AUTO_RESUME = True
 # Gradient accumulation steps
 # could be overwritten by command line argument
-_C.TRAIN.ACCUMULATION_STEPS = 0
+_C.TRAIN.ACCUMULATION_STEPS = 1
 # Whether to use gradient checkpointing to save memory
 # could be overwritten by command line argument
 _C.TRAIN.USE_CHECKPOINT = False
@@ -162,9 +162,9 @@ _C.TEST.CROP = True
 # -----------------------------------------------------------------------------
 # Misc
 # -----------------------------------------------------------------------------
-# Mixed precision opt level, if O0, no amp is used ('O0', 'O1', 'O2')
-# overwritten by command line argument
-_C.AMP_OPT_LEVEL = ''
+
+# Enable Pytorch automatic mixed precision (amp).
+_C.AMP_ENABLE = True
 # Path to output folder, overwritten by command line argument
 _C.OUTPUT = ''
 # Tag of experiment, overwritten by command line argument
@@ -218,8 +218,8 @@ def update_config(config, args):
         config.TRAIN.ACCUMULATION_STEPS = args.accumulation_steps
     if args.use_checkpoint:
         config.TRAIN.USE_CHECKPOINT = True
-    if args.amp_opt_level:
-        config.AMP_OPT_LEVEL = args.amp_opt_level
+    if args.disable_amp:
+        config.AMP_ENABLE = False
     if args.output:
         config.OUTPUT = args.output
     if args.tag:
@@ -228,8 +228,6 @@ def update_config(config, args):
         config.EVAL_MODE = True
     if args.throughput:
         config.THROUGHPUT_MODE = True
-        # we disable apex and use native amp to measure throughput
-        config.AMP_OPT_LEVEL = 'O0'
 
     # set local rank for distributed training
     if args.local_rank is None and 'LOCAL_RANK' in os.environ:
