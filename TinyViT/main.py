@@ -116,7 +116,7 @@ def main(args, config):
         flops = model_without_ddp.flops()
         logger.info(f"number of GFLOPs: {flops / 1e9}")
 
-    lr_scheduler = build_scheduler(config, optimizer, len(data_loader_train))
+    lr_scheduler = build_scheduler(config, optimizer, len(data_loader_train) // config.TRAIN.ACCUMULATION_STEPS)
 
     if config.DISTILL.ENABLED:
         # we disable MIXUP and CUTMIX when knowledge distillation
