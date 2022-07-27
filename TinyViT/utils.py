@@ -11,14 +11,8 @@ import torch
 import torch.distributed as dist
 import subprocess
 
-try:
-    # noinspection PyUnresolvedReferences
-    from apex import amp
-except ImportError:
-    amp = None
 
-
-def load_checkpoint(config, model, optimizer, lr_scheduler, logger):
+def load_checkpoint(config, model, optimizer, lr_scheduler, loss_scaler, logger):
     logger.info(
         f"==============> Resuming form {config.MODEL.RESUME}....................")
     if config.MODEL.RESUME.startswith('https'):
@@ -61,8 +55,8 @@ def load_checkpoint(config, model, optimizer, lr_scheduler, logger):
                 optimizer.load_state_dict(checkpoint['optimizer'])
             if lr_scheduler is not None:
                 lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
-            if 'amp' in checkpoint and config.AMP_OPT_LEVEL != "O0" and checkpoint['config'].AMP_OPT_LEVEL != "O0":
-                amp.load_state_dict(checkpoint['amp'])
+            if 'scaler' in checkpoint:
+                loss_scaler.load_state_dict(checkpoint['scaler'])
             logger.info(
                 f"=> loaded successfully '{config.MODEL.RESUME}' (epoch {checkpoint['epoch']})")
             if 'max_accuracy' in checkpoint:
@@ -206,15 +200,14 @@ def load_pretrained(config, model, logger):
     torch.cuda.empty_cache()
 
 
-def save_checkpoint(config, epoch, model, max_accuracy, optimizer, lr_scheduler, logger):
+def save_checkpoint(config, epoch, model, max_accuracy, optimizer, lr_scheduler, loss_scaler, logger):
     save_state = {'model': model.state_dict(),
                   'optimizer': optimizer.state_dict(),
                   'lr_scheduler': lr_scheduler.state_dict(),
                   'max_accuracy': max_accuracy,
+                  'scaler': loss_scaler.state_dict(),
                   'epoch': epoch,
                   'config': config}
-    if config.AMP_OPT_LEVEL != "O0":
-        save_state['amp'] = amp.state_dict()
 
     save_path = os.path.join(config.OUTPUT, f'ckpt_epoch_{epoch}.pth')
     logger.info(f"{save_path} saving......")
@@ -256,6 +249,53 @@ def reduce_tensor(tensor, n=None):
     dist.all_reduce(rt, op=dist.ReduceOp.SUM)
     rt = rt / n
     return rt
+
+
+def ampscaler_get_grad_norm(parameters, norm_type: float = 2.0) -> torch.Tensor:
+    if isinstance(parameters, torch.Tensor):
+        parameters = [parameters]
+    parameters = [p for p in parameters if p.grad is not None]
+    norm_type = float(norm_type)
+    if len(parameters) == 0:
+        return torch.tensor(0.)
+    device = parameters[0].grad.device
+    if norm_type == inf:
+        total_norm = max(p.grad.detach().abs().max().to(device)
+                         for p in parameters)
+    else:
+        total_norm = torch.norm(torch.stack([torch.norm(p.grad.detach(),
+                                                        norm_type).to(device) for p in parameters]), norm_type)
+    return total_norm
+
+
+class NativeScalerWithGradNormCount:
+    state_dict_key = "amp_scaler"
+
+    def __init__(self):
+        self._scaler = torch.cuda.amp.GradScaler()
+
+    def __call__(self, loss, optimizer, clip_grad=None, parameters=None, create_graph=False, update_grad=True):
+        self._scaler.scale(loss).backward(create_graph=create_graph)
+        if update_grad:
+            if clip_grad is not None:
+                assert parameters is not None
+                # unscale the gradients of optimizer's assigned params in-place
+                self._scaler.unscale_(optimizer)
+                norm = torch.nn.utils.clip_grad_norm_(parameters, clip_grad)
+            else:
+                self._scaler.unscale_(optimizer)
+                norm = ampscaler_get_grad_norm(parameters)
+            self._scaler.step(optimizer)
+            self._scaler.update()
+        else:
+            norm = None
+        return norm
+
+    def state_dict(self):
+        return self._scaler.state_dict()
+
+    def load_state_dict(self, state_dict):
+        self._scaler.load_state_dict(state_dict)
 
 
 def is_main_process():
