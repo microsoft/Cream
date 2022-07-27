@@ -54,7 +54,8 @@ def parse_option():
                         help="gradient accumulation steps")
     parser.add_argument('--use-checkpoint', action='store_true',
                         help="whether to use gradient checkpointing to save memory")
-    parser.add_argument('--disable_amp', action='store_true', help='Disable pytorch amp')
+    parser.add_argument('--disable_amp', action='store_true',
+                        help='Disable pytorch amp')
     parser.add_argument('--output', default='output', type=str, metavar='PATH',
                         help='root of output folder, the full path is <output>/<model_name>/<tag> (default: output)')
     parser.add_argument('--tag', help='tag of experiment')
@@ -101,7 +102,8 @@ def main(config):
 
     assert config.MODEL.RESUME
     loss_scaler = NativeScalerWithGradNormCount()
-    load_checkpoint(config, model_without_ddp, optimizer, lr_scheduler, loss_scaler, logger)
+    load_checkpoint(config, model_without_ddp, optimizer,
+                    lr_scheduler, loss_scaler, logger)
     if not args.skip_eval and not args.check_saved_logits:
         acc1, acc5, loss = validate(config, data_loader_val, model)
         logger.info(

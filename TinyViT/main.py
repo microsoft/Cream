@@ -29,9 +29,9 @@ from lr_scheduler import build_scheduler
 from optimizer import build_optimizer
 from logger import create_logger
 from utils import load_checkpoint, load_pretrained, save_checkpoint,\
-                  NativeScalerWithGradNormCount,\
-                  auto_resume_helper, is_main_process,\
-                  get_git_info, run_cmd
+    NativeScalerWithGradNormCount,\
+    auto_resume_helper, is_main_process,\
+    get_git_info, run_cmd
 
 from models.remap_layer import RemapLayer
 remap_layer_22kto1k = RemapLayer('./imagenet_1kto22k.txt')
@@ -66,7 +66,8 @@ def parse_option():
                         help="gradient accumulation steps")
     parser.add_argument('--use-checkpoint', action='store_true',
                         help="whether to use gradient checkpointing to save memory")
-    parser.add_argument('--disable_amp', action='store_true', help='Disable pytorch amp')
+    parser.add_argument('--disable_amp', action='store_true',
+                        help='Disable pytorch amp')
     parser.add_argument('--output', default='output', type=str, metavar='PATH',
                         help='root of output folder, the full path is <output>/<model_name>/<tag> (default: output)')
     parser.add_argument('--tag', help='tag of experiment')
@@ -116,7 +117,8 @@ def main(args, config):
         flops = model_without_ddp.flops()
         logger.info(f"number of GFLOPs: {flops / 1e9}")
 
-    lr_scheduler = build_scheduler(config, optimizer, len(data_loader_train) // config.TRAIN.ACCUMULATION_STEPS)
+    lr_scheduler = build_scheduler(config, optimizer, len(
+        data_loader_train) // config.TRAIN.ACCUMULATION_STEPS)
 
     if config.DISTILL.ENABLED:
         # we disable MIXUP and CUTMIX when knowledge distillation
@@ -255,13 +257,15 @@ def train_one_epoch(args, config, model, criterion, data_loader, optimizer, epoc
         loss = loss / config.TRAIN.ACCUMULATION_STEPS
 
         # this attribute is added by timm on one optimizer (adahessian)
-        is_second_order = hasattr(optimizer, 'is_second_order') and optimizer.is_second_order
+        is_second_order = hasattr(
+            optimizer, 'is_second_order') and optimizer.is_second_order
         grad_norm = loss_scaler(loss, optimizer, clip_grad=config.TRAIN.CLIP_GRAD,
                                 parameters=model.parameters(), create_graph=is_second_order,
                                 update_grad=(idx + 1) % config.TRAIN.ACCUMULATION_STEPS == 0)
         if (idx + 1) % config.TRAIN.ACCUMULATION_STEPS == 0:
             optimizer.zero_grad()
-            lr_scheduler.step_update((epoch * num_steps + idx) // config.TRAIN.ACCUMULATION_STEPS)
+            lr_scheduler.step_update(
+                (epoch * num_steps + idx) // config.TRAIN.ACCUMULATION_STEPS)
         loss_scale_value = loss_scaler.state_dict()["scale"]
 
         with torch.no_grad():
@@ -355,15 +359,16 @@ def train_one_epoch_distill_using_saved_logits(args, config, model, criterion, d
         loss = loss / config.TRAIN.ACCUMULATION_STEPS
 
         # this attribute is added by timm on one optimizer (adahessian)
-        is_second_order = hasattr(optimizer, 'is_second_order') and optimizer.is_second_order
+        is_second_order = hasattr(
+            optimizer, 'is_second_order') and optimizer.is_second_order
         grad_norm = loss_scaler(loss, optimizer, clip_grad=config.TRAIN.CLIP_GRAD,
                                 parameters=model.parameters(), create_graph=is_second_order,
                                 update_grad=(idx + 1) % config.TRAIN.ACCUMULATION_STEPS == 0)
         if (idx + 1) % config.TRAIN.ACCUMULATION_STEPS == 0:
             optimizer.zero_grad()
-            lr_scheduler.step_update((epoch * num_steps + idx) // config.TRAIN.ACCUMULATION_STEPS)
+            lr_scheduler.step_update(
+                (epoch * num_steps + idx) // config.TRAIN.ACCUMULATION_STEPS)
         loss_scale_value = loss_scaler.state_dict()["scale"]
-
 
         # compute accuracy
         real_batch_size = len(original_targets)
