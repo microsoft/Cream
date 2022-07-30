@@ -1,16 +1,17 @@
 # TinyViT: Fast Pretraining Distillation for Small Vision Transformers
 
-:sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com.
 
-**This is an official implementation of [TinyViT](https://arxiv.org/pdf/2207.10666.pdf).**
+:pushpin: This is an official PyTorch implementation of **[ECCV 2022]** - [TinyViT: Fast Pretraining Distillation for Small Vision Transformers](https://arxiv.org/pdf/2207.10666.pdf).
 
-**[ECCV 2022]** - [TinyViT: Fast Pretraining Distillation for Small Vision Transformers](https://arxiv.org/pdf/2207.10666.pdf)
+TinyViT is a new family of **tiny and efficient** vision transformers pretrained on **large-scale** datasets with out proposed **fast distillation framework**. The central idea is to **transfer knowledge** from **large pretrained models** to small ones. The logits of large teacher models are sparsified and stored in disk in advance to **save the memory cost and computation overheads**.
 
-TinyViT is a new family of tiny and efficient vision transformers pretrained on large-scale datasets with our proposed fast distillation framework. The central idea is to transfer knowledge from large pretrained models to small ones, while enabling small models to get the dividends of massive pretraining data. More specifically, we apply distillation during pretraining for knowledge transfer. The logits of large teacher models are sparsified and stored in disk in advance to save the memory cost and computation overheads.
+:rocket: TinyViT with **only 21M parameters** achieves **84.8%** top-1 accuracy on ImageNet-1k, and **86.5%** accuracy under 512x512 resolutions.
 
 <div align="center">
     <img width="80%" alt="TinyViT overview" src=".figure/framework.png"/>
 </div>
+
+:sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com.
 
 ## Highlights
 
@@ -18,14 +19,32 @@ TinyViT is a new family of tiny and efficient vision transformers pretrained on 
     <img width="80%" src=".figure/performance.png"/>
 </div>
 
-* 1. A fast pretraining distillation framework to unleash the capacity of small models by fully leveraging the large-scale pretraining data.
-* 2. A new family of tiny vision transformer models, striking a good trade-off between computation and accuracy.
+* TinyViT-21M ![](./.figure/distill.png) on IN-22k achieves **84.8%** top-1 accuracy on IN-1k, and **86.5%** accuracy under 512x512 resolutions.
+* TinyViT-21M **trained from scratch on IN-1k** without distillation achieves **83.1** top-1 accuracy, under **4.3 GFLOPs** and **1,571 images/s** throughput on V100 GPU.
+* TinyViT-5M ![](./.figure/distill.png) reaches **80.7%** top-1 accuracy on IN-1k under 3,060 images/s throughput.
+* Save teacher logits **once**, and **reuse** the saved sparse logits to distill **arbitrary students without overhead** of teacher model. It takes **16 GB / 481 GB** storage space for IN-1k (300 epochs) and IN-22k (90 epochs), respectively.
 
+## Features
+1. **Efficient Distillation**. The teacher logits can be saved in parallel and reused for arbitrary student models, to avoid re-forwarding cost of the large teacher model.
+
+2. **Reproducibility**. We provide the hyper-parameters of [IN-1k training](./configs/1k), [IN-22k pre-training with distillation](./configs/22k_distill), [IN-22kto1k fine-tuning](./configs/22kto1k), and [higher resolution fine-tuning](./configs/higher_resolution). In addition, all training logs are public (in Model Zoo).
+
+3. **Ease of Use**. One file to build a TinyViT model.
+The file [`models/tiny_vit.py`](./models/tiny_vit.py) defines TinyViT model family.
+    ```python
+    from tiny_vit import tiny_vit_21m_224
+    model = tiny_vit_21m_224(pretrained=True)
+    output = model(image)
+    ```
+
+4. **Extensibility**. Add custom dataset, student and teacher models with no need to modify your code.
+The class [`DatasetWrapper`](./data/build.py#L74) wraps the general dataset to support saving and loading sparse logits. It only need the logits of models for knowledge distillation.
+
+5. **Public teacher model**. We provide CLIP-ViT-Large/16-22k, a powerful teacher model on pretraining distillation (Acc@1 85.894 Acc@5 97.566 on IN-1k). We finetuned CLIP-ViT-Large/16 released by OpenAI on IN-22k.
+
+6. **Online Logging**. Support [wandb](https://wandb.ai) for checking the results anytime anywhere.
 
 ## Model Zoo
-
-For evaluation, we provide the links of our models in the following table.
-
 
 Model                                      | Pretrain | Input | Acc@1 | Acc@5 | #Params | MACs | FPS  | 22k Model | 1k Model
 :-----------------------------------------:|:---------|:-----:|:-----:|:-----:|:-------:|:----:|:----:|:---------:|:--------:
@@ -42,22 +61,39 @@ The models with ![](./.figure/distill.png) are pretrained on ImageNet-22k with t
 
 ImageNet-22k (IN-22k) is the same as ImageNet-21k (IN-21k), where the number of classes is 21,841.
 
-
 ## Getting Started
+:beginner: Here is the setup tutorial and evaluation scripts.
 
-### Install the requirements and prepare the datasets
+### Install dependencies and prepare datasets
 - [Preparation](./docs/PREPARATION.md)
 
-### Evaluation
+### Evaluate it !
 - [Evaluation](./docs/EVALUATION.md)
 
 ## Pretrain a TinyViT model on ImageNet
-- [Save Teacher Sparse Logits](./docs/SAVE_TEACHER_LOGITS.md)
-- [Train TinyViT](./docs/TRAINING.md)
+:beginner: For the proposed fast pretraining distillation, we need to **save teacher sparse logits** firstly, then **pretrain a model**.
 
-## License
-- [License](./LICENSE)
+- [How to save teacher sparse logits?](./docs/SAVE_TEACHER_LOGITS.md)
+- [Let's train a TinyViT model](./docs/TRAINING.md)
+
+## Citation
+
+If this repo is helpful for you, please consider to cite it. :mega: Thank you! :)
+
+```bibtex
+@InProceedings{tiny_vit,
+  title={TinyViT: Fast Pretraining Distillation for Small Vision Transformers},
+  author={Wu, Kan and Zhang, Jinnian and Peng, Houwen and Liu, Mengchen and Xiao, Bin and Fu, Jianlong and Yuan, Lu},
+  booktitle={European conference on computer vision (ECCV)},
+  year={2022}
+}
+```
 
 ## Acknowledge
 
-Our code is based on [Swin Transformer](https://github.com/microsoft/swin-transformer), [LeViT](https://github.com/facebookresearch/LeViT), [pytorch-image-models](https://github.com/rwightman/pytorch-image-models), [CLIP](https://github.com/openai/CLIP) and [PyTorch](https://github.com/pytorch/pytorch).
+Our code is based on [Swin Transformer](https://github.com/microsoft/swin-transformer), [LeViT](https://github.com/facebookresearch/LeViT), [pytorch-image-models](https://github.com/rwightman/pytorch-image-models), [CLIP](https://github.com/openai/CLIP) and [PyTorch](https://github.com/pytorch/pytorch). Thank contributors for their awesome contribution!
+
+
+## License
+
+- [License](./LICENSE)

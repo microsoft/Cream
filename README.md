@@ -43,7 +43,7 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 ## Works
 
 ### [TinyViT](./TinyViT)
-TinyViT is a new family of tiny and efficient vision transformers pretrained on large-scale datasets with out proposed fast distillation framework. The central idea is to transfer knowledge from large pretrained models to small ones, while enabling small models to get the dividends of massive pretraining data. More specifically, we apply distillation during pretraining for knowledge transfer. The logits of large teacher models are sparsified and stored in disk in advance to save the memory cost and computation overheads.
+TinyViT is a new family of **tiny and efficient** vision transformers pretrained on **large-scale** datasets with out proposed **fast distillation framework**. The central idea is to **transfer knowledge** from **large pretrained models** to small ones. The logits of large teacher models are sparsified and stored in disk in advance to **save the memory cost and computation overheads**.
 <div align="center">
     <img width="80%" alt="TinyViT overview" src="./TinyViT/.figure/framework.png"/>
 </div>
@@ -95,6 +95,13 @@ In this work, we present a simple yet effective architecture distillation method
 
 ## Bibtex
 ```bibtex
+@InProceedings{tiny_vit,
+  title={TinyViT: Fast Pretraining Distillation for Small Vision Transformers},
+  author={Wu, Kan and Zhang, Jinnian and Peng, Houwen and Liu, Mengchen and Xiao, Bin and Fu, Jianlong and Yuan, Lu},
+  booktitle={European conference on computer vision (ECCV)},
+  year={2022}
+}
+
 @InProceedings{MiniViT,
     title     = {MiniViT: Compressing Vision Transformers With Weight Multiplexing},
     author    = {Zhang, Jinnian and Peng, Houwen and Wu, Kan and Liu, Mengchen and Xiao, Bin and Fu, Jianlong and Yuan, Lu},
