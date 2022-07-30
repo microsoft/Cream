@@ -43,7 +43,7 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 ## Works
 
 ### [TinyViT](./TinyViT)
-TinyViT is a new family of **tiny and efficient** vision transformers pretrained on **large-scale** datasets with out proposed **fast distillation framework**. The central idea is to transfer knowledge from **large pretrained models** to small ones. The logits of large teacher models are sparsified and stored in disk in advance to save the memory cost and computation overheads.
+TinyViT is a new family of **tiny and efficient** vision transformers pretrained on **large-scale** datasets with out proposed **fast distillation framework**. The central idea is to **transfer knowledge** from **large pretrained models** to small ones. The logits of large teacher models are sparsified and stored in disk in advance to **save the memory cost and computation overheads**.
 <div align="center">
     <img width="80%" alt="TinyViT overview" src="./TinyViT/.figure/framework.png"/>
 </div>
