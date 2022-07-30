@@ -95,6 +95,13 @@ In this work, we present a simple yet effective architecture distillation method
 
 ## Bibtex
 ```bibtex
+@InProceedings{tiny_vit,
+  title={TinyViT: Fast Pretraining Distillation for Small Vision Transformers},
+  author={Wu, Kan and Zhang, Jinnian and Peng, Houwen and Liu, Mengchen and Xiao, Bin and Fu, Jianlong and Yuan, Lu},
+  booktitle={European conference on computer vision (ECCV)},
+  year={2022}
+}
+
 @InProceedings{MiniViT,
     title     = {MiniViT: Compressing Vision Transformers With Weight Multiplexing},
     author    = {Zhang, Jinnian and Peng, Houwen and Wu, Kan and Liu, Mengchen and Xiao, Bin and Fu, Jianlong and Yuan, Lu},
