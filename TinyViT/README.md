@@ -61,8 +61,8 @@ The models with ![](./.figure/distill.png) are pretrained on ImageNet-22k with t
 
 ImageNet-22k (IN-22k) is the same as ImageNet-21k (IN-21k), where the number of classes is 21,841.
 
-
 ## Getting Started
+:beginner: Here is the setup tutorial and evaluation scripts.
 
 ### Install dependencies and prepare datasets
 - [Preparation](./docs/PREPARATION.md)
@@ -71,14 +71,14 @@ ImageNet-22k (IN-22k) is the same as ImageNet-21k (IN-21k), where the number of 
 - [Evaluation](./docs/EVALUATION.md)
 
 ## Pretrain a TinyViT model on ImageNet
-For the proposed fast pretraining distillation, we need to save teacher sparse logits firstly, then pretrain a model.
+:beginner: For the proposed fast pretraining distillation, we need to **save teacher sparse logits** firstly, then **pretrain a model**.
 
 - [How to save teacher sparse logits?](./docs/SAVE_TEACHER_LOGITS.md)
 - [Let's train a TinyViT model](./docs/TRAINING.md)
 
 ## Citation
 
-:mega: If this repo is helpful for you, please consider to cite it. Thank you! :)
+If this repo is helpful for you, please consider to cite it. :mega: Thank you! :)
 
 ```bibtex
 @InProceedings{tiny_vit,
