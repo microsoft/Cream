@@ -1,5 +1,5 @@
 
-# Neureal Architecture Design and Search
+# Neural Architecture Design and Search
 
 ***This is a collection of our NAS and Vision Transformer work***
 
