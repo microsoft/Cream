@@ -39,17 +39,17 @@ The directory structure is the standard layout as following.
 
 
 ## Model Zoo
-For evaluation, we provide the checkpoints and configs of our models in [GitHub](https://github.com/silent-chen/AutoFormerV2-model-zoo/).
+For evaluation, we provide the checkpoints and configs of our models.
 
 After downloading the models, you can do the evaluation following the description in *Evaluation*).
 
 Model download links:
 
-Model | Params. | Top-1 Acc. % | Top-5 Acc. % | Download link 
+Model | Params. | Top-1 Acc. % | Top-5 Acc. % | Model
 --- |:---:|:---:|:---:|:---:
-AutoFormerV2-T | 28M | 82.1 | 95.8 | [GitHub](https://github.com/silent-chen/AutoFormerV2-model-zoo/releases/download/v1.0.0/S3-T.pth)
-AutoFormerV2-S | 50M | 83.7 | 96.4 | [GitHub](https://github.com/silent-chen/AutoFormerV2-model-zoo/releases/download/v1.0.0/S3-S.pth)
-AutoFormerV2-B | 71M | 84.0 | 96.6 | [GitHub](https://github.com/silent-chen/AutoFormerV2-model-zoo/releases/download/v1.0.0/S3-B.pth)
+AutoFormerV2-T | 28M | 82.1 | 95.8 | [link](https://github.com/silent-chen/AutoFormerV2-model-zoo/releases/download/v1.0.0/S3-T.pth)/[config](./configs/S3-T.yaml)
+AutoFormerV2-S | 50M | 83.7 | 96.4 | [link](https://github.com/silent-chen/AutoFormerV2-model-zoo/releases/download/v1.0.0/S3-S.pth)/[config](./configs/S3-S.yaml)
+AutoFormerV2-B | 71M | 84.0 | 96.6 | [link](https://github.com/silent-chen/AutoFormerV2-model-zoo/releases/download/v1.0.0/S3-B.pth)/[config](./configs/S3-B.yaml)
 
 ### Evaluation
 To evaluate our trained models, you need to put the downloaded model in `/PATH/TO/CHECKPOINT`. After that you could use the following command to test the model (Please change your config file and model checkpoint according to different models. Here we use the AutoFormer-B as an example).
