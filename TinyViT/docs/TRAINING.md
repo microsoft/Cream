@@ -32,7 +32,7 @@ where `tiny_vit_21m_22k.pth` is the checkpoint of pretrained TinyViT-21M on IN-2
 
 - Finetune with higher resolution
 
-To obtain better accuracy, we finetune the model to highr resolution gradually (224 -> 384 -> 512).
+To obtain better accuracy, we finetune the model to higher resolution progressively (224 -> 384 -> 512).
 
 <details>
 <summary>Finetune with higher resolution from 224 to 384</summary>
