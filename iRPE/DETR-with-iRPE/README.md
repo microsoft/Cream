@@ -45,7 +45,7 @@ python setup.py install --user
 
 You can download the MSCOCO dataset from [`https://cocodataset.org/#download`](https://cocodataset.org/#download).
 
-Please downlaod the following files:
+Please download the following files:
 - [2017 Train images [118K/18GB]](http://images.cocodataset.org/zips/train2017.zip)
 - [2017 Val images [5K/1GB]](http://images.cocodataset.org/zips/val2017.zip)
 - [2017 Train/Val annotations [241MB]](http://images.cocodataset.org/annotations/annotations_trainval2017.zip)
