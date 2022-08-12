@@ -41,8 +41,9 @@ class RelativePosition2D_super(nn.Module):
         # remove the first cls token distance computation
         length_q = length_q - 1
         length_k = length_k - 1
-        range_vec_q = torch.arange(length_q, device=torch.device("cuda"))
-        range_vec_k = torch.arange(length_k, device=torch.device("cuda"))
+        device = self.embeddings_table_v.device
+        range_vec_q = torch.arange(length_q, device=device)
+        range_vec_k = torch.arange(length_k, device=device)
         # compute the row and column distance
         distance_mat_v = (range_vec_k[None, :] // int(length_q ** 0.5 )  - range_vec_q[:, None] // int(length_q ** 0.5 ))
         distance_mat_h = (range_vec_k[None, :] % int(length_q ** 0.5 ) - range_vec_q[:, None] % int(length_q ** 0.5 ))
