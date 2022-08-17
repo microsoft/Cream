@@ -1,4 +1,4 @@
-# TinyViT: Fast Pretraining Distillation for Small Vision Transformers
+# TinyViT: Fast Pretraining Distillation for Small Vision Transformers [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Tiny%20vision%20transformer%20models,%20SOTA%20performance!!&url=https://github.com/microsoft/Cream/tree/main/TinyViT&via=houwen_peng&hashtags=ViT,tiny,efficient)
 
 
 :pushpin: This is an official PyTorch implementation of **[ECCV 2022]** - [TinyViT: Fast Pretraining Distillation for Small Vision Transformers](https://arxiv.org/pdf/2207.10666.pdf).
