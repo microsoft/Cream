@@ -33,7 +33,7 @@ remap_layer_22kto1k = RemapLayer('./imagenet_1kto22k.txt')
 
 def parse_option():
     parser = argparse.ArgumentParser(
-        'Swin Transformer training and evaluation script', add_help=False)
+        'TinyViT saving sparse logits script', add_help=False)
     parser.add_argument('--cfg', type=str, required=True,
                         metavar="FILE", help='path to config file', )
     parser.add_argument(
