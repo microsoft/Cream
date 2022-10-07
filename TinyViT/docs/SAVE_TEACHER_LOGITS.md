@@ -29,5 +29,5 @@ The sparse logits between 30 to 40 will be saved.
 ## Check teacher sparse logits
 After saving the logits, we can check them by adding the extra argument `--check-saved-logits`.
 ```bash
-python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/teacher/clip_vit_large_patch14_22k.yaml --data-path ./ImageNet-22k --batch-size 128 --eval --resume checkpoints/clip_vit_large_patch14_22k.pth --check-saved-logits --opts DISTILL.TEACHER_LOGITS_PATH ./teacher_logits
+python -m torch.distributed.launch --nproc_per_node 8 save_logits.py --cfg configs/teacher/clip_vit_large_patch14_22k.yaml --data-path ./ImageNet-22k --batch-size 128 --eval --resume checkpoints/clip_vit_large_patch14_22k.pth --check-saved-logits --opts DISTILL.TEACHER_LOGITS_PATH ./teacher_logits
 ```
