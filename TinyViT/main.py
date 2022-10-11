@@ -124,7 +124,7 @@ def main(args, config):
         # we disable MIXUP and CUTMIX when knowledge distillation
         assert len(
             config.DISTILL.TEACHER_LOGITS_PATH) > 0, "Please fill in DISTILL.TEACHER_LOGITS_PATH"
-        criterion = torch.nn.CrossEntropyLoss(reduction='mean')
+        criterion = SoftTargetCrossEntropy()
     else:
         if config.AUG.MIXUP > 0.:
             # smoothing is handled with mixup label transform
