@@ -73,6 +73,8 @@ def parse_option():
     parser.add_argument('--tag', help='tag of experiment')
     parser.add_argument('--eval', action='store_true',
                         help='Perform evaluation only')
+    parser.add_argument('--only-cpu', action='store_true',
+                        help='Perform evaluation on CPU')
     parser.add_argument('--throughput', action='store_true',
                         help='Test throughput only')
     parser.add_argument('--use-sync-bn', action='store_true',
@@ -97,7 +99,8 @@ def main(args, config):
 
     logger.info(f"Creating model:{config.MODEL.TYPE}/{config.MODEL.NAME}")
     model = build_model(config)
-    model.cuda()
+    if not args.only_cpu:
+        model.cuda()
 
     if args.use_sync_bn:
         model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
@@ -105,10 +108,15 @@ def main(args, config):
     logger.info(str(model))
 
     optimizer = build_optimizer(config, model)
-    model = torch.nn.parallel.DistributedDataParallel(
-        model, device_ids=[config.LOCAL_RANK], broadcast_buffers=False)
+
+    if not args.only_cpu:
+        model = torch.nn.parallel.DistributedDataParallel(
+            model, device_ids=[config.LOCAL_RANK], broadcast_buffers=False)
+        model_without_ddp = model.module
+    else:
+        model_without_ddp = model
+
     loss_scaler = NativeScalerWithGradNormCount()
-    model_without_ddp = model.module
 
     n_parameters = sum(p.numel()
                        for p in model.parameters() if p.requires_grad)
@@ -440,8 +448,9 @@ def validate(args, config, data_loader, model, num_classes=1000):
 
     end = time.time()
     for idx, (images, target) in enumerate(data_loader):
-        images = images.cuda(non_blocking=True)
-        target = target.cuda(non_blocking=True)
+        if not args.only_cpu:
+            images = images.cuda(non_blocking=True)
+            target = target.cuda(non_blocking=True)
 
         # compute output
         with torch.cuda.amp.autocast(enabled=config.AMP_ENABLE):
@@ -528,9 +537,15 @@ if __name__ == '__main__':
     else:
         rank = -1
         world_size = -1
-    torch.cuda.set_device(config.LOCAL_RANK)
+
+    if args.only_cpu:
+        ddp_backend = 'gloo'
+    else:
+        torch.cuda.set_device(config.LOCAL_RANK)
+        ddp_backend = 'nccl'
+
     torch.distributed.init_process_group(
-        backend='nccl', init_method='env://', world_size=world_size, rank=rank)
+        backend=ddp_backend, init_method='env://', world_size=world_size, rank=rank)
     torch.distributed.barrier()
 
     seed = config.SEED + dist.get_rank()
