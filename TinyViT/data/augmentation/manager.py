@@ -93,6 +93,7 @@ class _Reader:
         raise KeyError(key)
 
     def search_packages(self, path):
+        assert os.path.isdir(path), f'[Error] Reading logits fails. Path {path} not found.'
         names = self.search_packages_names(path)
         return [_Reader._PackageReader(name, self.item_size) for name in names]
 
