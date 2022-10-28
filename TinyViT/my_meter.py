@@ -5,14 +5,21 @@
 
 import torch
 import torch.distributed as dist
-from utils import reduce_tensor
+
+
+def get_dist_backend():
+    if not dist.is_available():
+        return None
+    if not dist.is_initialized():
+        return None
+    return dist.get_backend()
 
 
 class AverageMeter:
     """Computes and stores the average and current value"""
 
     def __init__(self):
-        self._world_size = dist.get_world_size()
+        self._use_gpu = get_dist_backend() == 'nccl'
         self.reset()
 
     def reset(self):
@@ -50,8 +57,10 @@ class AverageMeter:
 
     def sync(self):
         buf = torch.tensor([self._sum, self._count],
-                           dtype=torch.float32).cuda()
-        buf = reduce_tensor(buf, 1)
+                           dtype=torch.float32)
+        if self._use_gpu:
+            buf = buf.cuda()
+        dist.all_reduce(buf, op=dist.ReduceOp.SUM)
         _sum, _count = buf.tolist()
         _avg = _sum / max(1, _count)
         r = self._history_count / max(1, self._history_count + _count)

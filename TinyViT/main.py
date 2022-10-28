@@ -31,6 +31,7 @@ from logger import create_logger
 from utils import load_checkpoint, load_pretrained, save_checkpoint,\
     NativeScalerWithGradNormCount,\
     auto_resume_helper, is_main_process,\
+    add_common_args,\
     get_git_info, run_cmd
 
 from models.remap_layer import RemapLayer
@@ -46,44 +47,7 @@ NORM_ITER_LEN = 100
 def parse_option():
     parser = argparse.ArgumentParser(
         'TinyViT training and evaluation script', add_help=False)
-    parser.add_argument('--cfg', type=str, required=True,
-                        metavar="FILE", help='path to config file', )
-    parser.add_argument(
-        "--opts",
-        help="Modify config options by adding 'KEY VALUE' pairs. ",
-        default=None,
-        nargs='+',
-    )
-
-    # easy config modification
-    parser.add_argument('--batch-size', type=int,
-                        help="batch size for single GPU")
-    parser.add_argument('--data-path', type=str, help='path to dataset')
-    parser.add_argument('--pretrained',
-                        help='pretrained weight from checkpoint, could be imagenet22k pretrained weight')
-    parser.add_argument('--resume', help='resume from checkpoint')
-    parser.add_argument('--accumulation-steps', type=int,
-                        help="gradient accumulation steps")
-    parser.add_argument('--use-checkpoint', action='store_true',
-                        help="whether to use gradient checkpointing to save memory")
-    parser.add_argument('--disable_amp', action='store_true',
-                        help='Disable pytorch amp')
-    parser.add_argument('--output', default='output', type=str, metavar='PATH',
-                        help='root of output folder, the full path is <output>/<model_name>/<tag> (default: output)')
-    parser.add_argument('--tag', help='tag of experiment')
-    parser.add_argument('--eval', action='store_true',
-                        help='Perform evaluation only')
-    parser.add_argument('--throughput', action='store_true',
-                        help='Test throughput only')
-    parser.add_argument('--use-sync-bn', action='store_true',
-                        default=False, help='sync bn')
-    parser.add_argument('--use-wandb', action='store_true',
-                        default=False, help='use wandb to record log')
-
-    # distributed training
-    parser.add_argument("--local_rank", type=int,
-                        help='local rank for DistributedDataParallel')
-
+    add_common_args(parser)
     args = parser.parse_args()
 
     config = get_config(args)
@@ -97,7 +61,8 @@ def main(args, config):
 
     logger.info(f"Creating model:{config.MODEL.TYPE}/{config.MODEL.NAME}")
     model = build_model(config)
-    model.cuda()
+    if not args.only_cpu:
+        model.cuda()
 
     if args.use_sync_bn:
         model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
@@ -105,10 +70,15 @@ def main(args, config):
     logger.info(str(model))
 
     optimizer = build_optimizer(config, model)
-    model = torch.nn.parallel.DistributedDataParallel(
-        model, device_ids=[config.LOCAL_RANK], broadcast_buffers=False)
+
+    if not args.only_cpu:
+        model = torch.nn.parallel.DistributedDataParallel(
+            model, device_ids=[config.LOCAL_RANK], broadcast_buffers=False)
+        model_without_ddp = model.module
+    else:
+        model_without_ddp = model
+
     loss_scaler = NativeScalerWithGradNormCount()
-    model_without_ddp = model.module
 
     n_parameters = sum(p.numel()
                        for p in model.parameters() if p.requires_grad)
@@ -440,8 +410,9 @@ def validate(args, config, data_loader, model, num_classes=1000):
 
     end = time.time()
     for idx, (images, target) in enumerate(data_loader):
-        images = images.cuda(non_blocking=True)
-        target = target.cuda(non_blocking=True)
+        if not args.only_cpu:
+            images = images.cuda(non_blocking=True)
+            target = target.cuda(non_blocking=True)
 
         # compute output
         with torch.cuda.amp.autocast(enabled=config.AMP_ENABLE):
@@ -528,9 +499,15 @@ if __name__ == '__main__':
     else:
         rank = -1
         world_size = -1
-    torch.cuda.set_device(config.LOCAL_RANK)
+
+    if args.only_cpu:
+        ddp_backend = 'gloo'
+    else:
+        torch.cuda.set_device(config.LOCAL_RANK)
+        ddp_backend = 'nccl'
+
     torch.distributed.init_process_group(
-        backend='nccl', init_method='env://', world_size=world_size, rank=rank)
+        backend=ddp_backend, init_method='env://', world_size=world_size, rank=rank)
     torch.distributed.barrier()
 
     seed = config.SEED + dist.get_rank()

@@ -25,7 +25,7 @@ from config import get_config
 from models import build_model
 from data import build_loader
 from logger import create_logger
-from utils import load_checkpoint, NativeScalerWithGradNormCount
+from utils import load_checkpoint, NativeScalerWithGradNormCount, add_common_args
 
 from models.remap_layer import RemapLayer
 remap_layer_22kto1k = RemapLayer('./imagenet_1kto22k.txt')
@@ -34,43 +34,11 @@ remap_layer_22kto1k = RemapLayer('./imagenet_1kto22k.txt')
 def parse_option():
     parser = argparse.ArgumentParser(
         'TinyViT saving sparse logits script', add_help=False)
-    parser.add_argument('--cfg', type=str, required=True,
-                        metavar="FILE", help='path to config file', )
-    parser.add_argument(
-        "--opts",
-        help="Modify config options by adding 'KEY VALUE' pairs. ",
-        default=None,
-        nargs='+',
-    )
-
-    # easy config modification
-    parser.add_argument('--batch-size', type=int,
-                        help="batch size for single GPU")
-    parser.add_argument('--data-path', type=str, help='path to dataset')
-    parser.add_argument('--pretrained',
-                        help='pretrained weight from checkpoint, could be imagenet22k pretrained weight')
-    parser.add_argument('--resume', help='resume from checkpoint')
-    parser.add_argument('--accumulation-steps', type=int,
-                        help="gradient accumulation steps")
-    parser.add_argument('--use-checkpoint', action='store_true',
-                        help="whether to use gradient checkpointing to save memory")
-    parser.add_argument('--disable_amp', action='store_true',
-                        help='Disable pytorch amp')
-    parser.add_argument('--output', default='output', type=str, metavar='PATH',
-                        help='root of output folder, the full path is <output>/<model_name>/<tag> (default: output)')
-    parser.add_argument('--tag', help='tag of experiment')
-    parser.add_argument('--eval', action='store_true',
-                        help='Perform evaluation only')
+    add_common_args(parser)
     parser.add_argument('--check-saved-logits',
                         action='store_true', help='Check saved logits')
     parser.add_argument('--skip-eval',
                         action='store_true', help='Skip evaluation')
-    parser.add_argument('--throughput', action='store_true',
-                        help='Test throughput only')
-
-    # distributed training
-    parser.add_argument("--local_rank", type=int,
-                        help='local rank for DistributedDataParallel')
 
     args = parser.parse_args()
 

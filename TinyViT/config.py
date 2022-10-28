@@ -218,7 +218,7 @@ def update_config(config, args):
         config.TRAIN.ACCUMULATION_STEPS = args.accumulation_steps
     if args.use_checkpoint:
         config.TRAIN.USE_CHECKPOINT = True
-    if args.disable_amp:
+    if args.disable_amp or args.only_cpu:
         config.AMP_ENABLE = False
     if args.output:
         config.OUTPUT = args.output
