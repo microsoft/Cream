@@ -78,7 +78,7 @@ def main(args, config):
     else:
         model_without_ddp = model
 
-    loss_scaler = NativeScalerWithGradNormCount()
+    loss_scaler = NativeScalerWithGradNormCount(grad_scaler_enabled=config.AMP_ENABLE)
 
     n_parameters = sum(p.numel()
                        for p in model.parameters() if p.requires_grad)
@@ -236,7 +236,7 @@ def train_one_epoch(args, config, model, criterion, data_loader, optimizer, epoc
             optimizer.zero_grad()
             lr_scheduler.step_update(
                 (epoch * num_steps + idx) // config.TRAIN.ACCUMULATION_STEPS)
-        loss_scale_value = loss_scaler.state_dict()["scale"]
+        loss_scale_value = loss_scaler.state_dict().get("scale", 1.0)
 
         with torch.no_grad():
             acc1, acc5 = accuracy(outputs, original_targets, topk=(1, 5))
@@ -338,7 +338,7 @@ def train_one_epoch_distill_using_saved_logits(args, config, model, criterion, d
             optimizer.zero_grad()
             lr_scheduler.step_update(
                 (epoch * num_steps + idx) // config.TRAIN.ACCUMULATION_STEPS)
-        loss_scale_value = loss_scaler.state_dict()["scale"]
+        loss_scale_value = loss_scaler.state_dict().get("scale", 1.0)
 
         # compute accuracy
         real_batch_size = len(original_targets)
