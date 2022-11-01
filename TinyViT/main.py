@@ -78,7 +78,7 @@ def main(args, config):
     else:
         model_without_ddp = model
 
-    loss_scaler = NativeScalerWithGradNormCount(grad_scale_enabled=config.AMP_ENABLE)
+    loss_scaler = NativeScalerWithGradNormCount(grad_scaler_enabled=config.AMP_ENABLE)
 
     n_parameters = sum(p.numel()
                        for p in model.parameters() if p.requires_grad)
