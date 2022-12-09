@@ -32,7 +32,7 @@ from utils import load_checkpoint, load_pretrained, save_checkpoint,\
     NativeScalerWithGradNormCount,\
     auto_resume_helper, is_main_process,\
     add_common_args,\
-    get_git_info, run_cmd
+    get_git_info
 
 from models.remap_layer import RemapLayer
 remap_layer_22kto1k = RemapLayer('./imagenet_1kto22k.txt')
@@ -261,6 +261,8 @@ def train_one_epoch(args, config, model, criterion, data_loader, optimizer, epoc
                 f'eta {datetime.timedelta(seconds=int(etas))} lr {lr:.6f}\t'
                 f'time {batch_time.val:.4f} ({batch_time.avg:.4f})\t'
                 f'loss {loss_meter.val:.4f} ({loss_meter.avg:.4f})\t'
+                f'Acc@1 {acc1_meter.val:.3f} ({acc1_meter.avg:.3f})\t'
+                f'Acc@5 {acc5_meter.val:.3f} ({acc5_meter.avg:.3f})\t'
                 f'grad_norm {norm_meter.val:.4f} ({norm_meter.avg:.4f})\t'
                 f'loss_scale {scaler_meter.val:.4f} ({scaler_meter.avg:.4f})\t'
                 f'mem {memory_used:.0f}MB')
@@ -554,8 +556,7 @@ if __name__ == '__main__':
 
     # print git info
     logger.info('===== git =====')
-    logger.info(run_cmd('git rev-parse --abbrev-ref HEAD'))
-    logger.info(run_cmd('git rev-parse --short HEAD'))
+    logger.info(str(get_git_info()))
 
     # print config
     logger.info(config.dump())
