@@ -257,19 +257,6 @@ def save_checkpoint(config, epoch, model, max_accuracy, optimizer, lr_scheduler,
     logger.info(f"{save_path} saved !!!")
 
 
-def get_grad_norm(parameters, norm_type=2):
-    if isinstance(parameters, torch.Tensor):
-        parameters = [parameters]
-    parameters = list(filter(lambda p: p.grad is not None, parameters))
-    norm_type = float(norm_type)
-    total_norm = 0
-    for p in parameters:
-        param_norm = p.grad.data.norm(norm_type)
-        total_norm += param_norm.item() ** norm_type
-    total_norm = total_norm ** (1. / norm_type)
-    return total_norm
-
-
 def auto_resume_helper(output_dir):
     checkpoints = os.listdir(output_dir)
     checkpoints = [ckpt for ckpt in checkpoints if ckpt.endswith('pth')]
@@ -344,16 +331,17 @@ def is_main_process():
     return dist.get_rank() == 0
 
 
-def get_cmd_output(cmd):
-    return subprocess.check_output(cmd.split(), universal_newlines=True).strip()
+def run_cmd(cmd, default=None):
+    try:
+        return subprocess.check_output(cmd.split(), universal_newlines=True).strip()
+    except:
+        if default is None:
+            raise
+        return default
 
 
 def get_git_info():
     return dict(
-        branch=get_cmd_output('git name-rev --name-only HEAD'),
-        git_hash=get_cmd_output('git rev-parse HEAD'),
+        branch=run_cmd('git rev-parse --abbrev-ref HEAD', 'custom'),
+        git_hash=run_cmd('git rev-parse --short HEAD', 'custom'),
     )
-
-
-def run_cmd(cmd):
-    return subprocess.check_output(cmd.split(), universal_newlines=True).strip()
