@@ -36,13 +36,13 @@ To obtain better accuracy, we finetune the model to higher resolution progressiv
 
 <details>
 <summary>Finetune with higher resolution from 224 to 384</summary>
-<pre><code> python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/higher_resolution/tiny_vit_21m_224to384.yaml --data-path ./ImageNet --batch-size 32 --resume ./tiny_vit_21m_22kto1k_distill.pth --output ./output  --accumulation-steps 4
+<pre><code> python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/higher_resolution/tiny_vit_21m_224to384.yaml --data-path ./ImageNet --batch-size 32 --pretrained ./checkpoints/tiny_vit_21m_22kto1k_distill.pth --output ./output  --accumulation-steps 4
 </code></pre>
 </details>
 
 <details>
 <summary>Finetune with higher resolution from 384 to 512</summary>
-<pre><code> python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/higher_resolution/tiny_vit_21m_384to512.yaml --data-path ./ImageNet --batch-size 32 --resume ./tiny_vit_21m_22kto1k_384_distill.pth --output ./output  --accumulation-steps 4
+<pre><code> python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/higher_resolution/tiny_vit_21m_384to512.yaml --data-path ./ImageNet --batch-size 32 --pretrained ./checkpoints/tiny_vit_21m_22kto1k_384_distill.pth --output ./output  --accumulation-steps 4
 </code></pre>
 </details>
 
