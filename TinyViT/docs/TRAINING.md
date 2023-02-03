@@ -25,7 +25,7 @@ where `$NODE_RANK` and `$MASTER_ADDR` are the rank of a node and the IP address 
 After pretrained on IN-22k, the model can be finetuned on IN-1k by the following command.
 
 ```
-python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/22kto1k/tiny_vit_21m_22kto1k.yaml --data-path ./ImageNet --batch-size 128 --resume ./checkpoints/tiny_vit_21m_22k_distill.pth --output ./output
+python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/22kto1k/tiny_vit_21m_22kto1k.yaml --data-path ./ImageNet --batch-size 128 --pretrained ./checkpoints/tiny_vit_21m_22k_distill.pth --output ./output
 ```
 
 where `tiny_vit_21m_22k.pth` is the checkpoint of pretrained TinyViT-21M on IN-22k dataset.
@@ -36,13 +36,13 @@ To obtain better accuracy, we finetune the model to higher resolution progressiv
 
 <details>
 <summary>Finetune with higher resolution from 224 to 384</summary>
-<pre><code> python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/higher_resolution/tiny_vit_21m_224to384.yaml --data-path ./ImageNet --batch-size 32 --resume ./tiny_vit_21m_22kto1k_distill.pth --output ./output  --accumulation-steps 4
+<pre><code> python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/higher_resolution/tiny_vit_21m_224to384.yaml --data-path ./ImageNet --batch-size 32 --pretrained ./checkpoints/tiny_vit_21m_22kto1k_distill.pth --output ./output  --accumulation-steps 4
 </code></pre>
 </details>
 
 <details>
 <summary>Finetune with higher resolution from 384 to 512</summary>
-<pre><code> python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/higher_resolution/tiny_vit_21m_384to512.yaml --data-path ./ImageNet --batch-size 32 --resume ./tiny_vit_21m_22kto1k_384_distill.pth --output ./output  --accumulation-steps 4
+<pre><code> python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/higher_resolution/tiny_vit_21m_384to512.yaml --data-path ./ImageNet --batch-size 32 --pretrained ./checkpoints/tiny_vit_21m_22kto1k_384_distill.pth --output ./output  --accumulation-steps 4
 </code></pre>
 </details>
 
