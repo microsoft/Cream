@@ -25,7 +25,7 @@ where `$NODE_RANK` and `$MASTER_ADDR` are the rank of a node and the IP address 
 After pretrained on IN-22k, the model can be finetuned on IN-1k by the following command.
 
 ```
-python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/22kto1k/tiny_vit_21m_22kto1k.yaml --data-path ./ImageNet --batch-size 128 --resume ./checkpoints/tiny_vit_21m_22k_distill.pth --output ./output
+python -m torch.distributed.launch --nproc_per_node 8 main.py --cfg configs/22kto1k/tiny_vit_21m_22kto1k.yaml --data-path ./ImageNet --batch-size 128 --pretrained ./checkpoints/tiny_vit_21m_22k_distill.pth --output ./output
 ```
 
 where `tiny_vit_21m_22k.pth` is the checkpoint of pretrained TinyViT-21M on IN-22k dataset.
