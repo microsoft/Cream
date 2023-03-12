@@ -610,10 +610,18 @@ def _create_tiny_vit(variant, pretrained=False, **kwargs):
         num_classes=num_classes_pretrained,
         classifier='head',
     )
+
+    def _pretrained_filter_fn(state_dict):
+        state_dict = state_dict['model']
+        # filter out attention_bias_idxs
+        state_dict = {k: v for k, v in state_dict.items() if \
+            not k.endswith('attention_bias_idxs')}
+        return state_dict
+
     return build_model_with_cfg(
         TinyViT, variant, pretrained,
         default_cfg=cfg,
-        pretrained_filter_fn=lambda state_dict: state_dict['model'],
+        pretrained_filter_fn=_pretrained_filter_fn,
         **kwargs)
 
 
