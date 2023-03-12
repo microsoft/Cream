@@ -592,16 +592,28 @@ _checkpoint_url_format = \
 
 def _create_tiny_vit(variant, pretrained=False, **kwargs):
     # pretrained_type: 22kto1k_distill, 1k, 22k_distill
-    img_size = kwargs.get('img_size', 224)
     pretrained_type = kwargs.pop('pretrained_type', '22kto1k_distill')
+    assert pretrained_type in ['22kto1k_distill', '1k', '22k_distill'], \
+        'pretrained_type should be one of 22kto1k_distill, 1k, 22k_distill'
+
+    img_size = kwargs.get('img_size', 224)
     if img_size != 224:
         pretrained_type = pretrained_type.replace('_', f'_{img_size}_')
+
+    num_classes_pretrained = 21841 if \
+        pretrained_type  == '22k_distill' else 1000
+
+    variant_without_img_size = '_'.join(variant.split('_')[:-1])
     cfg = dict(
-        url=_checkpoint_url_format.format(f'{variant}_{pretrained_type}')
+        url=_checkpoint_url_format.format(
+            f'{variant_without_img_size}_{pretrained_type}'),
+        num_classes=num_classes_pretrained,
+        classifier='head',
     )
     return build_model_with_cfg(
         TinyViT, variant, pretrained,
         default_cfg=cfg,
+        pretrained_filter_fn=lambda state_dict: state_dict['model'],
         **kwargs)
 
 
@@ -612,11 +624,10 @@ def tiny_vit_5m_224(pretrained=False, **kwargs):
         depths=[2, 2, 6, 2],
         num_heads=[2, 4, 5, 10],
         window_sizes=[7, 7, 14, 7],
-        num_classes=1000,
         drop_path_rate=0.0,
     )
     model_kwargs.update(kwargs)
-    return _create_tiny_vit('tiny_vit_5m_224', pretrained, **kwargs)
+    return _create_tiny_vit('tiny_vit_5m_224', pretrained, **model_kwargs)
 
 
 @register_model
@@ -626,11 +637,10 @@ def tiny_vit_11m_224(pretrained=False, **kwargs):
         depths=[2, 2, 6, 2],
         num_heads=[2, 4, 8, 14],
         window_sizes=[7, 7, 14, 7],
-        num_classes=1000,
         drop_path_rate=0.1,
     )
     model_kwargs.update(kwargs)
-    return _create_tiny_vit('tiny_vit_11m_224', pretrained, **kwargs)
+    return _create_tiny_vit('tiny_vit_11m_224', pretrained, **model_kwargs)
 
 
 @register_model
@@ -640,11 +650,10 @@ def tiny_vit_21m_224(pretrained=False, **kwargs):
         depths=[2, 2, 6, 2],
         num_heads=[3, 6, 12, 18],
         window_sizes=[7, 7, 14, 7],
-        num_classes=1000,
         drop_path_rate=0.2,
     )
     model_kwargs.update(kwargs)
-    return _create_tiny_vit('tiny_vit_21m_224', pretrained, **kwargs)
+    return _create_tiny_vit('tiny_vit_21m_224', pretrained, **model_kwargs)
 
 
 @register_model
@@ -655,11 +664,10 @@ def tiny_vit_21m_384(pretrained=False, **kwargs):
         depths=[2, 2, 6, 2],
         num_heads=[3, 6, 12, 18],
         window_sizes=[12, 12, 24, 12],
-        num_classes=1000,
         drop_path_rate=0.1,
     )
     model_kwargs.update(kwargs)
-    return _create_tiny_vit('tiny_vit_21m_384', pretrained, **kwargs)
+    return _create_tiny_vit('tiny_vit_21m_384', pretrained, **model_kwargs)
 
 
 @register_model
@@ -670,8 +678,7 @@ def tiny_vit_21m_512(pretrained=False, **kwargs):
         depths=[2, 2, 6, 2],
         num_heads=[3, 6, 12, 18],
         window_sizes=[16, 16, 32, 16],
-        num_classes=1000,
         drop_path_rate=0.1,
     )
     model_kwargs.update(kwargs)
-    return _create_tiny_vit('tiny_vit_21m_512', pretrained, **kwargs)
+    return _create_tiny_vit('tiny_vit_21m_512', pretrained, **model_kwargs)
