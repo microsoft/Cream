@@ -1,0 +1,11 @@
+torch==1.11.0 
+torchvision
+timm==0.5.4 
+einops==0.4.1
+fvcore
+easydict
+matplotlib
+numpy==1.21.0
+yacs
+scikit-image==0.19.3
+pillow
