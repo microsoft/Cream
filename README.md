@@ -3,6 +3,8 @@
 
 ***This is a collection of our NAS and Vision Transformer work***
 
+> [**EfficientViT**](./EfficientViT) (```@CVPR'23```): **EfficientViT: Memory Efficient Vision Transformer with Cascaded Group Attention**
+
 > [**TinyViT**](./TinyViT) (```@ECCV'22```): **TinyViT: Fast Pretraining Distillation for Small Vision Transformers**
 
 > [**MiniViT**](./MiniViT) (```@CVPR'22```): **MiniViT: Compressing Vision Transformers with Weight Multiplexing**
@@ -25,6 +27,7 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 
 ## News
 - :sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com
+- :boom: May, 2023: Code for [**EfficientViT**](./EfficientViT) is now released.
 - :boom: Jul, 2022: Code for [**TinyViT**](./TinyViT) is now released.
 - :boom: Apr, 2022: Code for [**MiniViT**](./MiniViT) is now released.
 - :boom: Mar, 2022: [**MiniViT**](https://openaccess.thecvf.com/content/CVPR2022/html/Zhang_MiniViT_Compressing_Vision_Transformers_With_Weight_Multiplexing_CVPR_2022_paper.html) has been accepted by CVPR'22.
@@ -41,6 +44,12 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 - :boom: Oct, 2020: [**Cream**](./Cream) was accepted to NeurIPS'20
 
 ## Works
+
+### [EfficientViT](./EfficientViT)
+**EfficientViT** is a family of high-speed vision transformers. It is built with a new memory efficient building block with a **sandwich layout**, and an efficient **cascaded group attention** operation which mitigates attention computation redundancy. 
+<div align="center">
+    <img width="69%" alt="EfficientViT overview" src="./EfficientViT/classification/.figures/efficientvit_main_static.png"/>
+</div>
 
 ### [TinyViT](./TinyViT)
 TinyViT is a new family of **tiny and efficient** vision transformers pretrained on **large-scale** datasets with our proposed **fast distillation framework**. The central idea is to **transfer knowledge** from **large pretrained models** to small ones. The logits of large teacher models are sparsified and stored in disk in advance to **save the memory cost and computation overheads**.
@@ -95,6 +104,13 @@ In this work, we present a simple yet effective architecture distillation method
 
 ## Bibtex
 ```bibtex
+@InProceedings{liu2023efficientvit,
+    title     = {EfficientViT: Memory Efficient Vision Transformer with Cascaded Group Attention},
+    author    = {Liu, Xinyu and Peng, Houwen and Zheng, Ningxin and Yang, Yuqing and Hu, Han and Yuan, Yixuan},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    year      = {2023},
+}
+
 @InProceedings{tiny_vit,
   title={TinyViT: Fast Pretraining Distillation for Small Vision Transformers},
   author={Wu, Kan and Zhang, Jinnian and Peng, Houwen and Liu, Mengchen and Xiao, Bin and Fu, Jianlong and Yuan, Lu},
