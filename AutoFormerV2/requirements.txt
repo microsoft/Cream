@@ -1,4 +1,4 @@
-torch==1.7.1
+torch==1.13.1
 timm==0.3.2
 scikit-image
 ptflops
