@@ -5,7 +5,7 @@ einops==0.4.1
 fvcore
 easydict
 matplotlib
-numpy==1.21.0
+numpy==1.22.0
 yacs
 scikit-image==0.19.3
 pillow
