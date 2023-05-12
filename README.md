@@ -28,6 +28,7 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 ## News
 - :sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com
 - :boom: May, 2023: Code for [**EfficientViT**](./EfficientViT) is now released.
+- :boom: Mar, 2023: [**EfficientViT**](./EfficientViT) accepted to CVPR'23
 - :boom: Jul, 2022: Code for [**TinyViT**](./TinyViT) is now released.
 - :boom: Apr, 2022: Code for [**MiniViT**](./MiniViT) is now released.
 - :boom: Mar, 2022: [**MiniViT**](https://openaccess.thecvf.com/content/CVPR2022/html/Zhang_MiniViT_Compressing_Vision_Transformers_With_Weight_Multiplexing_CVPR_2022_paper.html) has been accepted by CVPR'22.
