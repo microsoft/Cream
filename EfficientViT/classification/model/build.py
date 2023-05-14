@@ -180,4 +180,4 @@ def replace_batchnorm(net):
             replace_batchnorm(child)
 
 _checkpoint_url_format = \
-    'https://github.com/xinyuliu-jeffrey/EfficientViT_cream/releases/download/v1.0/{}.pth'
+    'https://github.com/xinyuliu-jeffrey/EfficientViT_Model_Zoo/releases/download/v1.0/{}.pth'
