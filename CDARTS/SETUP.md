@@ -62,7 +62,7 @@ We have provided all the shell scripts and the corresponding default parameters,
     --nasnet_lr                 # the learning rate of the evaluation network
     --w_weight_decay            # the weight decay the search and the evaluation network
     --alpha_weight_decay        # the weight decay the the architecture parameters
-    --fix_head                  # wheter to fix the paramters of auxiliary heads
+    --fix_head                  # wheter to fix the parameters of auxiliary heads
     --interactive_type          # The KD function, 0 kl, 1 cosine, 2 mse, 3 sl1
     --pretrain_epochs           # the pretrain epochs of the search network
     --search_iter               # the search iterations
