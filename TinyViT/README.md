@@ -37,7 +37,7 @@ The file [`models/tiny_vit.py`](./models/tiny_vit.py) defines TinyViT model fami
     output = model(image)
     ```
 
-A model inference script: [`inference.py`](./inference.py).
+    An inference script: [`inference.py`](./inference.py).
 
 4. **Extensibility**. Add custom dataset, student and teacher models with no need to modify your code.
 The class [`DatasetWrapper`](./data/build.py#L74) wraps the general dataset to support saving and loading sparse logits. It only need the logits of models for knowledge distillation.
