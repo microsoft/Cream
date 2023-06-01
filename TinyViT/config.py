@@ -241,11 +241,12 @@ def update_config(config, args):
     config.freeze()
 
 
-def get_config(args):
+def get_config(args=None):
     """Get a yacs CfgNode object with default values."""
     # Return a clone so that the defaults will not be altered
     # This is for the "local variable" use pattern
     config = _C.clone()
-    update_config(config, args)
+    if args is not None:
+        update_config(config, args)
 
     return config
