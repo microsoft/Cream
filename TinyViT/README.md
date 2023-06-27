@@ -93,6 +93,27 @@ If this repo is helpful for you, please consider to cite it. :mega: Thank you! :
 }
 ```
 
+
+## Research Citing Our Work   
+
+:tada: We would like to acknowledge the following research work that cites and utilizes our method:
+
+<details>
+<summary>
+<a href="https://github.com/ChaoningZhang/MobileSAM">MobileSAM</a> (Faster Segment Anything: Towards Lightweight SAM for Mobile Applications) [<b>bib</b>]
+</summary>
+
+```bibtex
+@article{zhang2023faster,
+  title={Faster Segment Anything: Towards Lightweight SAM for Mobile Applications},
+  author={Zhang, Chaoning and Han, Dongshen and Qiao, Yu and Kim, Jung Uk and Bae, Sung Ho and Lee, Seungkyu and Hong, Choong Seon},
+  journal={arXiv preprint arXiv:2306.14289},
+  year={2023}
+}
+```
+</details>
+
+
 ## Acknowledge
 
 Our code is based on [Swin Transformer](https://github.com/microsoft/swin-transformer), [LeViT](https://github.com/facebookresearch/LeViT), [pytorch-image-models](https://github.com/rwightman/pytorch-image-models), [CLIP](https://github.com/openai/CLIP) and [PyTorch](https://github.com/pytorch/pytorch). Thank contributors for their awesome contribution!
