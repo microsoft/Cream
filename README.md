@@ -3,6 +3,8 @@
 
 ***This is a collection of our NAS and Vision Transformer work***
 
+> [**TinyCLIP**](./TinyCLIP) (```@ICCV'23```): **TinyCLIP: CLIP Distillation via Affinity Mimicking and Weight Inheritance**
+
 > [**EfficientViT**](./EfficientViT) (```@CVPR'23```): **EfficientViT: Memory Efficient Vision Transformer with Cascaded Group Attention**
 
 > [**TinyViT**](./TinyViT) (```@ECCV'22```): **TinyViT: Fast Pretraining Distillation for Small Vision Transformers**
@@ -27,6 +29,7 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 
 ## News
 - :sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com
+- :boom: Jul, 2023: [**TinyCLIP**](./TinyCLIP) accepted to ICCV'23
 - :boom: May, 2023: Code for [**EfficientViT**](./EfficientViT) is now released.
 - :boom: Mar, 2023: [**EfficientViT**](./EfficientViT) accepted to CVPR'23
 - :boom: Jul, 2022: Code for [**TinyViT**](./TinyViT) is now released.
