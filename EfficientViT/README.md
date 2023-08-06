@@ -3,7 +3,7 @@
 :pushpin: This is an official PyTorch implementation of **[CVPR 2023]** - EfficientViT: Memory Efficient Vision Transformer with Cascaded Group Attention
 
 > [**EfficientViT: Memory Efficient Vision Transformer with Cascaded Group Attention**]()<br>
-> [Xinyu Liu](https://xinyuliu-jeffrey.github.io/), [Houwen Peng](https://houwenpeng.com/), [Ningxin Zheng](https://www.microsoft.com/en-us/research/people/nizhen/), [Yuqing Yang](https://www.microsoft.com/en-us/research/people/yuqyang/), [Han Hu](https://ancientmooner.github.io/), [Yixuan Yuan](http://www.ee.cuhk.edu.hk/~yxyuan/)<br>Microsoft Research Asia, The Chinese Univerisity of Hong Kong
+> [Xinyu Liu](https://xinyuliu-jeffrey.github.io/), [Houwen Peng](https://houwenpeng.com/), [Ningxin Zheng](https://www.microsoft.com/en-us/research/people/nizhen/), [Yuqing Yang](https://www.microsoft.com/en-us/research/people/yuqyang/), [Han Hu](https://ancientmooner.github.io/), [Yixuan Yuan](http://www.ee.cuhk.edu.hk/~yxyuan/)<br>The Chinese Univerisity of Hong Kong, Microsoft Research Asia
 
 **EfficientViT** is a family of high-speed vision transformers. It is built with a new memory efficient building block with a **sandwich layout**, and an efficient **cascaded group attention** operation which mitigates attention computation redundancy. 
 
