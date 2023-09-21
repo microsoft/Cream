@@ -29,13 +29,14 @@ def bytes_to_unicode():
     To avoid that, we want lookup tables between utf-8 bytes and unicode strings.
     And avoids mapping to whitespace/control characters the bpe code barfs on.
     """
-    bs = list(range(ord("!"), ord("~")+1))+list(range(ord("¡"), ord("¬")+1))+list(range(ord("®"), ord("ÿ")+1))
+    bs = list(range(ord("!"), ord("~") + 1)) + list(range(ord("¡"),
+                                                          ord("¬") + 1)) + list(range(ord("®"), ord("ÿ") + 1))
     cs = bs[:]
     n = 0
     for b in range(2**8):
         if b not in bs:
             bs.append(b)
-            cs.append(2**8+n)
+            cs.append(2**8 + n)
             n += 1
     cs = [chr(n) for n in cs]
     return dict(zip(bs, cs))
@@ -70,23 +71,25 @@ class SimpleTokenizer(object):
         self.byte_encoder = bytes_to_unicode()
         self.byte_decoder = {v: k for k, v in self.byte_encoder.items()}
         merges = gzip.open(bpe_path).read().decode("utf-8").split('\n')
-        merges = merges[1:49152-256-2+1]
+        merges = merges[1:49152 - 256 - 2 + 1]
         merges = [tuple(merge.split()) for merge in merges]
         vocab = list(bytes_to_unicode().values())
-        vocab = vocab + [v+'</w>' for v in vocab]
+        vocab = vocab + [v + '</w>' for v in vocab]
         for merge in merges:
             vocab.append(''.join(merge))
         if not special_tokens:
             special_tokens = ['<start_of_text>', '<end_of_text>']
         else:
-            special_tokens = ['<start_of_text>', '<end_of_text>'] + special_tokens
+            special_tokens = ['<start_of_text>',
+                              '<end_of_text>'] + special_tokens
         vocab.extend(special_tokens)
         self.encoder = dict(zip(vocab, range(len(vocab))))
         self.decoder = {v: k for k, v in self.encoder.items()}
         self.bpe_ranks = dict(zip(merges, range(len(merges))))
-        self.cache = {t:t for t in special_tokens}
+        self.cache = {t: t for t in special_tokens}
         special = "|".join(special_tokens)
-        self.pat = re.compile(special + r"""|'s|'t|'re|'ve|'m|'ll|'d|[\p{L}]+|[\p{N}]|[^\s\p{L}\p{N}]+""", re.IGNORECASE)
+        self.pat = re.compile(
+            special + r"""|'s|'t|'re|'ve|'m|'ll|'d|[\p{L}]+|[\p{N}]|[^\s\p{L}\p{N}]+""", re.IGNORECASE)
 
         self.vocab_size = len(self.encoder)
         self.all_special_ids = [self.encoder[t] for t in special_tokens]
@@ -94,14 +97,15 @@ class SimpleTokenizer(object):
     def bpe(self, token):
         if token in self.cache:
             return self.cache[token]
-        word = tuple(token[:-1]) + ( token[-1] + '</w>',)
+        word = tuple(token[:-1]) + (token[-1] + '</w>',)
         pairs = get_pairs(word)
 
         if not pairs:
-            return token+'</w>'
+            return token + '</w>'
 
         while True:
-            bigram = min(pairs, key = lambda pair: self.bpe_ranks.get(pair, float('inf')))
+            bigram = min(pairs, key=lambda pair: self.bpe_ranks.get(
+                pair, float('inf')))
             if bigram not in self.bpe_ranks:
                 break
             first, second = bigram
@@ -116,8 +120,8 @@ class SimpleTokenizer(object):
                     new_word.extend(word[i:])
                     break
 
-                if word[i] == first and i < len(word)-1 and word[i+1] == second:
-                    new_word.append(first+second)
+                if word[i] == first and i < len(word) - 1 and word[i + 1] == second:
+                    new_word.append(first + second)
                     i += 2
                 else:
                     new_word.append(word[i])
@@ -136,13 +140,16 @@ class SimpleTokenizer(object):
         bpe_tokens = []
         text = whitespace_clean(basic_clean(text)).lower()
         for token in re.findall(self.pat, text):
-            token = ''.join(self.byte_encoder[b] for b in token.encode('utf-8'))
-            bpe_tokens.extend(self.encoder[bpe_token] for bpe_token in self.bpe(token).split(' '))
+            token = ''.join(self.byte_encoder[b]
+                            for b in token.encode('utf-8'))
+            bpe_tokens.extend(self.encoder[bpe_token]
+                              for bpe_token in self.bpe(token).split(' '))
         return bpe_tokens
 
     def decode(self, tokens):
         text = ''.join([self.decoder[token] for token in tokens])
-        text = bytearray([self.byte_decoder[c] for c in text]).decode('utf-8', errors="replace").replace('</w>', ' ')
+        text = bytearray([self.byte_decoder[c] for c in text]).decode(
+            'utf-8', errors="replace").replace('</w>', ' ')
         return text
 
 
@@ -169,7 +176,8 @@ def tokenize(texts: Union[str, List[str]], context_length: int = 77) -> torch.Lo
 
     sot_token = _tokenizer.encoder["<start_of_text>"]
     eot_token = _tokenizer.encoder["<end_of_text>"]
-    all_tokens = [[sot_token] + _tokenizer.encode(text) + [eot_token] for text in texts]
+    all_tokens = [[sot_token] +
+                  _tokenizer.encode(text) + [eot_token] for text in texts]
     result = torch.zeros(len(all_tokens), context_length, dtype=torch.long)
 
     for i, tokens in enumerate(all_tokens):
@@ -179,6 +187,7 @@ def tokenize(texts: Union[str, List[str]], context_length: int = 77) -> torch.Lo
         result[i, :len(tokens)] = torch.tensor(tokens)
 
     return result
+
 
 class HFTokenizer:
     """HuggingFace tokenizer wrapper"""

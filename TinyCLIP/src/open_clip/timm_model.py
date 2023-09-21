@@ -57,10 +57,12 @@ class TimmModel(nn.Module):
 
         head_layers = OrderedDict()
         if pool == 'abs_attn':
-            head_layers['pool'] = AbsAttentionPool2d(prev_chs, feat_size=feat_size, out_features=embed_dim)
+            head_layers['pool'] = AbsAttentionPool2d(
+                prev_chs, feat_size=feat_size, out_features=embed_dim)
             prev_chs = embed_dim
         elif pool == 'rot_attn':
-            head_layers['pool'] = RotAttentionPool2d(prev_chs, out_features=embed_dim)
+            head_layers['pool'] = RotAttentionPool2d(
+                prev_chs, out_features=embed_dim)
             prev_chs = embed_dim
         else:
             assert proj, 'projection layer needed if non-attention pooling is used.'
@@ -70,7 +72,8 @@ class TimmModel(nn.Module):
             head_layers['drop'] = nn.Dropout(drop)
             head_layers['proj'] = nn.Linear(prev_chs, embed_dim)
         elif proj == 'mlp':
-            head_layers['mlp'] = Mlp(prev_chs, 2 * embed_dim, embed_dim, drop=drop)
+            head_layers['mlp'] = Mlp(
+                prev_chs, 2 * embed_dim, embed_dim, drop=drop)
 
         self.head = nn.Sequential(head_layers)
 
@@ -103,7 +106,8 @@ class TimmModel(nn.Module):
                     self.trunk.get_parameter(param).requires_grad = False
             if freeze_bn_stats:
                 gmodules = group_modules(self.trunk, matcher, reverse=True)
-                gmodules = {k for k, v in gmodules.items() if v <= max_layer_id}
+                gmodules = {k for k, v in gmodules.items() if v <=
+                            max_layer_id}
                 freeze_batch_norm_2d(self.trunk, gmodules)
 
     def forward(self, x):
@@ -113,5 +117,6 @@ class TimmModel(nn.Module):
 
 
 if __name__ == '__main__':
-    model = TimmModel('vit_base_patch32_224_in21k', 512, pool='', pretrained=False)
+    model = TimmModel('vit_base_patch32_224_in21k',
+                      512, pool='', pretrained=False)
     print(model)

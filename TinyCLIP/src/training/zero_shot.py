@@ -12,6 +12,7 @@ from .precision import get_autocast
 from timm.utils.model import unwrap_model
 from open_clip.imagenet_zeroshot_data import imagenet_classnames, openai_imagenet_template
 
+
 def all_gather(tensor, group, return_tensor=False, args=None):
     """Perform an all-gather operation."""
     world_size = args.world_size
@@ -24,6 +25,7 @@ def all_gather(tensor, group, return_tensor=False, args=None):
     else:
         return tensor_list
 
+
 def zero_shot_classifier(model, classnames, templates, args):
     # templates = templates + [lambda c: f'{c}.']
     model = unwrap_model(model)
@@ -35,7 +37,8 @@ def zero_shot_classifier(model, classnames, templates, args):
         padding_classnames += padding_classnames[:world_size - mod]
 
     def _get_classname_emb(classname):
-        texts = [template.format(classname) if isinstance(template, str) else template(classname) for template in templates]  # format with class
+        texts = [template.format(classname) if isinstance(template, str) else template(
+            classname) for template in templates]  # format with class
         texts = tokenize(texts).cuda(non_blocking=True)  # tokenize
         class_embeddings = model.encode_text(texts)
         class_embedding = F.normalize(class_embeddings, dim=-1).mean(dim=0)
@@ -58,7 +61,6 @@ def zero_shot_classifier(model, classnames, templates, args):
         zeroshot_weights = torch.cat(zeroshot_weights, dim=1)
         zeroshot_weights = zeroshot_weights[:, :len(classnames)]
 
-
     return zeroshot_weights
 
 
@@ -78,7 +80,7 @@ def run(model, classifier, dataloader, args):
         for images, target in bar:
             images = images.to(args.device)
             target = target.to(args.device)
-            batch_size = images.size(0) 
+            batch_size = images.size(0)
 
             with autocast():
                 # predict
@@ -88,7 +90,8 @@ def run(model, classifier, dataloader, args):
 
             # measure accuracy
             acc1, acc5 = accuracy(logits, target, topk=(1, 5))
-            bar.set_description(f'Acc@1 {acc1 / batch_size:.3f} Acc@5 {acc5 / batch_size:.3f}')
+            bar.set_description(
+                f'Acc@1 {acc1 / batch_size:.3f} Acc@5 {acc5 / batch_size:.3f}')
             top1 += acc1
             top5 += acc5
             n += batch_size
@@ -116,7 +119,6 @@ def zero_shot_eval(model, data, epoch, args):
 
     logging.info('Starting zero-shot imagenet.')
 
-
     model_without_ddp = unwrap_model(model)
 
     classifier_fname = os.getenv("EVAL_EMB", None)
@@ -132,7 +134,8 @@ def zero_shot_eval(model, data, epoch, args):
             if hasattr(model_without_ddp, text_classifier_name):
                 classifier = getattr(model_without_ddp, text_classifier_name)
         if classifier is None:
-            classifier = zero_shot_classifier(model, imagenet_classnames, openai_imagenet_template, args)
+            classifier = zero_shot_classifier(
+                model, imagenet_classnames, openai_imagenet_template, args)
         if enabled_saved_classifier:
             setattr(model_without_ddp, text_classifier_name, classifier)
 
@@ -144,11 +147,13 @@ def zero_shot_eval(model, data, epoch, args):
 
     logging.info('Using classifier')
     if 'imagenet-val' in data:
-        top1, top5 = run(model, classifier, data['imagenet-val'].dataloader, args)
+        top1, top5 = run(model, classifier,
+                         data['imagenet-val'].dataloader, args)
         results['imagenet-zeroshot-val-top1'] = top1
         results['imagenet-zeroshot-val-top5'] = top5
     if 'imagenet-v2' in data:
-        top1, top5 = run(model, classifier, data['imagenet-v2'].dataloader, args)
+        top1, top5 = run(model, classifier,
+                         data['imagenet-v2'].dataloader, args)
         results['imagenetv2-zeroshot-val-top1'] = top1
         results['imagenetv2-zeroshot-val-top5'] = top5
 

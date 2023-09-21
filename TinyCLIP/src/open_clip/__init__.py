@@ -1,6 +1,6 @@
 from .constants import OPENAI_DATASET_MEAN, OPENAI_DATASET_STD
 from .factory import list_models, create_model, create_model_and_transforms, add_model_config, \
-        load_model, load_exp
+    load_model, load_exp
 from .loss import ClipLoss
 from .model import CLIP, CLIPTextCfg, CLIPVisionCfg, convert_weights_to_fp16, trace_model
 from .openai import load_openai_model, list_openai_models

@@ -32,7 +32,8 @@ class ResizeMaxSize(nn.Module):
             img = F.resize(img, new_size, self.interpolation)
             pad_h = self.max_size - new_size[0]
             pad_w = self.max_size - new_size[1]
-            img = F.pad(img, padding=[pad_w//2, pad_h//2, pad_w - pad_w//2, pad_h - pad_h//2], fill=self.fill)
+            img = F.pad(img, padding=[
+                        pad_w // 2, pad_h // 2, pad_w - pad_w // 2, pad_h - pad_h // 2], fill=self.fill)
         return img
 
 
@@ -58,7 +59,8 @@ class ResizeMaxSize(nn.Module):
             img = F.resize(img, new_size, self.interpolation)
             pad_h = self.max_size - new_size[0]
             pad_w = self.max_size - new_size[1]
-            img = F.pad(img, padding=[pad_w//2, pad_h//2, pad_w - pad_w//2, pad_h - pad_h//2], fill=self.fill)
+            img = F.pad(img, padding=[
+                        pad_w // 2, pad_h // 2, pad_w - pad_w // 2, pad_h - pad_h // 2], fill=self.fill)
         return img
 
 
@@ -91,7 +93,8 @@ def image_transform(
     normalize = Normalize(mean=mean, std=std)
     if is_train:
         return Compose([
-            RandomResizedCrop(image_size, scale=(0.9, 1.0), interpolation=InterpolationMode.BICUBIC),
+            RandomResizedCrop(image_size, scale=(0.9, 1.0),
+                              interpolation=InterpolationMode.BICUBIC),
             _convert_to_rgb,
             ToTensor(),
             normalize,
@@ -109,7 +112,8 @@ def image_transform(
                 ]
             else:
                 transforms = [
-                    Resize((image_size, image_size), interpolation=InterpolationMode.BICUBIC),
+                    Resize((image_size, image_size),
+                           interpolation=InterpolationMode.BICUBIC),
                 ]
         transforms.extend([
             _convert_to_rgb,

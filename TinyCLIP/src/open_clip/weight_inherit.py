@@ -14,6 +14,7 @@ TRANS_PATTENS = [
     (re.compile(r"resblocks\.(\d+)\.(.*?)$"), 'resblocks.{}.{}'),
 ]
 
+
 def get_depth_state(state_dict):
     state = defaultdict(list)
     tstr = None
@@ -80,8 +81,8 @@ def weight_inherit(student_state_dict, teacher_state_dict, head_dim):
         encoder_type = 'interval_front'
         step = teacher_depth // max(student_depth, 1)
         idx = list(range(0, student_depth * step, step))
-        print(f'sample_method for {encoder_type}: stage: {si} depth: {teacher_depth} -> {student_depth}, idx: {idx}')
-
+        print(
+            f'sample_method for {encoder_type}: stage: {si} depth: {teacher_depth} -> {student_depth}, idx: {idx}')
 
         for i, j in enumerate(idx):
             for v, (prename, postname) in teacher_depth_state[si][j]:
@@ -105,13 +106,17 @@ def weight_inherit(student_state_dict, teacher_state_dict, head_dim):
                         # (3 * H * head_dim, in_dim)
                         student_dim = student_v.size(1)
                         teacher_dim = v.size(1)
-                        student_state_dict[new_name] = v.view(3, teacher_head, head_dim, teacher_dim)[:, :student_head, :, :student_dim].reshape(3 * student_head * head_dim, student_dim)
+                        student_state_dict[new_name] = v.view(3, teacher_head, head_dim, teacher_dim)[
+                            :, :student_head, :, :student_dim].reshape(3 * student_head * head_dim, student_dim)
                     else:
-                        assert new_name.endswith('.qkv.bias') or new_name.endswith('.attn.in_proj_bias')
-                        student_state_dict[new_name] = v.view(3, teacher_head, head_dim)[:, :student_head].reshape(-1,)
+                        assert new_name.endswith(
+                            '.qkv.bias') or new_name.endswith('.attn.in_proj_bias')
+                        student_state_dict[new_name] = v.view(3, teacher_head, head_dim)[
+                            :, :student_head].reshape(-1,)
                 else:
                     try:
-                        student_state_dict[new_name] = prune_param(v, student_state_dict[new_name].shape)
+                        student_state_dict[new_name] = prune_param(
+                            v, student_state_dict[new_name].shape)
                     except:
                         print(new_name, v.shape)
                         raise
@@ -119,13 +124,17 @@ def weight_inherit(student_state_dict, teacher_state_dict, head_dim):
     other_param_names = set(student_state_dict.keys()) - vised
     print('OTHER Pruned Params:', other_param_names)
     for k in other_param_names:
-        student_state_dict[k] = prune_param(teacher_state_dict[k], student_state_dict[k].shape)
+        student_state_dict[k] = prune_param(
+            teacher_state_dict[k], student_state_dict[k].shape)
         vised.add(k)
-    assert vised == set(student_state_dict.keys()), set(student_state_dict.keys()) - vised
+    assert vised == set(student_state_dict.keys()), set(
+        student_state_dict.keys()) - vised
     student_num_params = compute_dict_params(student_state_dict)
     teacher_num_params = compute_dict_params(teacher_state_dict)
-    print(f'Weight Inherit: {teacher_num_params} -> {student_num_params}, {student_num_params / teacher_num_params * 100:.2f}%')
+    print(
+        f'Weight Inherit: {teacher_num_params} -> {student_num_params}, {student_num_params / teacher_num_params * 100:.2f}%')
     return student_state_dict
+
 
 def weight_inherit_L2(student_state_dict, teacher_state_dict, head_dim):
     # the function will overwrite student_state_dict
@@ -142,8 +151,8 @@ def weight_inherit_L2(student_state_dict, teacher_state_dict, head_dim):
         encoder_type = 'interval_front'
         step = teacher_depth // max(student_depth, 1)
         idx = list(range(0, student_depth * step, step))
-        print(f'sample_method for {encoder_type}: stage: {si} depth: {teacher_depth} -> {student_depth}, idx: {idx}')
-
+        print(
+            f'sample_method for {encoder_type}: stage: {si} depth: {teacher_depth} -> {student_depth}, idx: {idx}')
 
         for i, j in enumerate(idx):
             for v, (prename, postname) in teacher_depth_state[si][j]:
@@ -167,13 +176,17 @@ def weight_inherit_L2(student_state_dict, teacher_state_dict, head_dim):
                         # (3 * H * head_dim, in_dim)
                         student_dim = student_v.size(1)
                         teacher_dim = v.size(1)
-                        student_state_dict[new_name] = v.view(3, teacher_head, head_dim, teacher_dim)[:, :student_head, :, :student_dim].reshape(3 * student_head * head_dim, student_dim)
+                        student_state_dict[new_name] = v.view(3, teacher_head, head_dim, teacher_dim)[
+                            :, :student_head, :, :student_dim].reshape(3 * student_head * head_dim, student_dim)
                     else:
-                        assert new_name.endswith('.qkv.bias') or new_name.endswith('.attn.in_proj_bias')
-                        student_state_dict[new_name] = v.view(3, teacher_head, head_dim)[:, :student_head].reshape(-1,)
+                        assert new_name.endswith(
+                            '.qkv.bias') or new_name.endswith('.attn.in_proj_bias')
+                        student_state_dict[new_name] = v.view(3, teacher_head, head_dim)[
+                            :, :student_head].reshape(-1,)
                 else:
                     try:
-                        student_state_dict[new_name] = prune_param(v, student_state_dict[new_name].shape)
+                        student_state_dict[new_name] = prune_param(
+                            v, student_state_dict[new_name].shape)
                     except:
                         print(new_name, v.shape)
                         raise
@@ -181,20 +194,23 @@ def weight_inherit_L2(student_state_dict, teacher_state_dict, head_dim):
     other_param_names = set(student_state_dict.keys()) - vised
     print('OTHER Pruned Params:', other_param_names)
     for k in other_param_names:
-        student_state_dict[k] = prune_param(teacher_state_dict[k], student_state_dict[k].shape)
+        student_state_dict[k] = prune_param(
+            teacher_state_dict[k], student_state_dict[k].shape)
         vised.add(k)
-    assert vised == set(student_state_dict.keys()), set(student_state_dict.keys()) - vised
+    assert vised == set(student_state_dict.keys()), set(
+        student_state_dict.keys()) - vised
     student_num_params = compute_dict_params(student_state_dict)
     teacher_num_params = compute_dict_params(teacher_state_dict)
-    print(f'Weight Inherit: {teacher_num_params} -> {student_num_params}, {student_num_params / teacher_num_params * 100:.2f}%')
+    print(
+        f'Weight Inherit: {teacher_num_params} -> {student_num_params}, {student_num_params / teacher_num_params * 100:.2f}%')
     return student_state_dict
 
 
 if __name__ == '__main__':
     def weight_inherit_for_tinyvit():
-        from tiny_vit import tiny_vit_5m_224, tiny_vit_21m_224 
+        from tiny_vit import tiny_vit_5m_224, tiny_vit_21m_224
         student_model = tiny_vit_5m_224()
-        teacher_model = tiny_vit_21m_224() 
+        teacher_model = tiny_vit_21m_224()
 
         student_state_dict = student_model.state_dict()
         teacher_state_dict = teacher_model.state_dict()
@@ -232,7 +248,6 @@ if __name__ == '__main__':
         # load inherited weights
         student_model.load_state_dict(student_state_dict)
 
-    
     # weight_inherit_for_tinyvit()
     weight_inherit_for_open_clip_transformer()
     weight_inherit_for_open_clip_vision()

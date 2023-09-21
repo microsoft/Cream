@@ -105,10 +105,14 @@ def parse_args():
     parser.add_argument(
         "--epochs", type=float, default=32, help="Number of epochs to train for."
     )
-    parser.add_argument("--lr", type=float, default=None, help="Learning rate.")
-    parser.add_argument("--beta1", type=float, default=None, help="Adam beta 1.")
-    parser.add_argument("--beta2", type=float, default=None, help="Adam beta 2.")
-    parser.add_argument("--eps", type=float, default=None, help="Adam epsilon.")
+    parser.add_argument("--lr", type=float, default=None,
+                        help="Learning rate.")
+    parser.add_argument("--beta1", type=float,
+                        default=None, help="Adam beta 1.")
+    parser.add_argument("--beta2", type=float,
+                        default=None, help="Adam beta 2.")
+    parser.add_argument("--eps", type=float, default=None,
+                        help="Adam epsilon.")
     parser.add_argument("--wd", type=float, default=0.2, help="Weight decay.")
     parser.add_argument(
         "--warmup", type=int, default=10000, help="Number of steps to warmup for."
@@ -382,11 +386,11 @@ def parse_args():
     parser.add_argument(
         "--seed", type=int, default=0, help="Default random seed."
     )
-    
+
     parser.add_argument(
         "--norm_gradient_clip", type=float, default=None, help="Gradient clip."
     )
-    
+
     parser.add_argument(
         "--distillation",
         default=False,

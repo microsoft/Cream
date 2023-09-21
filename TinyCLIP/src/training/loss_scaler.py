@@ -11,7 +11,8 @@ def ampscaler_get_grad_norm(parameters, norm_type: float = 2.0) -> torch.Tensor:
         return torch.tensor(0.)
     device = parameters[0].grad.device
     if norm_type == np.inf:
-        total_norm = max(p.grad.detach().abs().max().to(device) for p in parameters)
+        total_norm = max(p.grad.detach().abs().max().to(device)
+                         for p in parameters)
     else:
         total_norm = torch.norm(torch.stack([torch.norm(p.grad.detach(),
                                                         norm_type).to(device) for p in parameters]), norm_type)
@@ -29,7 +30,8 @@ class NativeScalerWithGradNormCount:
         if update_grad:
             if clip_grad is not None:
                 assert parameters is not None
-                self._scaler.unscale_(optimizer)  # unscale the gradients of optimizer's assigned params in-place
+                # unscale the gradients of optimizer's assigned params in-place
+                self._scaler.unscale_(optimizer)
                 norm = torch.nn.utils.clip_grad_norm_(parameters, clip_grad)
             else:
                 self._scaler.unscale_(optimizer)

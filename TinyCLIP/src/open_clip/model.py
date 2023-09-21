@@ -28,12 +28,14 @@ from .resnet import ModifiedResNet
 from .weight_inherit import weight_inherit
 from .l0module import L0Module
 
+
 def load_state_dict(model, state_dict):
     model.load_state_dict(state_dict, strict=True)
 
 
 class LayerNorm(nn.LayerNorm):
     """Subclass torch's LayerNorm to handle fp16."""
+
     def forward(self, x: torch.Tensor, hidden_z=None):
         '''
         x: (N, L, C)
@@ -43,7 +45,8 @@ class LayerNorm(nn.LayerNorm):
         orig_type = x.dtype
 
         if hidden_z is None:
-            x = F.layer_norm(x, self.normalized_shape, self.weight, self.bias, self.eps)
+            x = F.layer_norm(x, self.normalized_shape,
+                             self.weight, self.bias, self.eps)
         else:
             assert len(self.normalized_shape) == 1
             # [TODO] weighted layer norm
@@ -74,21 +77,22 @@ class LayerNorm(nn.LayerNorm):
         m.weight.data = compressed_weight.contiguous()
         m.bias.data = compressed_bias.contiguous()
         return m
-    
+
     def prune_mul_hidden(self):
         if self.hidden_z is None:
             return self
         hidden_z = self.hidden_z
         assert len(self.normalized_shape) == 1
         remaining_index = torch.where(hidden_z != 0)[0]
-        compressed_weight = self.weight[remaining_index] * hidden_z[remaining_index]
-        compressed_bias = self.bias[remaining_index] * hidden_z[remaining_index]
+        compressed_weight = self.weight[remaining_index] * \
+            hidden_z[remaining_index]
+        compressed_bias = self.bias[remaining_index] * \
+            hidden_z[remaining_index]
         m = self
         m.normalized_shape = (len(remaining_index),)
         m.weight.data = compressed_weight.contiguous()
         m.bias.data = compressed_bias.contiguous()
         return m
-
 
 
 class QuickGELU(nn.Module):
@@ -131,9 +135,11 @@ class Mlp(nn.Module):
     def prune(self):
         device = self.c_fc.weight.device
         if self.hidden_z is None:
-            self.hidden_z = torch.ones((self.d_model,), dtype=torch.bool, device=device)
+            self.hidden_z = torch.ones(
+                (self.d_model,), dtype=torch.bool, device=device)
         if self.intermediate_z is None:
-            self.intermediate_z = torch.ones((self.mlp_width,), dtype=torch.bool, device=device)
+            self.intermediate_z = torch.ones(
+                (self.mlp_width,), dtype=torch.bool, device=device)
         hidden_r = torch.where(self.hidden_z != 0)[0]
         intermediate_r = torch.where(self.intermediate_z != 0)[0]
         d_model = len(hidden_r)
@@ -144,12 +150,15 @@ class Mlp(nn.Module):
         m.c_proj = nn.Linear(intermediate_r.shape[0], hidden_r.shape[0])
         m.d_model = d_model
         m.mlp_width = mlp_width
-        m.c_fc.weight = nn.Parameter((self.c_fc.weight[intermediate_r][:, hidden_r]).contiguous())
-        m.c_fc.bias = nn.Parameter((self.c_fc.bias[intermediate_r]).contiguous())
+        m.c_fc.weight = nn.Parameter(
+            (self.c_fc.weight[intermediate_r][:, hidden_r]).contiguous())
+        m.c_fc.bias = nn.Parameter(
+            (self.c_fc.bias[intermediate_r]).contiguous())
 
-        m.c_proj.weight = nn.Parameter(((self.c_proj.weight * \
-                self.intermediate_z.view(1, -1) * self.hidden_z.view(-1, 1))[hidden_r][:, intermediate_r]).contiguous())
-        m.c_proj.bias = nn.Parameter(((self.c_proj.bias * self.hidden_z)[hidden_r]).contiguous())
+        m.c_proj.weight = nn.Parameter(((self.c_proj.weight *
+                                         self.intermediate_z.view(1, -1) * self.hidden_z.view(-1, 1))[hidden_r][:, intermediate_r]).contiguous())
+        m.c_proj.bias = nn.Parameter(
+            ((self.c_proj.bias * self.hidden_z)[hidden_r]).contiguous())
         return m
 
 
@@ -157,9 +166,11 @@ class MultiheadAttention(nn.MultiheadAttention):
     def prune(self):
         device = self.in_proj_weight.device
         if self.hidden_z is None:
-            self.hidden_z = torch.ones((self.embed_dim,), dtype=torch.bool, device=device)
+            self.hidden_z = torch.ones(
+                (self.embed_dim,), dtype=torch.bool, device=device)
         if self.head_z is None:
-            self.head_z = torch.ones((self.num_heads,), dtype=torch.bool, device=device)
+            self.head_z = torch.ones(
+                (self.num_heads,), dtype=torch.bool, device=device)
         hidden_r = torch.where(self.hidden_z != 0)[0]
         head_r = torch.where(self.head_z != 0)[0]
         d_model = len(hidden_r)
@@ -173,17 +184,19 @@ class MultiheadAttention(nn.MultiheadAttention):
         mod.head_dim = self.head_dim
         mod.num_heads = d_head
         inter_dim = d_head * self.head_dim
-        mod.in_proj_weight = nn.Parameter(self.in_proj_weight.view(3, org_num_heads, org_head_dim, org_embed_dim)[:, head_r][..., hidden_r].reshape(-1, d_model))
+        mod.in_proj_weight = nn.Parameter(self.in_proj_weight.view(
+            3, org_num_heads, org_head_dim, org_embed_dim)[:, head_r][..., hidden_r].reshape(-1, d_model))
         if self.in_proj_bias is not None:
-            mod.in_proj_bias = nn.Parameter(self.in_proj_bias.view(3, org_num_heads, org_head_dim)[:, head_r].reshape(-1))
+            mod.in_proj_bias = nn.Parameter(self.in_proj_bias.view(
+                3, org_num_heads, org_head_dim)[:, head_r].reshape(-1))
         mod.out_proj.weight = nn.Parameter(
-                ((self.out_proj.weight * self.hidden_z.view(-1, 1)).\
-                        view(org_embed_dim, org_num_heads, org_head_dim) * self.head_z.view(1, org_num_heads, 1))[hidden_r][:, head_r].reshape(d_model, -1)
+            ((self.out_proj.weight * self.hidden_z.view(-1, 1)).
+             view(org_embed_dim, org_num_heads, org_head_dim) * self.head_z.view(1, org_num_heads, 1))[hidden_r][:, head_r].reshape(d_model, -1)
         )
         if self.out_proj.bias is not None:
             mod.out_proj.bias = nn.Parameter(
-                    (self.out_proj.bias * self.hidden_z.view(-1,)).\
-                            view(org_embed_dim)[hidden_r].reshape(-1)
+                (self.out_proj.bias * self.hidden_z.view(-1,)).
+                view(org_embed_dim)[hidden_r].reshape(-1)
             )
         return mod
 
@@ -227,7 +240,7 @@ class ResidualAttentionBlock(nn.Module):
         self.attn.head_z = head_z
         self.attn.hidden_z = hidden_z
 
-        if (head_z is None and hidden_z is None and \
+        if (head_z is None and hidden_z is None and
                 not getattr(self.attn, 'use_naive_compute', False)):
             return self.attn(x, x, x, need_weights=False, attn_mask=attn_mask)[0]
         else:
@@ -259,7 +272,8 @@ class ResidualAttentionBlock(nn.Module):
                 out *= head_z.view(1, -1, 1, 1)
                 out = out.view(batch_size * n_head, length, dim_per_head)
             out = out.transpose(0, 1).reshape(length, batch_size, -1)
-            out = F.linear(out, self.attn.out_proj.weight, self.attn.out_proj.bias)
+            out = F.linear(out, self.attn.out_proj.weight,
+                           self.attn.out_proj.bias)
             if hidden_z is not None:
                 out = torch.mul(out, hidden_z)
             return out
@@ -298,7 +312,7 @@ class ResidualAttentionBlock(nn.Module):
 
     def prune(self):
         mod = self
-        if (self.mha_z is not None and self.mha_z.item() == 0) or (self.heads_z).sum()==0:
+        if (self.mha_z is not None and self.mha_z.item() == 0) or (self.heads_z).sum() == 0:
             mod.ln_1 = None
             mod.attn = None
             mod.attention = None
@@ -322,7 +336,7 @@ class ResidualAttentionBlock(nn.Module):
 
 
 class Transformer(nn.Module):
-    def __init__(self, width: int, layers: int, heads: int,  mlp_ratio: float = 4.0,
+    def __init__(self, width: int, layers: int, heads: int, mlp_ratio: float = 4.0,
                  act_layer: Callable = nn.GELU):
         super().__init__()
         self.width = width
@@ -335,9 +349,10 @@ class Transformer(nn.Module):
         self.mlp_ratio = mlp_ratio
 
         self.resblocks = nn.ModuleList([
-            ResidualAttentionBlock(width, heads, mlp_ratio, act_layer=act_layer)
+            ResidualAttentionBlock(
+                width, heads, mlp_ratio, act_layer=act_layer)
             for _ in range(layers)
-            ])
+        ])
 
     def forward(self, x: torch.Tensor, attn_mask: Optional[torch.Tensor] = None,
                 hidden_z: Optional[torch.Tensor] = None,
@@ -353,7 +368,7 @@ class Transformer(nn.Module):
                                  intermediate_z=intermediate_z,
                                  ffn_z=ffn_z)
 
-    def infer_blocks(self, x: torch.Tensor, attn_mask: Optional[torch.Tensor] = None, block_idxs=None, 
+    def infer_blocks(self, x: torch.Tensor, attn_mask: Optional[torch.Tensor] = None, block_idxs=None,
                      hidden_z: Optional[torch.Tensor] = None,
                      heads_z: Optional[torch.Tensor] = None,
                      mha_z: Optional[torch.Tensor] = None,
@@ -366,13 +381,15 @@ class Transformer(nn.Module):
         if heads_z is not None:
             if heads_z.ndim == 5:
                 heads_z = heads_z.view(num_layers, self.num_heads)
-            assert heads_z.shape in [(num_layers, self.num_heads), (self.num_heads,)], (heads_z.shape, (num_layers, self.num_heads))
+            assert heads_z.shape in [(num_layers, self.num_heads), (self.num_heads,)], (
+                heads_z.shape, (num_layers, self.num_heads))
         if mha_z is not None:
             assert mha_z.shape == (num_layers,), mha_z.shape
         if intermediate_z is not None:
             if intermediate_z.ndim == 4:
                 intermediate_z = intermediate_z.view(num_layers, -1)
-            assert intermediate_z.shape in [(num_layers, self.mlp_ratio * self.width), (self.mlp_ratio * self.width,)], intermediate_z.shape
+            assert intermediate_z.shape in [
+                (num_layers, self.mlp_ratio * self.width), (self.mlp_ratio * self.width,)], intermediate_z.shape
         if ffn_z is not None:
             assert ffn_z.shape == (num_layers,), ffn_z.shape
 
@@ -389,18 +406,18 @@ class Transformer(nn.Module):
 
             if self.grad_checkpointing and not torch.jit.is_scripting():
                 x = checkpoint(r, x, attn_mask,
-                    hidden_z,
-                    _get_zi(heads_z, i),
-                    _get_zi(mha_z, i, ndim=1),
-                    _get_zi(intermediate_z, i),
-                    _get_zi(ffn_z, i, ndim=1))
+                               hidden_z,
+                               _get_zi(heads_z, i),
+                               _get_zi(mha_z, i, ndim=1),
+                               _get_zi(intermediate_z, i),
+                               _get_zi(ffn_z, i, ndim=1))
             else:
                 x = r(x, attn_mask=attn_mask,
-                    hidden_z=hidden_z,
-                    heads_z=_get_zi(heads_z, i),
-                    mha_z=_get_zi(mha_z, i, ndim=1),
-                    intermediate_z=_get_zi(intermediate_z, i),
-                    ffn_z=_get_zi(ffn_z, i, ndim=1))
+                      hidden_z=hidden_z,
+                      heads_z=_get_zi(heads_z, i),
+                      mha_z=_get_zi(mha_z, i, ndim=1),
+                      intermediate_z=_get_zi(intermediate_z, i),
+                      ffn_z=_get_zi(ffn_z, i, ndim=1))
 
         return x
 
@@ -430,27 +447,32 @@ class VisualTransformer(nn.Module):
             output_dim: int,
             act_layer: Callable = nn.GELU,
             teacher_width: int = -1,
-            ):
+    ):
         super().__init__()
         self.image_size = to_2tuple(image_size)
         self.patch_size = to_2tuple(patch_size)
-        self.grid_size = (self.image_size[0] // self.patch_size[0], self.image_size[1] // self.patch_size[1])
+        self.grid_size = (
+            self.image_size[0] // self.patch_size[0], self.image_size[1] // self.patch_size[1])
         self.output_dim = output_dim
         self.embed_dim = width
         self.layers = layers
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=width, kernel_size=patch_size, stride=patch_size, bias=False)
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=width,
+                               kernel_size=patch_size, stride=patch_size, bias=False)
 
         scale = width ** -0.5
         self.class_embedding = nn.Parameter(scale * torch.randn(width))
-        self.positional_embedding = nn.Parameter(scale * torch.randn(self.grid_size[0] * self.grid_size[1] + 1, width))
+        self.positional_embedding = nn.Parameter(
+            scale * torch.randn(self.grid_size[0] * self.grid_size[1] + 1, width))
         self.ln_pre = LayerNorm(width)
 
-        self.transformer = Transformer(width, layers, heads, mlp_ratio, act_layer=act_layer)
+        self.transformer = Transformer(
+            width, layers, heads, mlp_ratio, act_layer=act_layer)
 
         self.ln_post = LayerNorm(width)
         # image proj
         if teacher_width > 0:
-            self.proj = nn.Parameter(torch.empty(teacher_width, output_dim), requires_grad=False)
+            self.proj = nn.Parameter(torch.empty(
+                teacher_width, output_dim), requires_grad=False)
         else:
             self.proj = nn.Parameter(scale * torch.randn(width, output_dim))
 
@@ -476,13 +498,14 @@ class VisualTransformer(nn.Module):
 
         x = x.to(self.conv1.weight.device)
         x = self.conv1(x)  # shape = [*, width, grid, grid]
-        x = x.reshape(x.shape[0], x.shape[1], -1)  # shape = [*, width, grid ** 2]
+        # shape = [*, width, grid ** 2]
+        x = x.reshape(x.shape[0], x.shape[1], -1)
         x = x.permute(0, 2, 1)  # shape = [*, grid ** 2, width]
         # the first token is the class token.
         x = torch.cat(
             [self.class_embedding.to(x.dtype) + torch.zeros(x.shape[0], 1, x.shape[-1], dtype=x.dtype, device=x.device),
              x], dim=1)  # shape = [*, 1 + grid ** 2, width]
-        x = x + self.positional_embedding.to(x.dtype) # 128, 50, 768
+        x = x + self.positional_embedding.to(x.dtype)  # 128, 50, 768
 
         if hidden_z is not None:
             x = torch.mul(x, hidden_z)
@@ -490,11 +513,11 @@ class VisualTransformer(nn.Module):
 
         x = x.permute(1, 0, 2)  # NLD -> LND 50, 128, 768
         x = self.transformer(x,
-                hidden_z = hidden_z,
-                heads_z = heads_z,
-                mha_z = mha_z,
-                intermediate_z=intermediate_z,
-                ffn_z=ffn_z)
+                             hidden_z=hidden_z,
+                             heads_z=heads_z,
+                             mha_z=mha_z,
+                             intermediate_z=intermediate_z,
+                             ffn_z=ffn_z)
 
         x = x.permute(1, 0, 2)  # LND -> NLD
 
@@ -516,19 +539,25 @@ class VisualTransformer(nn.Module):
 
     def prune(self):
         hidden_r = torch.where(self.hidden_z != 0)[0]
-        self.conv1.weight = nn.Parameter((self.conv1.weight.data * self.hidden_z.view(-1, 1, 1, 1))[hidden_r])
+        self.conv1.weight = nn.Parameter(
+            (self.conv1.weight.data * self.hidden_z.view(-1, 1, 1, 1))[hidden_r])
         if self.conv1.bias is not None:
-            self.conv1.bias = nn.Parameter((self.conv1.bias * self.hidden_z.view(-1,))[hidden_r])
-        self.class_embedding = nn.Parameter((self.class_embedding * self.hidden_z.view(-1,))[hidden_r])
-        self.positional_embedding = nn.Parameter((self.positional_embedding * self.hidden_z.view(1, -1))[:, hidden_r])
+            self.conv1.bias = nn.Parameter(
+                (self.conv1.bias * self.hidden_z.view(-1,))[hidden_r])
+        self.class_embedding = nn.Parameter(
+            (self.class_embedding * self.hidden_z.view(-1,))[hidden_r])
+        self.positional_embedding = nn.Parameter(
+            (self.positional_embedding * self.hidden_z.view(1, -1))[:, hidden_r])
         self.ln_pre = self.ln_pre.prune()
         self.transformer = self.transformer.prune()
         self.ln_post = self.ln_post.prune()
         if self.embed_dim_z is not None:
             embed_dim_r = self.embed_dim_z > 0
-            self.proj = nn.Parameter((self.proj * self.hidden_z.view(-1, 1) * self.embed_dim_z.view(1, -1))[hidden_r][:, embed_dim_r])
+            self.proj = nn.Parameter((self.proj * self.hidden_z.view(-1, 1)
+                                     * self.embed_dim_z.view(1, -1))[hidden_r][:, embed_dim_r])
         else:
-            self.proj = nn.Parameter((self.proj * self.hidden_z.view(-1, 1))[hidden_r])
+            self.proj = nn.Parameter(
+                (self.proj * self.hidden_z.view(-1, 1))[hidden_r])
         return self
 
 
@@ -542,9 +571,12 @@ class CLIPVisionCfg:
     patch_size: int = 16
     image_size: Union[Tuple[int, int], int] = 224
     timm_model_name: str = None  # a valid model name overrides layers, width, patch_size
-    timm_model_pretrained: bool = False  # use (imagenet) pretrained weights for named model
-    timm_pool: str = 'avg'  # feature pooling for timm model ('abs_attn', 'rot_attn', 'avg', '')
-    timm_proj: str = 'linear'  # linear projection for timm model output ('linear', 'mlp', '')
+    # use (imagenet) pretrained weights for named model
+    timm_model_pretrained: bool = False
+    # feature pooling for timm model ('abs_attn', 'rot_attn', 'avg', '')
+    timm_pool: str = 'avg'
+    # linear projection for timm model output ('linear', 'mlp', '')
+    timm_proj: str = 'linear'
 
 
 @dataclass
@@ -602,13 +634,14 @@ class ImageEncoder(nn.Module):
             logging.info('use l0_module_vision')
             config_mask = Namespace()
             config_mask.hidden_size = vision_cfg.width
-            config_mask.intermediate_size = 4*vision_cfg.width
+            config_mask.intermediate_size = 4 * vision_cfg.width
             config_mask.num_attention_heads = vision_heads
             config_mask.num_hidden_layers = vision_cfg.layers
             config_mask.sparsity_warmup = mask_cfg.sparsity_warmup
             config_mask.sparsity = mask_cfg.sparsity
             config_mask.start_sparsity = mask_cfg.start_sparsity
-            self.l0_module = L0Module(config_mask, lagrangian_warmup=config_mask.sparsity_warmup, start_sparsity = config_mask.start_sparsity, target_sparsity=config_mask.sparsity, pruning_type=["hidden", "heads", "intermediate"])
+            self.l0_module = L0Module(config_mask, lagrangian_warmup=config_mask.sparsity_warmup, start_sparsity=config_mask.start_sparsity,
+                                      target_sparsity=config_mask.sparsity, pruning_type=["hidden", "heads", "intermediate"])
         else:
             self.l0_module = None
 
@@ -643,7 +676,7 @@ class ImageEncoder(nn.Module):
 
 class TextEncoder(nn.Module):
     def __init__(self, embed_dim, text_cfg, quick_gelu,
-                 l0_module_text, mask_cfg = None):
+                 l0_module_text, mask_cfg=None):
         super().__init__()
 
         act_layer = QuickGELU if quick_gelu else nn.GELU
@@ -662,14 +695,19 @@ class TextEncoder(nn.Module):
         self.text_projection = None
         if text_cfg.layers > 0:
             self.vocab_size = text_cfg.vocab_size
-            self.token_embedding = nn.Embedding(text_cfg.vocab_size, text_cfg.width)
-            self.positional_embedding = nn.Parameter(torch.empty(self.context_length, text_cfg.width))
+            self.token_embedding = nn.Embedding(
+                text_cfg.vocab_size, text_cfg.width)
+            self.positional_embedding = nn.Parameter(
+                torch.empty(self.context_length, text_cfg.width))
             self.ln_final = LayerNorm(text_cfg.width)
             if text_cfg.teacher_width > 0:
-                self.text_projection = nn.Parameter(torch.empty(text_cfg.width, embed_dim), requires_grad=False)
+                self.text_projection = nn.Parameter(torch.empty(
+                    text_cfg.width, embed_dim), requires_grad=False)
             else:
-                self.text_projection = nn.Parameter(torch.empty(text_cfg.width, embed_dim))
-            self.register_buffer('attn_mask', self.build_attention_mask(), persistent=False)
+                self.text_projection = nn.Parameter(
+                    torch.empty(text_cfg.width, embed_dim))
+            self.register_buffer(
+                'attn_mask', self.build_attention_mask(), persistent=False)
         else:
             self.token_embedding = None
         self.init_parameters()
@@ -678,13 +716,14 @@ class TextEncoder(nn.Module):
             logging.info('use l0_module_text')
             config_mask = Namespace()
             config_mask.hidden_size = text_cfg.width
-            config_mask.intermediate_size = 4*text_cfg.width
+            config_mask.intermediate_size = 4 * text_cfg.width
             config_mask.num_attention_heads = text_cfg.heads
             config_mask.num_hidden_layers = text_cfg.layers
             config_mask.sparsity_warmup = mask_cfg.sparsity_warmup
             config_mask.sparsity = mask_cfg.sparsity
             config_mask.start_sparsity = mask_cfg.start_sparsity
-            self.l0_module = L0Module(config_mask, lagrangian_warmup=config_mask.sparsity_warmup, start_sparsity = config_mask.start_sparsity, target_sparsity=config_mask.sparsity, pruning_type=["hidden", "heads", "intermediate"])
+            self.l0_module = L0Module(config_mask, lagrangian_warmup=config_mask.sparsity_warmup, start_sparsity=config_mask.start_sparsity,
+                                      target_sparsity=config_mask.sparsity, pruning_type=["hidden", "heads", "intermediate"])
         else:
             self.l0_module = None
 
@@ -695,8 +734,8 @@ class TextEncoder(nn.Module):
             nn.init.normal_(self.token_embedding.weight, std=0.02)
             nn.init.normal_(self.positional_embedding, std=0.01)
 
-
-            proj_std = (self.transformer.width ** -0.5) * ((2 * self.transformer.layers) ** -0.5)
+            proj_std = (self.transformer.width ** -0.5) * \
+                ((2 * self.transformer.layers) ** -0.5)
             attn_std = self.transformer.width ** -0.5
             fc_std = (2 * self.transformer.width) ** -0.5
             for block in self.transformer.resblocks:
@@ -706,7 +745,8 @@ class TextEncoder(nn.Module):
                 nn.init.normal_(block.mlp.c_proj.weight, std=proj_std)
 
             if self.text_projection is not None:
-                nn.init.normal_(self.text_projection, std=self.transformer.width ** -0.5)
+                nn.init.normal_(self.text_projection,
+                                std=self.transformer.width ** -0.5)
 
     def build_attention_mask(self):
         # lazily create causal attention mask, with full attention between the vision tokens
@@ -775,20 +815,27 @@ class TextEncoder(nn.Module):
     def prune(self):
         device = self.token_embedding.weight.device
         if self.hidden_z is None:
-            self.hidden_z = torch.ones(self.text_projection.size(0), device=device)
+            self.hidden_z = torch.ones(
+                self.text_projection.size(0), device=device)
         if self.embed_dim_z is None:
-            self.embed_dim_z = torch.ones(self.text_projection.size(1), device=device)
+            self.embed_dim_z = torch.ones(
+                self.text_projection.size(1), device=device)
         mod = self
         self_copy = copy.deepcopy(self)
         hidden_r = self.hidden_z > 0
-        mod.token_embedding = nn.Embedding(self_copy.token_embedding.weight.shape[0], hidden_r.sum())
-        mod.positional_embedding = nn.Parameter(torch.empty(self_copy.context_length, hidden_r.sum()))
-        mod.token_embedding.weight = nn.Parameter((self_copy.token_embedding.weight * self_copy.hidden_z.view(1, -1))[:, hidden_r])
-        mod.positional_embedding = nn.Parameter((self_copy.positional_embedding * self_copy.hidden_z.view(1, -1))[:, hidden_r])
+        mod.token_embedding = nn.Embedding(
+            self_copy.token_embedding.weight.shape[0], hidden_r.sum())
+        mod.positional_embedding = nn.Parameter(
+            torch.empty(self_copy.context_length, hidden_r.sum()))
+        mod.token_embedding.weight = nn.Parameter(
+            (self_copy.token_embedding.weight * self_copy.hidden_z.view(1, -1))[:, hidden_r])
+        mod.positional_embedding = nn.Parameter(
+            (self_copy.positional_embedding * self_copy.hidden_z.view(1, -1))[:, hidden_r])
         mod.transformer = self.transformer.prune()
         mod.ln_final = self.ln_final.prune()
         embed_dim_r = self.embed_dim_z > 0
-        mod.text_projection = nn.Parameter((self.text_projection * self.hidden_z.view(-1, 1) * self.embed_dim_z.view(1, -1))[hidden_r][:, embed_dim_r])
+        mod.text_projection = nn.Parameter(
+            (self.text_projection * self.hidden_z.view(-1, 1) * self.embed_dim_z.view(1, -1))[hidden_r][:, embed_dim_r])
         return mod
 
 
@@ -805,6 +852,7 @@ class FNBlock(nn.Module):
     def __init__(self, fn):
         super().__init__()
         self.fn = fn
+
     def forward(self, *args, **kwargs):
         return self.fn(*args, **kwargs)
 
@@ -813,6 +861,7 @@ class FakeDDP(nn.Module):
     def __init__(self, module):
         super().__init__()
         self.module = module
+
     def forward(self, *args, **kwargs):
         return self.module(*args, **kwargs)
 
@@ -831,7 +880,8 @@ class CLIPBase(nn.Module):
         self.logit_autocast = nullcontext
 
         # copy the module without ddp
-        self._without_ddp = [self._image_encoder, self._text_encoder, self._logit_scale]
+        self._without_ddp = [self._image_encoder,
+                             self._text_encoder, self._logit_scale]
 
         self.used_ddp = False
 
@@ -876,11 +926,12 @@ class CLIPBase(nn.Module):
                 return teacher.encode_image(image, normalized=normalized)
 
         self._image_encoder = FNBlock(teacher_image_encoder_fn)
+
         class EmptyVisual(nn.Module):
             def __init__(self):
                 super().__init__()
                 self.layers = 0
-        self._image_encoder.visual = EmptyVisual() 
+        self._image_encoder.visual = EmptyVisual()
         self._without_ddp[0] = self._image_encoder
 
     def use_teacher_text(self):
@@ -889,6 +940,7 @@ class CLIPBase(nn.Module):
             with torch.no_grad():
                 return teacher.encode_text(text, normalized=normalized)
         self._text_encoder = FNBlock(teacher_text_encoder_fn)
+
         class EmptyTransformer(nn.Module):
             def __init__(self):
                 super().__init__()
@@ -899,7 +951,8 @@ class CLIPBase(nn.Module):
 
     def ddpify(self, ddp_fn):
         def _ddp_fn(module):
-            cnt = sum([p.numel() for p in module.parameters() if p.requires_grad])
+            cnt = sum([p.numel()
+                      for p in module.parameters() if p.requires_grad])
             if cnt > 0:
                 return ddp_fn(module)
             return FakeDDP(module)
@@ -913,7 +966,8 @@ class CLIPBase(nn.Module):
         image_features = text_features = None
         if image is not None:
             with self.image_autocast():
-                image_features = self._image_encoder(image, normalized=normalized)
+                image_features = self._image_encoder(
+                    image, normalized=normalized)
         if text is not None:
             with self.text_autocast():
                 text_features = self._text_encoder(text, normalized=normalized)
@@ -969,21 +1023,24 @@ class CLIPBase(nn.Module):
 
     def load_state_dict(self, state_dict, strict=True):
         state_dict = convert_to_new_checkpoint(state_dict, self.used_ddp)
-        if not any (k.startswith('_image_encoder') for k in state_dict.keys()):
+        if not any(k.startswith('_image_encoder') for k in state_dict.keys()):
             self.use_teacher_image()
 
         for m in ['module.', '']:
             flag = f'_image_encoder.{m}visual.model.head.0.weight'
             if flag in state_dict:
                 # LN
-                state_dict[f'_image_encoder.{m}visual.ln_post.weight'] = state_dict.pop(f'_image_encoder.{m}visual.model.head.0.weight')
-                state_dict[f'_image_encoder.{m}visual.ln_post.bias'] = state_dict.pop(f'_image_encoder.{m}visual.model.head.0.bias')
+                state_dict[f'_image_encoder.{m}visual.ln_post.weight'] = state_dict.pop(
+                    f'_image_encoder.{m}visual.model.head.0.weight')
+                state_dict[f'_image_encoder.{m}visual.ln_post.bias'] = state_dict.pop(
+                    f'_image_encoder.{m}visual.model.head.0.bias')
                 # FC
-                state_dict[f'_image_encoder.{m}visual.proj'] = state_dict.pop(f'_image_encoder.{m}visual.model.head.1.weight').T
+                state_dict[f'_image_encoder.{m}visual.proj'] = state_dict.pop(
+                    f'_image_encoder.{m}visual.model.head.1.weight').T
         new_state_dict = state_dict.copy()
         for k, v in new_state_dict.items():
             if '.module' in k:
-                state_dict[k.replace('.module','')] = v
+                state_dict[k.replace('.module', '')] = v
                 state_dict.pop(k)
         super().load_state_dict(state_dict, strict=strict)
 
@@ -999,7 +1056,7 @@ class CLIP(CLIPBase):
             mask_text: bool = False,
             sparsity_warmup: int = 1000,
             sparsity: float = 0.25,
-            start_sparsity:float = 0.0,
+            start_sparsity: float = 0.0,
     ):
 
         vision_ocfg = None
@@ -1012,7 +1069,7 @@ class CLIP(CLIPBase):
         if isinstance(text_cfg, dict):
             text_ocfg = text_cfg.pop('configs', None)
             text_cfg = CLIPTextCfg(**text_cfg)
-        
+
         mask_cfg = Namespace()
         mask_cfg.sparsity_warmup = sparsity_warmup
         mask_cfg.sparsity = sparsity
@@ -1025,7 +1082,7 @@ class CLIP(CLIPBase):
 
         if text_ocfg is None:
             text_encoder = TextEncoder(embed_dim, text_cfg, quick_gelu,
-                                       l0_module_text=mask_text,mask_cfg=mask_cfg)
+                                       l0_module_text=mask_text, mask_cfg=mask_cfg)
 
         super().__init__(image_encoder, text_encoder)
 
@@ -1107,16 +1164,19 @@ def build_model_from_openai_state_dict(state_dict: dict):
         vision_layers = len(
             [k for k in state_dict.keys() if k.startswith("visual.") and k.endswith(".attn.in_proj_weight")])
         vision_patch_size = state_dict["visual.conv1.weight"].shape[-1]
-        grid_size = round((state_dict["visual.positional_embedding"].shape[0] - 1) ** 0.5)
+        grid_size = round(
+            (state_dict["visual.positional_embedding"].shape[0] - 1) ** 0.5)
         image_size = vision_patch_size * grid_size
     else:
         counts: list = [
             len(set(k.split(".")[2] for k in state_dict if k.startswith(f"visual.layer{b}"))) for b in [1, 2, 3, 4]]
         vision_layers = tuple(counts)
         vision_width = state_dict["visual.layer1.0.conv1.weight"].shape[0]
-        output_width = round((state_dict["visual.attnpool.positional_embedding"].shape[0] - 1) ** 0.5)
+        output_width = round(
+            (state_dict["visual.attnpool.positional_embedding"].shape[0] - 1) ** 0.5)
         vision_patch_size = None
-        assert output_width ** 2 + 1 == state_dict["visual.attnpool.positional_embedding"].shape[0]
+        assert output_width ** 2 + \
+            1 == state_dict["visual.attnpool.positional_embedding"].shape[0]
         image_size = output_width * 32
 
     embed_dim = state_dict["text_projection"].shape[1]
@@ -1124,7 +1184,8 @@ def build_model_from_openai_state_dict(state_dict: dict):
     vocab_size = state_dict["token_embedding.weight"].shape[0]
     transformer_width = state_dict["ln_final.weight"].shape[0]
     transformer_heads = transformer_width // 64
-    transformer_layers = len(set(k.split(".")[2] for k in state_dict if k.startswith(f"transformer.resblocks")))
+    transformer_layers = len(set(
+        k.split(".")[2] for k in state_dict if k.startswith(f"transformer.resblocks")))
 
     vision_cfg = CLIPVisionCfg(
         layers=vision_layers,
@@ -1157,8 +1218,10 @@ def build_model_from_openai_state_dict(state_dict: dict):
 def trace_model(model, batch_size=256, device=torch.device('cpu')):
     model.eval()
     image_size = model.visual.image_size
-    example_images = torch.ones((batch_size, 3, image_size, image_size), device=device)
-    example_text = torch.zeros((batch_size, model.context_length), dtype=torch.int, device=device)
+    example_images = torch.ones(
+        (batch_size, 3, image_size, image_size), device=device)
+    example_text = torch.zeros(
+        (batch_size, model.context_length), dtype=torch.int, device=device)
     model = torch.jit.trace_module(
         model,
         inputs=dict(
@@ -1176,26 +1239,31 @@ def resize_pos_embed(state_dict, model, interpolation: str = 'bicubic', seq_dim=
     if old_pos_embed is None or not hasattr(model.visual, 'grid_size'):
         return
     grid_size = to_2tuple(model.visual.grid_size)
-    extra_tokens = 1  # FIXME detect different token configs (ie no class token, or more)
+    # FIXME detect different token configs (ie no class token, or more)
+    extra_tokens = 1
     new_seq_len = grid_size[0] * grid_size[1] + extra_tokens
     if new_seq_len == old_pos_embed.shape[0]:
         return
 
     if extra_tokens:
-        pos_emb_tok, pos_emb_img = old_pos_embed[:extra_tokens], old_pos_embed[extra_tokens:]
+        pos_emb_tok, pos_emb_img = old_pos_embed[:
+                                                 extra_tokens], old_pos_embed[extra_tokens:]
     else:
         pos_emb_tok, pos_emb_img = None, old_pos_embed
     old_grid_size = to_2tuple(int(math.sqrt(len(pos_emb_img))))
 
-    logging.info('Resizing position embedding grid-size from %s to %s', old_grid_size, grid_size)
-    pos_emb_img = pos_emb_img.reshape(1, old_grid_size[0], old_grid_size[1], -1).permute(0, 3, 1, 2)
+    logging.info('Resizing position embedding grid-size from %s to %s',
+                 old_grid_size, grid_size)
+    pos_emb_img = pos_emb_img.reshape(
+        1, old_grid_size[0], old_grid_size[1], -1).permute(0, 3, 1, 2)
     pos_emb_img = F.interpolate(
         pos_emb_img,
         size=grid_size,
         mode=interpolation,
         align_corners=True,
     )
-    pos_emb_img = pos_emb_img.permute(0, 2, 3, 1).reshape(1, grid_size[0] * grid_size[1], -1)[0]
+    pos_emb_img = pos_emb_img.permute(0, 2, 3, 1).reshape(
+        1, grid_size[0] * grid_size[1], -1)[0]
     if pos_emb_tok is not None:
         new_pos_embed = torch.cat([pos_emb_tok, pos_emb_img], dim=0)
     else:

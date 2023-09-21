@@ -96,7 +96,8 @@ def get_dataset_size(shards):
     len_filename = os.path.join(dir_path, '__len__')
     if os.path.exists(sizes_filename):
         sizes = json.load(open(sizes_filename, 'r'))
-        total_size = sum([int(sizes[os.path.basename(shard)]) for shard in shards_list])
+        total_size = sum([int(sizes[os.path.basename(shard)])
+                         for shard in shards_list])
     elif os.path.exists(len_filename):
         # FIXME this used to be eval(open(...)) but that seemed rather unsafe
         total_size = ast.literal_eval(open(len_filename, 'r').read())
@@ -118,7 +119,8 @@ def get_imagenet(args, preprocess_fns, split):
 
     if split == "v2":
         from imagenetv2_pytorch import ImageNetV2Dataset
-        dataset = ImageNetV2Dataset(location=args.imagenet_v2, transform=preprocess_val)
+        dataset = ImageNetV2Dataset(
+            location=args.imagenet_v2, transform=preprocess_val)
     else:
         if is_train:
             data_path = args.imagenet_train
@@ -206,7 +208,8 @@ def group_by_keys_nothrow(data, keys=base_plus_ext, lcase=True, suffixes=None, h
         if current_sample is None or prefix != current_sample["__key__"] or suffix in current_sample:
             if valid_sample(current_sample):
                 yield current_sample
-            current_sample = dict(__key__=prefix, __url__=filesample["__url__"])
+            current_sample = dict(
+                __key__=prefix, __url__=filesample["__url__"])
         if suffixes is None or suffix in suffixes:
             current_sample[suffix] = value
     if valid_sample(current_sample):
@@ -322,11 +325,14 @@ def get_wds_dataset(args, preprocess_img, is_train, epoch=0, floor=False):
                     'Currently, number of dataset samples must be specified for training dataset. '
                     'Please specify via `--train-num-samples` if no dataset length info present.')
         else:
-            num_samples = args.val_num_samples or 0  # eval will just exhaust the iterator if not specified
+            # eval will just exhaust the iterator if not specified
+            num_samples = args.val_num_samples or 0
 
-    shared_epoch = SharedEpoch(epoch=epoch)  # create a shared epoch store to sync epoch to dataloader worker proc
+    # create a shared epoch store to sync epoch to dataloader worker proc
+    shared_epoch = SharedEpoch(epoch=epoch)
     if resampled:
-        pipeline = [ResampledShards2(input_shards, deterministic=True, epoch=shared_epoch)]
+        pipeline = [ResampledShards2(
+            input_shards, deterministic=True, epoch=shared_epoch)]
     else:
         pipeline = [wds.SimpleShardList(input_shards)]
 
@@ -345,7 +351,8 @@ def get_wds_dataset(args, preprocess_img, is_train, epoch=0, floor=False):
             ])
         pipeline.extend([
             # at this point, we have an iterator over the shards assigned to each worker at each node
-            tarfile_to_samples_nothrow,  # wds.tarfile_to_samples(handler=log_and_continue),
+            # wds.tarfile_to_samples(handler=log_and_continue),
+            tarfile_to_samples_nothrow,
             wds.shuffle(
                 bufsize=_SAMPLE_SHUFFLE_SIZE,
                 initial=_SAMPLE_SHUFFLE_INITIAL,
@@ -369,16 +376,19 @@ def get_wds_dataset(args, preprocess_img, is_train, epoch=0, floor=False):
     dataset = wds.DataPipeline(*pipeline)
     if is_train:
         if not resampled:
-            assert num_shards >= args.workers * args.world_size, 'number of shards must be >= total workers'
+            assert num_shards >= args.workers * \
+                args.world_size, 'number of shards must be >= total workers'
         # roll over and repeat a few samples to get same number of full batches on each node
         round_fn = math.floor if floor else math.ceil
         global_batch_size = args.batch_size * args.world_size
         num_batches = round_fn(num_samples / global_batch_size)
         num_workers = max(1, args.workers)
-        num_worker_batches = round_fn(num_batches / num_workers)  # per dataloader worker
+        num_worker_batches = round_fn(
+            num_batches / num_workers)  # per dataloader worker
         num_batches = num_worker_batches * num_workers
         num_samples = num_batches * global_batch_size
-        dataset = dataset.with_epoch(num_worker_batches)  # each worker is iterating over this
+        # each worker is iterating over this
+        dataset = dataset.with_epoch(num_worker_batches)
     else:
         # last batches are partial, eval is done on single (master) node
         num_batches = math.ceil(num_samples / args.batch_size)
@@ -422,7 +432,8 @@ def get_csv_dataset(args, preprocess_fn, is_train, epoch=0, tokenizer=None):
         caption_key=args.csv_caption_key,
         sep=args.csv_separator)
     num_samples = len(dataset)
-    sampler = DistributedSampler(dataset) if args.distributed and is_train else None
+    sampler = DistributedSampler(
+        dataset) if args.distributed and is_train else None
     shuffle = is_train and sampler is None
 
     dataloader = DataLoader(
@@ -438,6 +449,7 @@ def get_csv_dataset(args, preprocess_fn, is_train, epoch=0, tokenizer=None):
     dataloader.num_batches = len(dataloader)
 
     return DataInfo(dataloader, sampler)
+
 
 class SyntheticDataset(Dataset):
 
@@ -464,7 +476,8 @@ def get_synthetic_dataset(args, preprocess_fn, is_train, epoch=0, tokenizer=None
     dataset = SyntheticDataset(
         transform=preprocess_fn, image_size=image_size, dataset_size=args.train_num_samples, tokenizer=tokenizer)
     num_samples = len(dataset)
-    sampler = DistributedSampler(dataset) if args.distributed and is_train else None
+    sampler = DistributedSampler(
+        dataset) if args.distributed and is_train else None
     shuffle = is_train and sampler is None
 
     dataloader = DataLoader(
@@ -500,6 +513,7 @@ def get_dataset_fn(data_path, dataset_type):
                 f"Tried to figure out dataset type, but failed for extension {ext}.")
     else:
         raise ValueError(f"Unsupported dataset type: {dataset_type}")
+
 
 def get_data(args, preprocess_fns, epoch=0, tokenizer=None):
     preprocess_train, preprocess_val = preprocess_fns

@@ -18,7 +18,8 @@ from .tokenizer import HFTokenizer, tokenize
 
 HF_HUB_PREFIX = 'hf-hub:'
 _MODEL_CONFIG_PATHS = [Path(__file__).parent / f"model_configs/"]
-_MODEL_CONFIGS = {}  # directory (model_name: config) of model architecture configs
+# directory (model_name: config) of model architecture configs
+_MODEL_CONFIGS = {}
 
 
 def _natural_key(string_):
@@ -43,16 +44,19 @@ def _rescan_model_configs():
             if all(a in model_cfg for a in ('embed_dim', 'vision_cfg', 'text_cfg')):
                 _MODEL_CONFIGS[cf.stem] = model_cfg
 
-    _MODEL_CONFIGS = {k: v for k, v in sorted(_MODEL_CONFIGS.items(), key=lambda x: _natural_key(x[0]))}
+    _MODEL_CONFIGS = {k: v for k, v in sorted(
+        _MODEL_CONFIGS.items(), key=lambda x: _natural_key(x[0]))}
 
 
 _rescan_model_configs()  # initial populate of model config registry
+
 
 def get_model_config(model_name):
     if model_name in _MODEL_CONFIGS:
         return deepcopy(_MODEL_CONFIGS[model_name])
     else:
         return None
+
 
 def get_tokenizer(model_name):
     if model_name.startswith(HF_HUB_PREFIX):
@@ -93,11 +97,13 @@ def create_model(
         cache_dir: Optional[str] = None,
         args=None,
 ):
-    model_name = model_name.replace('/', '-')  # for callers using old naming with / in ViT names
+    # for callers using old naming with / in ViT names
+    model_name = model_name.replace('/', '-')
 
     if pretrained.lower() == 'openai':
         logging.info(f'Loading pretrained {model_name} from OpenAI.')
-        model = load_openai_model(model_name, device=device, jit=jit, cache_dir=cache_dir)
+        model = load_openai_model(
+            model_name, device=device, jit=jit, cache_dir=cache_dir)
         # See https://discuss.pytorch.org/t/valueerror-attemting-to-unscale-fp16-gradients/81372
         if precision == "amp" or precision == "fp32":
             model = model.float()
@@ -106,7 +112,8 @@ def create_model(
             logging.info(f'Loading {model_name} model config.')
             model_cfg = deepcopy(_MODEL_CONFIGS[model_name])
         else:
-            logging.error(f'Model config for {model_name} not found; available models {list_models()}.')
+            logging.error(
+                f'Model config for {model_name} not found; available models {list_models()}.')
             raise RuntimeError(f'Model config for {model_name} not found.')
 
         if force_quick_gelu:
@@ -123,10 +130,12 @@ def create_model(
         if args is not None:
             model_cfg['mask_image'] = getattr(args, 'prune_image', False)
             model_cfg['mask_text'] = getattr(args, 'prune_text', False)
-            model_cfg['sparsity_warmup'] = getattr(args, 'sparsity_warmup', 1000)
+            model_cfg['sparsity_warmup'] = getattr(
+                args, 'sparsity_warmup', 1000)
             model_cfg['start_sparsity'] = getattr(args, 'start_sparsity', 0.0)
             model_cfg['sparsity'] = getattr(args, 'target_sparsity', 0.25)
-            logging.info(f'model sparsity varies from {model_cfg["start_sparsity"]} to {model_cfg["sparsity"]}, sparsity warmup steps: {model_cfg["sparsity_warmup"]}')
+            logging.info(
+                f'model sparsity varies from {model_cfg["start_sparsity"]} to {model_cfg["sparsity"]}, sparsity warmup steps: {model_cfg["sparsity_warmup"]}')
 
         logging.info(str(model_cfg))
         model = CLIP(**model_cfg)
@@ -136,16 +145,20 @@ def create_model(
             checkpoint_path = ''
             pretrained_cfg = get_pretrained_cfg(model_name, pretrained)
             if pretrained_cfg:
-                checkpoint_path = download_pretrained(pretrained_cfg, cache_dir=cache_dir)
+                checkpoint_path = download_pretrained(
+                    pretrained_cfg, cache_dir=cache_dir)
             elif os.path.exists(pretrained):
                 checkpoint_path = pretrained
 
             if checkpoint_path:
-                logging.info(f'Loading pretrained {model_name} weights ({pretrained}).')
+                logging.info(
+                    f'Loading pretrained {model_name} weights ({pretrained}).')
                 load_checkpoint(model, checkpoint_path)
             else:
-                logging.warning(f'Pretrained weights ({pretrained}) not found for model {model_name}.')
-                raise RuntimeError(f'Pretrained weights ({pretrained}) not found for model {model_name}.')
+                logging.warning(
+                    f'Pretrained weights ({pretrained}) not found for model {model_name}.')
+                raise RuntimeError(
+                    f'Pretrained weights ({pretrained}) not found for model {model_name}.')
 
         model.to(device=device)
         if precision == "fp16":
@@ -156,8 +169,10 @@ def create_model(
         if 'davit' in model_name.lower():
             pretrained_cfg['mean'] = [0.485, 0.456, 0.406]
             pretrained_cfg['std'] = [0.229, 0.224, 0.225]
-        model.visual.image_mean = pretrained_cfg.get('mean', None) or OPENAI_DATASET_MEAN
-        model.visual.image_std = pretrained_cfg.get('std', None) or OPENAI_DATASET_STD
+        model.visual.image_mean = pretrained_cfg.get(
+            'mean', None) or OPENAI_DATASET_MEAN
+        model.visual.image_std = pretrained_cfg.get(
+            'std', None) or OPENAI_DATASET_STD
 
         if jit:
             model = torch.jit.script(model)
@@ -176,7 +191,7 @@ def create_model_and_transforms(
         image_mean: Optional[Tuple[float, ...]] = None,
         image_std: Optional[Tuple[float, ...]] = None,
         cache_dir: Optional[str] = None,
-        args = None,
+        args=None,
 ):
     model = create_model(
         model_name, pretrained, precision, device, jit,
@@ -188,8 +203,10 @@ def create_model_and_transforms(
     image_mean = image_mean or getattr(model.visual, 'image_mean', None)
     image_std = image_std or getattr(model.visual, 'image_std', None)
     val_keep_ratio = 'davit' not in model_name.lower()
-    preprocess_train = image_transform(model.visual.image_size, is_train=True, mean=image_mean, std=image_std)
-    preprocess_val = image_transform(model.visual.image_size, is_train=False, mean=image_mean, std=image_std, val_keep_ratio=val_keep_ratio)
+    preprocess_train = image_transform(
+        model.visual.image_size, is_train=True, mean=image_mean, std=image_std)
+    preprocess_val = image_transform(model.visual.image_size, is_train=False,
+                                     mean=image_mean, std=image_std, val_keep_ratio=val_keep_ratio)
 
     return model, preprocess_train, preprocess_val
 

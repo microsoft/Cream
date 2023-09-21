@@ -12,7 +12,8 @@ from .version import __version__
 
 try:
     from huggingface_hub import hf_hub_download
-    hf_hub_download = partial(hf_hub_download, library_name="open_clip", library_version=__version__)
+    hf_hub_download = partial(
+        hf_hub_download, library_name="open_clip", library_version=__version__)
     _has_hf_hub = True
 except ImportError:
     hf_hub_download = None
@@ -204,8 +205,10 @@ def get_pretrained_url(model: str, tag: str):
     cfg = get_pretrained_cfg(model, tag)
     return cfg.get('url', '')
 
+
 def is_local_master():
     return int(os.getenv('LOCAL_RANK', 0)) == 0
+
 
 def download_pretrained_from_url(
         url: str = os.path.expanduser("~/.cache/clip"),
@@ -215,7 +218,7 @@ def download_pretrained_from_url(
     if not cache_dir:
         cache_dir = os.path.expanduser("~/.cache/clip")
     os.makedirs(cache_dir, exist_ok=True)
-    
+
     filename = os.path.basename(url)
     download_target = os.path.join(cache_dir, filename)
     if is_local_master():
@@ -230,6 +233,7 @@ def download_pretrained_from_url(
             time.sleep(1)
     return download_target
 
+
 def _download_pretrained(url: str, root: str = os.path.expanduser("~/.cache/clip")):
     os.makedirs(root, exist_ok=True)
     filename = os.path.basename(url)
@@ -242,14 +246,16 @@ def _download_pretrained(url: str, root: str = os.path.expanduser("~/.cache/clip
     download_target = os.path.join(root, filename)
 
     if os.path.exists(download_target) and not os.path.isfile(download_target):
-        raise RuntimeError(f"{download_target} exists and is not a regular file")
+        raise RuntimeError(
+            f"{download_target} exists and is not a regular file")
 
     if os.path.isfile(download_target):
         if expected_sha256:
             if hashlib.sha256(open(download_target, "rb").read()).hexdigest() == expected_sha256:
                 return download_target
             else:
-                warnings.warn(f"{download_target} exists, but the SHA256 checksum does not match; re-downloading the file")
+                warnings.warn(
+                    f"{download_target} exists, but the SHA256 checksum does not match; re-downloading the file")
         else:
             return download_target
 
@@ -266,7 +272,8 @@ def _download_pretrained(url: str, root: str = os.path.expanduser("~/.cache/clip
 
     if expected_sha256 and hashlib.sha256(open(download_target_tmp, "rb").read()).hexdigest() != expected_sha256:
         os.remove(download_target_tmp)
-        raise RuntimeError(f"Model has been downloaded but the SHA256 checksum does not not match")
+        raise RuntimeError(
+            f"Model has been downloaded but the SHA256 checksum does not not match")
 
     os.rename(download_target_tmp, download_target)
     return download_target
@@ -287,7 +294,8 @@ def download_pretrained_from_hf(
         cache_dir: Union[str, None] = None,
 ):
     has_hf_hub(True)
-    cached_file = hf_hub_download(model_id, filename, revision=revision, cache_dir=cache_dir)
+    cached_file = hf_hub_download(
+        model_id, filename, revision=revision, cache_dir=cache_dir)
     return cached_file
 
 
@@ -307,7 +315,8 @@ def download_pretrained(
         download_url = ''
 
     if download_url:
-        target = download_pretrained_from_url(download_url, cache_dir=cache_dir)
+        target = download_pretrained_from_url(
+            download_url, cache_dir=cache_dir)
     elif download_hf_hub:
         has_hf_hub(True)
         # we assume the hf_hub entries in pretrained config combine model_id + filename in
@@ -315,7 +324,8 @@ def download_pretrained(
         # use 'open_clip_pytorch_model.bin' default, there must be a trailing slash 'org/model_name/'.
         model_id, filename = os.path.split(download_hf_hub)
         if filename:
-            target = download_pretrained_from_hf(model_id, filename=filename, cache_dir=cache_dir)
+            target = download_pretrained_from_hf(
+                model_id, filename=filename, cache_dir=cache_dir)
         else:
             target = download_pretrained_from_hf(model_id, cache_dir=cache_dir)
 
