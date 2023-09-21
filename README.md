@@ -29,6 +29,7 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 
 ## News
 - :sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com
+- :boom: Sep, 2023: Code for [**TinyCLIP**](./TinyCLIP) is now released.
 - :boom: Jul, 2023: [**TinyCLIP**](./TinyCLIP) accepted to ICCV'23
 - :boom: May, 2023: Code for [**EfficientViT**](./EfficientViT) is now released.
 - :boom: Mar, 2023: [**EfficientViT**](./EfficientViT) accepted to CVPR'23
@@ -48,6 +49,12 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 - :boom: Oct, 2020: [**Cream**](./Cream) was accepted to NeurIPS'20
 
 ## Works
+
+### [TinyCLIP](./TinyCLIP)
+**TinyCLIP** is a novel **cross-modal distillation** method for large-scale language-image pre-trained models. The method introduces two core techniques: **affinity mimicking** and **weight inheritance**. This work unleashes the capacity of small CLIP models, fully leveraging large-scale models as well as pre-training data and striking the best trade-off between speed and accuracy.
+<div align="center">
+    <img width="85%" alt="TinyCLIP overview" src="./TinyCLIP/figure/TinyCLIP.jpg"/>
+</div>
 
 ### [EfficientViT](./EfficientViT)
 **EfficientViT** is a family of high-speed vision transformers. It is built with a new memory efficient building block with a **sandwich layout**, and an efficient **cascaded group attention** operation which mitigates attention computation redundancy. 
@@ -108,6 +115,13 @@ In this work, we present a simple yet effective architecture distillation method
 
 ## Bibtex
 ```bibtex
+@InProceedings{tinyclip,
+  title={TinyCLIP: CLIP Distillation via Affinity Mimicking and Weight Inheritance},
+  author={Wu, Kan and Peng, Houwen and Zhou, Zhenghong and Xiao, Bin and Liu, Mengchen and Yuan, Lu and Xuan, Hong and Valenzuela, Michael and Chen, Xi (Stephen) and Wang, Xinggang and Chao, Hongyang and Hu, Han},
+  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
+  year={2023}
+}
+
 @InProceedings{liu2023efficientvit,
     title     = {EfficientViT: Memory Efficient Vision Transformer with Cascaded Group Attention},
     author    = {Liu, Xinyu and Peng, Houwen and Zheng, Ningxin and Yang, Yuqing and Hu, Han and Yuan, Yixuan},
