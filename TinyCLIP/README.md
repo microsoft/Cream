@@ -1,6 +1,6 @@
 # TinyCLIP: CLIP Distillation via Affinity Mimicking and Weight Inheritance
 
-:pushpin: This is an official PyTorch implementation of **[ICCV 2023]** - TinyCLIP: CLIP Distillation via Affinity Mimicking and Weight Inheritance
+:pushpin: This is an official PyTorch implementation of **[ICCV 2023]** - [TinyCLIP: CLIP Distillation via Affinity Mimicking and Weight Inheritance](https://arxiv.org/pdf/2309.12314.pdf)
 
 **TinyCLIP** is a novel **cross-modal distillation** method for large-scale language-image pre-trained models. The method introduces two core techniques: **affinity mimicking** and **weight inheritance**. This work unleashes the capacity of small CLIP models, fully leveraging large-scale models as well as pre-training data and striking the best trade-off between speed and accuracy.
 
@@ -21,7 +21,7 @@
 * *Sep.2023* This is preliminary released code, including inference code and checkpoints.
 
 ## TODO
-* Training code will be released soon.
+* Training code will be released in 2 weeks.
 
 ## Model Zoo
 | Model              | Weight inheritance | Pretrain      | IN-1K Acc@1(%) | #Params(M) image+text | MACs(G) | Throughput(pairs/s) | Link |
