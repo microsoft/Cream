@@ -28,7 +28,7 @@
 We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com/microsoft/nni) (Neural Network Intelligence).
 
 ## News
-- :sunny: Hiring research interns for neural architecture search, tiny transformer design, model compression projects: houwen.peng@microsoft.com
+- :sunny: Hiring research interns for next-generation model design, efficient large model inference: houwen.peng@microsoft.com
 - :boom: Sep, 2023: Code for [**TinyCLIP**](./TinyCLIP) is now released.
 - :boom: Jul, 2023: [**TinyCLIP**](./TinyCLIP) accepted to ICCV'23
 - :boom: May, 2023: Code for [**EfficientViT**](./EfficientViT) is now released.
