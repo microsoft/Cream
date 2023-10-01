@@ -24,7 +24,7 @@ def register_rpe_model(fn):
     It is a wrapper of `register_model` with loading the pretrained checkpoint.
     '''
     def fn_wrapper(pretrained=False, **kwargs):
-        model = fn()
+        model = fn(pretrained=False, **kwargs)
         if pretrained:
             model_name = fn.__name__
             assert model_name in _provided_checkpoints, \
