@@ -116,10 +116,12 @@ In this work, we present a simple yet effective architecture distillation method
 ## Bibtex
 ```bibtex
 @InProceedings{tinyclip,
-  title={TinyCLIP: CLIP Distillation via Affinity Mimicking and Weight Inheritance},
-  author={Wu, Kan and Peng, Houwen and Zhou, Zhenghong and Xiao, Bin and Liu, Mengchen and Yuan, Lu and Xuan, Hong and Valenzuela, Michael and Chen, Xi (Stephen) and Wang, Xinggang and Chao, Hongyang and Hu, Han},
-  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
-  year={2023}
+    title     = {TinyCLIP: CLIP Distillation via Affinity Mimicking and Weight Inheritance},
+    author    = {Wu, Kan and Peng, Houwen and Zhou, Zhenghong and Xiao, Bin and Liu, Mengchen and Yuan, Lu and Xuan, Hong and Valenzuela, Michael and Chen, Xi (Stephen) and Wang, Xinggang and Chao, Hongyang and Hu, Han},
+    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
+    month     = {October},
+    year      = {2023},
+    pages     = {21970-21980}
 }
 
 @InProceedings{liu2023efficientvit,
