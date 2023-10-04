@@ -21,9 +21,6 @@
 * *Oct.2023* Training code is released.
 * *Sep.2023* This is preliminary released code, including inference code and checkpoints.
 
-<!-- ## TODO
-* Training code will be released in 2 weeks. -->
-
 ## Model Zoo
 | Model              | Weight inheritance | Pretrain      | IN-1K Acc@1(%) | #Params(M) image+text | MACs(G) | Throughput(pairs/s) | Link |
 |--------------------|--------------------|---------------|-------|-----------------------|---------|---------------------|------|
