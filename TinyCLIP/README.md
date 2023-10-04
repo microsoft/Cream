@@ -18,10 +18,8 @@
 * TinyCLIP ResNet-19M reduces the parameters by **50\%** while getting **$2\times$** inference speedup, and obtains **56.4\%** accuracy on ImageNet.
 
 ## News
+* *Oct.2023* Training code is released.
 * *Sep.2023* This is preliminary released code, including inference code and checkpoints.
-
-## TODO
-* Training code will be released in 2 weeks.
 
 ## Model Zoo
 | Model              | Weight inheritance | Pretrain      | IN-1K Acc@1(%) | #Params(M) image+text | MACs(G) | Throughput(pairs/s) | Link |
@@ -44,6 +42,9 @@ TinyCLIP ViT-45M/32 | auto | LAION+YFCC-400M   | 62.7  | 45+18     | 1.9 | 3,685
 
 ### Evaluate it !
 - [Evaluation](./docs/EVALUATION.md)
+
+### Pretrain it !
+- [Pretraining](./docs/PRETRAINING.md)
 
 ## Citation
 If this repo is helpful for you, please consider to cite it. :mega: Thank you! :)
