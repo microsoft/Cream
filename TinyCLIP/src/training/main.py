@@ -37,7 +37,7 @@ except ImportError:
     hvd = None
 
 from open_clip import create_model_and_transforms, trace_model
-from training.data import get_data, fast_forward_dataloader, reset_dataloader_sampler
+from training.data import get_data
 from training.distributed import is_master, init_distributed_device, world_info_from_env
 from training.logger import setup_logging
 from training.params import parse_args
@@ -157,6 +157,7 @@ def load_pruned_model(model_state_dict, sd):
     model_state_dict['_text_encoder.l0_module.hidden_loga'][hidden_size_txt:] = torch.zeros_like(
         model_state_dict['_text_encoder.l0_module.hidden_loga'][hidden_size_txt:]).to(model_state_dict['_text_encoder.l0_module.hidden_loga'].device) - 10
 
+    # TODO: MODEL DEPTH
     for i in range(12):
         if 'image_encoder_without_ddp.visual.transformer.resblocks.' + str(i) + '.attn.in_proj_weight' in sd:
             head_size_img = int(sd[img_prefix + '.visual.transformer.resblocks.' +
@@ -687,16 +688,12 @@ def main():
     print(f"Dataset: {set(data.keys())}")
     assert len(data), 'At least one train or eval dataset must be specified.'
 
-    if 'train' in data and start_iter > 0:
-        fast_forward_dataloader(data['train'].dataloader, start_epoch, start_iter)
-
     # create scheduler if train
-    # scheduler = None
+    scheduler = None
     if 'train' in data and optimizer is not None:
         total_steps = data["train"].dataloader.num_batches * args.epochs
         if args.prune_image or args.prune_text:
             scheduler = cosine_lr(optimizer[0:3], args.lr, args.prune_step, total_steps)
-            # scheduler = cosine_lr_start_nowarmup(optimizer[0:3], args.lr, total_steps, args.prune_step)
             scheduler_l0 = step_lr(optimizer[-1], args.prune_step)
         else:
             scheduler = cosine_lr(optimizer, args.lr, args.warmup, total_steps)
@@ -713,11 +710,6 @@ def main():
             logging.info(f'Start epoch {epoch}')
 
         model, optimizer, scaler, scheduler, scheduler_l0, args = train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_l0, args, writer, start_iter)
-        # if rtn == 'non-finite loss':
-        #     break
-        if start_iter > 0:
-            # reset batch sampler
-            reset_dataloader_sampler(data['train'].dataloader)
         start_iter = 0
 
     if args.wandb and is_master(args):
