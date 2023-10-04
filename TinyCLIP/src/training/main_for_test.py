@@ -100,6 +100,7 @@ def _load_checkpoint(name):
         state_dict = state_dict['model']
     return state_dict
 
+
 def load_pruned_model(model_state_dict, sd):
     for k in model_state_dict:
         # auto weight inheritance model weight prefix
@@ -297,7 +298,6 @@ def main():
         logging.info(f'number of params text: {num_params_text / 1e6}')
         logging.info(
             f'number of token embedding in text encoder : {num_token_emb / 1e6}')
-
 
     if args.distillation:
         teacher_model = load_model(args.distillation_teacher, device=device)
