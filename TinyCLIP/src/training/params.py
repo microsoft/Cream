@@ -403,6 +403,12 @@ def parse_args():
         help="Weight for distillation.",
     )
     parser.add_argument(
+        "--distillation-alpha",  # for soft label
+        type=float,
+        default=1.0,
+        help="Alpha for distillation.",
+    )
+    parser.add_argument(
         "--distillation-teacher",
         type=str,
         help='Teacher model for distillation.',
@@ -411,6 +417,11 @@ def parse_args():
         "--eval",
         default=False,
         action="store_true",
+    )
+    parser.add_argument(
+        "--logit-scale",
+        type=float,
+        help="both student and teacher's logit scale, basic: 100"
     )
     args = parser.parse_args()
 
