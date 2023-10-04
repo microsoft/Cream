@@ -55,6 +55,7 @@ class ClipSoftLoss(nn.Module):
                 image_features, text_features, logit_scale,
                 teacher_image_features, teacher_text_features, teacher_logit_scale,
                 average_two_losses=True,
+                labels=None,
                 ):
         # calculated ground-truth and cache if enabled
         logits_per_image, logits_per_text = self.compute_sim(
