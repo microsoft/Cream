@@ -32,4 +32,4 @@ torchrun $DISTRIBUTED_ARGS src/training/main.py \
  --target-sparsity 0.25 \
  --start-sparsity 0.0 \
  --sparsity-warmup 1000 \
- --logit-scale 50 \
+ --logit-scale 50

@@ -508,8 +508,7 @@ def main():
         # you will have to configure this for your project!
         wandb_output_path = args.checkpoint_path
         wandb.init(
-            project="tinyclip_",
-            entity="yourname",
+            project="tinyclip",
             name=args.name,
             notes=args.wandb_notes,
             tags=[],
@@ -708,8 +707,11 @@ def main():
     for epoch in range(start_epoch, math.ceil(args.epochs)):
         if is_master(args):
             logging.info(f'Start epoch {epoch}')
-
-        model, optimizer, scaler, scheduler, scheduler_l0, args = train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_l0, args, writer, start_iter)
+        rtn = train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_l0, args, writer, start_iter)
+        if isinstance(rtn, str) and rtn == 'non-finite loss':
+            break
+        else:
+            model, optimizer, scaler, scheduler, scheduler_l0, args = rtn
         start_iter = 0
 
     if args.wandb and is_master(args):

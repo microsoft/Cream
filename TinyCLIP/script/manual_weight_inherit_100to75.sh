@@ -25,4 +25,4 @@ torchrun $DISTRIBUTED_ARGS src/training/main.py \
  --distillation-teacher ViT-B-32@laion2b_e16 \
  --logit-scale 50 \
  --norm_gradient_clip 5 \
- --train-num-samples 400000000 \
+ --train-num-samples 400000000

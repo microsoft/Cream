@@ -28,7 +28,7 @@ from .zero_shot import zero_shot_eval
 from .precision import get_autocast
 from training.scheduler import cosine_lr, cosine_lr_start, step_lr, cosine_lr_start_nowarmup
 import torch.distributed as dist
-from my_meter import AverageMeter, reduce_tensor
+from training.my_meter import AverageMeter, reduce_tensor
 
 
 def _stack2cat(items):
@@ -149,7 +149,6 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
 
     eval_freq = int(os.getenv('EVAL_FREQ', 1000))
     save_freq = int(os.getenv('SAVE_FREQ', 1000))
-    stat_freq = int(os.getenv('STAT_FREQ', 100)) 
 
     # define model_fn and loss_fn
     infer_teacher_image = True
@@ -312,7 +311,6 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
 
     for (i, batch), is_last_batch in check_last_batch(enumerate(dataloader, start=start_iter)):
         step = num_batches_per_epoch * epoch + i
-        epoch_float = epoch + i / num_batches_per_epoch
         num_feed_images += total_batch_size
 
         if step == args.prune_step and model.image_encoder_without_ddp.l0_module is not None and model.text_encoder_without_ddp.l0_module is not None:
@@ -411,11 +409,6 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
         scheduler(step)
         if scheduler_l0 != None:
             scheduler_l0(step)
-
-        # stat loss
-        if is_master(args) and distillation and i % stat_freq == 0:
-            # only master stat
-            soft_loss_fn.stat = dict()
 
         if len(batch) == 2:
             images, texts = batch
@@ -578,16 +571,6 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
                 "lr_l0": optimizer[-1].param_groups[0]["lr"]
             }
 
-            if distillation and i % stat_freq == 0:
-                for k, v in soft_loss_fn.stat.items():
-                    if k.endswith('_hist'):
-                        bins = len(k)
-                        xs = np.linspace(0, 1, bins + 1)
-                        log_data['loss_stat/' + k] = wandb.Histogram(np_histogram=(k, xs), num_bins=bins)
-                    else:
-                        log_data['loss_stat/' + k] = v
-                soft_loss_fn.stat = None
-
             for k, v in metrics.items():
                 log_data[k] = v.val
             for name, val in log_data.items():
@@ -607,7 +590,7 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
             do_evaluate = True
 
         if ((i + 1) % eval_freq == 0 or is_last_batch) or step == 0: 
-            from viz import plot
+            from training.viz import plot
             if args.prune_image:
                 model.eval()
                 layers = model._image_encoder.module.l0_module.num_hidden_layers
