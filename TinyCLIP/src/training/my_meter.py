@@ -6,6 +6,7 @@
 import torch
 import torch.distributed as dist
 
+
 def reduce_tensor(tensor, n=None):
     if n is None:
         n = dist.get_world_size()

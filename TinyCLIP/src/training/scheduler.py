@@ -26,6 +26,7 @@ def cosine_lr(optimizer, base_lr, warmup_length, steps):
         return lr
     return _lr_adjuster
 
+
 def cosine_lr_start(optimizer, base_lr, warmup_length, steps, start_steps):
     def _lr_adjuster(step):
         if step < start_steps:
@@ -41,6 +42,7 @@ def cosine_lr_start(optimizer, base_lr, warmup_length, steps, start_steps):
         return lr
     return _lr_adjuster
 
+
 def cosine_lr_start_nowarmup(optimizer, base_lr, steps, start_steps):
     def _lr_adjuster(step):
         if step < start_steps:
@@ -53,6 +55,7 @@ def cosine_lr_start_nowarmup(optimizer, base_lr, steps, start_steps):
         return lr
     return _lr_adjuster
 
+
 def step_lr(optimizer, start_steps):
     def _lr_adjuster(step):
         if step > start_steps:
@@ -62,6 +65,7 @@ def step_lr(optimizer, start_steps):
         else:
             return None
     return _lr_adjuster
+
 
 def exponential_lr(optimizer, base_lr, warmup_length, steps, gamma, w):
     def _lr_adjuster(step):

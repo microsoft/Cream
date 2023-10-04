@@ -45,7 +45,8 @@ class ClipSoftLoss(nn.Module):
     def gather_feature(self, feat):
         feat_id = id(feat)
         if feat_id not in self.feat_buffer:
-            args = (self.local_loss, self.gather_with_grad, self.rank, self.world_size, self.use_horovod)
+            args = (self.local_loss, self.gather_with_grad,
+                    self.rank, self.world_size, self.use_horovod)
             all_feat = gather_feature(feat, *args)
             self.feat_buffer[feat_id] = all_feat
         return self.feat_buffer[feat_id]
@@ -56,8 +57,10 @@ class ClipSoftLoss(nn.Module):
                 average_two_losses=True,
                 ):
         # calculated ground-truth and cache if enabled
-        logits_per_image, logits_per_text = self.compute_sim(image_features, text_features)
-        teacher_logits_per_image, teacher_logits_per_text = self.compute_sim(teacher_image_features, teacher_text_features)
+        logits_per_image, logits_per_text = self.compute_sim(
+            image_features, text_features)
+        teacher_logits_per_image, teacher_logits_per_text = self.compute_sim(
+            teacher_image_features, teacher_text_features)
 
         self.feat_buffer.clear()
 
@@ -77,6 +80,8 @@ class ClipSoftLoss(nn.Module):
                               single_loss_fn(logits_per_text, teacher_logits_per_text)) / 2
                 return total_loss
             else:
-                img2text_loss = single_loss_fn(logits_per_image, teacher_logits_per_image)
-                text2img_loss = single_loss_fn(logits_per_text, teacher_logits_per_text)
+                img2text_loss = single_loss_fn(
+                    logits_per_image, teacher_logits_per_image)
+                text2img_loss = single_loss_fn(
+                    logits_per_text, teacher_logits_per_text)
                 return img2text_loss, text2img_loss

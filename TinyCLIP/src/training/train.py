@@ -79,6 +79,7 @@ def check_last_batch(it):
 
 NAN_LOSS_CNT = 0
 
+
 def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_l0, args, tb_writer=None, start_iter=0, zs=None):
 
     global NAN_LOSS_CNT
@@ -91,9 +92,9 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
     logit_autocast = get_autocast(args.logit_precision)
 
     model.set_autocast(
-            image_autocast=image_autocast,
-            text_autocast=text_autocast,
-            logit_autocast=logit_autocast)
+        image_autocast=image_autocast,
+        text_autocast=text_autocast,
+        logit_autocast=logit_autocast)
 
     teacher_autocast = torch.cuda.amp.autocast
 
@@ -113,12 +114,13 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
         use_horovod=args.horovod)
 
     if start_iter == 0:
-        data['train'].set_epoch(epoch)  # set epoch in process safe manner via sampler or shared_epoch
+        # set epoch in process safe manner via sampler or shared_epoch
+        data['train'].set_epoch(epoch)
     dataloader = data['train'].dataloader
 
     dataloader.device = args.device
     if distillation:
-        soft_loss_fn = ClipSoftLoss(**loss_kwargs)#, ignore_diag=True)
+        soft_loss_fn = ClipSoftLoss(**loss_kwargs)  # , ignore_diag=True)
     else:
         soft_loss_fn = None
 
@@ -140,19 +142,20 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
     total_batch_size = batch_size * args.world_size
     num_feed_images = samples_per_epoch * epoch + start_iter * total_batch_size
     num_feed_images_after_epoch = samples_per_epoch * (epoch + 1)
-    all_num_feed_images = (int(samples_per_epoch * args.epochs) // total_batch_size * total_batch_size)
+    all_num_feed_images = (
+        int(samples_per_epoch * args.epochs) // total_batch_size * total_batch_size)
 
     # for float epoch
     is_last_epoch = (epoch + 1 >= args.epochs)
-    samples_per_epoch_r = samples_per_epoch if not is_last_epoch else all_num_feed_images - epoch * samples_per_epoch
-    num_batches_per_epoch_r = samples_per_epoch_r // total_batch_size 
+    samples_per_epoch_r = samples_per_epoch if not is_last_epoch else all_num_feed_images - \
+        epoch * samples_per_epoch
+    num_batches_per_epoch_r = samples_per_epoch_r // total_batch_size
 
     eval_freq = int(os.getenv('EVAL_FREQ', 1000))
     save_freq = int(os.getenv('SAVE_FREQ', 1000))
 
     # define model_fn and loss_fn
     infer_teacher_image = True
-
 
     def loss_fn(student_outputs,
                 teacher_outputs):
@@ -187,10 +190,11 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
             # Hard Loss
             if args.distillation_alpha < 1.0 and args.distillation_weight > 0.0:
                 hard_loss = hard_loss_fn(image_features, text_features, logit_scale) *\
-                            ((1.0 - args.distillation_alpha) * args.distillation_weight)
+                    ((1.0 - args.distillation_alpha) * args.distillation_weight)
                 losses['hard_loss'] = hard_loss
         else:
-            losses['loss'] = hard_loss_fn(image_features, text_features, logit_scale)
+            losses['loss'] = hard_loss_fn(
+                image_features, text_features, logit_scale)
 
         total_loss = 0
         for k, v in losses.items():
@@ -229,7 +233,8 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
             texts = None
 
         with autocast():
-            image_feat, text_feat, logit_scale = model(images, texts, normalized=True)
+            image_feat, text_feat, logit_scale = model(
+                images, texts, normalized=True)
 
         if image_feat is None:
             image_feat = image_feat_no_grad
@@ -237,7 +242,7 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
             text_feat = text_feat_no_grad
         return image_feat, text_feat, logit_scale
 
-    def naive_model_fn(student_inputs, teacher_outputs, total_loss_flag = True):
+    def naive_model_fn(student_inputs, teacher_outputs, total_loss_flag=True):
         images, texts = student_inputs
         with autocast():
 
@@ -245,50 +250,67 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
             model.visual.transformer.outputs = None
             model.transformer.outputs = None
             outputs_no_grad = [None, None, None]
-            student_outputs = forward_backward_fn(model, images, texts, outputs_no_grad)
+            student_outputs = forward_backward_fn(
+                model, images, texts, outputs_no_grad)
             del images, texts, student_inputs
             model.visual.transformer.outputs = None
             model.transformer.outputs = None
 
             loss = grad_cache_loss_fn(student_outputs, teacher_outputs)
 
-            use_image_mask = getattr(model.image_encoder_without_ddp, 'l0_module', None) is not None
-            use_text_mask = getattr(model.text_encoder_without_ddp, 'l0_module', None) is not None
+            use_image_mask = getattr(
+                model.image_encoder_without_ddp, 'l0_module', None) is not None
+            use_text_mask = getattr(
+                model.text_encoder_without_ddp, 'l0_module', None) is not None
             if total_loss_flag and use_image_mask and use_text_mask:
                 img_mask = model.image_encoder_without_ddp.l0_module
                 txt_mask = model.text_encoder_without_ddp.l0_module
                 all_para_txt = txt_mask.prunable_model_size
                 all_para_img = img_mask.prunable_model_size
-                remain_para_txt = txt_mask.get_num_parameters_and_constraint("hidden" in txt_mask.types)
-                remain_para_img = img_mask.get_num_parameters_and_constraint("hidden" in img_mask.types)
-                expected_sparsity = 1 - (remain_para_txt+remain_para_img) /(all_para_txt+all_para_img)
-                target_sparsity_img = img_mask.get_target_sparsity(step) if img_mask.lagrangian_warmup > 0 else img_mask.target_sparsity
-                target_sparsity_txt = txt_mask.get_target_sparsity(step) if txt_mask.lagrangian_warmup > 0 else txt_mask.target_sparsity
-                target_sparsity = (target_sparsity_img + target_sparsity_txt)/2
-                lambda_1_ = (img_mask.lambda_1 + txt_mask.lambda_1)/2
-                lambda_2_ = (img_mask.lambda_2 + txt_mask.lambda_2)/2
+                remain_para_txt = txt_mask.get_num_parameters_and_constraint(
+                    "hidden" in txt_mask.types)
+                remain_para_img = img_mask.get_num_parameters_and_constraint(
+                    "hidden" in img_mask.types)
+                expected_sparsity = 1 - \
+                    (remain_para_txt + remain_para_img) / \
+                    (all_para_txt + all_para_img)
+                target_sparsity_img = img_mask.get_target_sparsity(
+                    step) if img_mask.lagrangian_warmup > 0 else img_mask.target_sparsity
+                target_sparsity_txt = txt_mask.get_target_sparsity(
+                    step) if txt_mask.lagrangian_warmup > 0 else txt_mask.target_sparsity
+                target_sparsity = (target_sparsity_img +
+                                   target_sparsity_txt) / 2
+                lambda_1_ = (img_mask.lambda_1 + txt_mask.lambda_1) / 2
+                lambda_2_ = (img_mask.lambda_2 + txt_mask.lambda_2) / 2
                 zero = torch.tensor(0.0, device=expected_sparsity.device)
                 total_lagrangian_loss = (
-                   lambda_1_ * torch.maximum(target_sparsity - expected_sparsity, zero) + 
-                    lambda_2_ * torch.maximum(target_sparsity - expected_sparsity, zero).square()
+                    lambda_1_ * torch.maximum(target_sparsity - expected_sparsity, zero) +
+                    lambda_2_ *
+                    torch.maximum(target_sparsity -
+                                  expected_sparsity, zero).square()
                 )
                 loss = loss + total_lagrangian_loss
                 metrics['all_expected_sparsity'].update(expected_sparsity)
-                metrics['vision_expected_sparsity'].update(1-remain_para_img/all_para_img)
-                metrics['text_expected_sparsity'].update(1-remain_para_txt/all_para_txt)
+                metrics['vision_expected_sparsity'].update(
+                    1 - remain_para_img / all_para_img)
+                metrics['text_expected_sparsity'].update(
+                    1 - remain_para_txt / all_para_txt)
                 metrics['all_target_sparsity'].update(target_sparsity)
                 metrics['all_lagran_loss'].update(total_lagrangian_loss)
             else:
                 if use_image_mask:
                     lagran_loss, expected_sparsity, target_sparsity = \
-                            model.image_encoder_without_ddp.l0_module.lagrangian_regularization(step)
+                        model.image_encoder_without_ddp.l0_module.lagrangian_regularization(
+                            step)
                     loss = loss + lagran_loss
-                    metrics['vision_expected_sparsity'].update(expected_sparsity)
+                    metrics['vision_expected_sparsity'].update(
+                        expected_sparsity)
                     metrics['vision_target_sparsity'].update(target_sparsity)
                     metrics['vision_lagran_loss'].update(lagran_loss)
                 if use_text_mask:
                     lagran_loss, expected_sparsity, target_sparsity = \
-                            model.text_encoder_without_ddp.l0_module.lagrangian_regularization(step)
+                        model.text_encoder_without_ddp.l0_module.lagrangian_regularization(
+                            step)
                     loss = loss + lagran_loss
                     metrics['text_expected_sparsity'].update(expected_sparsity)
                     metrics['text_target_sparsity'].update(target_sparsity)
@@ -315,7 +337,8 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
 
         if step == args.prune_step and model.image_encoder_without_ddp.l0_module is not None and model.text_encoder_without_ddp.l0_module is not None:
             logging.info('=== FUSE MASK IMAGE ===')
-            num_params_before_fuse = sum(p.numel() for p in model.image_encoder_without_ddp.parameters() if p.requires_grad)
+            num_params_before_fuse = sum(
+                p.numel() for p in model.image_encoder_without_ddp.parameters() if p.requires_grad)
             with torch.no_grad():
                 model.image_encoder_without_ddp.eval()
                 image = torch.randn((1, 3, 224, 224), device='cuda')
@@ -323,11 +346,14 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
                 model.image_encoder_without_ddp = model.image_encoder_without_ddp.prune()
             assert hasattr(model.image_encoder_without_ddp, 'l0_module')
             model.image_encoder_without_ddp.l0_module = None
-            num_params_after_fuse = sum(p.numel() for p in model.image_encoder_without_ddp.parameters() if p.requires_grad)
-            logging.info(f'=> fuse MASK image: {num_params_before_fuse} -> {num_params_after_fuse}')
+            num_params_after_fuse = sum(
+                p.numel() for p in model.image_encoder_without_ddp.parameters() if p.requires_grad)
+            logging.info(
+                f'=> fuse MASK image: {num_params_before_fuse} -> {num_params_after_fuse}')
 
             logging.info('=== FUSE MASK TEXT ===')
-            num_params_before_fuse = sum(p.numel() for p in model.text_encoder_without_ddp.parameters() if p.requires_grad)
+            num_params_before_fuse = sum(
+                p.numel() for p in model.text_encoder_without_ddp.parameters() if p.requires_grad)
             with torch.no_grad():
                 model.text_encoder_without_ddp.eval()
                 text = torch.randint(0, 100, (1, 77), device='cuda')
@@ -335,18 +361,22 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
                 model.text_encoder_without_ddp = model.text_encoder_without_ddp.prune()
             assert hasattr(model.text_encoder_without_ddp, 'l0_module')
             model.text_encoder_without_ddp.l0_module = None
-            num_params_after_fuse = sum(p.numel() for p in model.text_encoder_without_ddp.parameters() if p.requires_grad)
-            logging.info(f'=> fuse MASK text: {num_params_before_fuse} -> {num_params_after_fuse}')
+            num_params_after_fuse = sum(
+                p.numel() for p in model.text_encoder_without_ddp.parameters() if p.requires_grad)
+            logging.info(
+                f'=> fuse MASK text: {num_params_before_fuse} -> {num_params_after_fuse}')
 
             # results = evaluate(model, data, epoch, args)
             if args.distributed and not args.horovod:
                 if args.use_bn_sync:
-                    model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
+                    model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(
+                        model)
                 ddp_args = {}
                 if args.ddp_static_graph:
                     # this doesn't exist in older PyTorch, arg only added if enabled
                     ddp_args['static_graph'] = True
-                ddp_fn = functools.partial(torch.nn.parallel.DistributedDataParallel, device_ids=[device], **ddp_args)
+                ddp_fn = functools.partial(
+                    torch.nn.parallel.DistributedDataParallel, device_ids=[device], **ddp_args)
                 model.ddpify(ddp_fn)
                 model_without_ddp = model
 
@@ -354,41 +384,50 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
             args.prune_text = False
             use_mask = False
 
-            exclude = lambda n, p: p.ndim < 2 or "bn" in n or "ln" in n or "bias" in n or 'logit_scale' in n
-            include = lambda n, p: not exclude(n, p)
+            def exclude(
+                n, p): return p.ndim < 2 or "bn" in n or "ln" in n or "bias" in n or 'logit_scale' in n
+
+            def include(n, p): return not exclude(n, p)
             named_parameters = list(model.named_parameters())
             # we create three optimizer for image encode, text encoder, and jointly part
             model_parts = [
-                    list(model_without_ddp.image_named_params()),
-                    list(model_without_ddp.text_named_params()),
-                    list(model_without_ddp.joint_named_params()),
-                    ]
+                list(model_without_ddp.image_named_params()),
+                list(model_without_ddp.text_named_params()),
+                list(model_without_ddp.joint_named_params()),
+            ]
             optimizer = []
             part_names = ['image', 'text', 'joint']
             assert len(model_parts) == len(part_names)
             for name, named_parameters in zip(part_names, model_parts):
-                gain_or_bias_params = [p for n, p in named_parameters if exclude(n, p) and p.requires_grad and "l0_module" not in n]
-                rest_params = [p for n, p in named_parameters if include(n, p) and p.requires_grad and "l0_module" not in n]
+                gain_or_bias_params = [p for n, p in named_parameters if exclude(
+                    n, p) and p.requires_grad and "l0_module" not in n]
+                rest_params = [p for n, p in named_parameters if include(
+                    n, p) and p.requires_grad and "l0_module" not in n]
                 params_groups = [
-                        {"params": gain_or_bias_params, "weight_decay": 0.},
-                        {"params": rest_params, "weight_decay": args.wd},
+                    {"params": gain_or_bias_params, "weight_decay": 0.},
+                    {"params": rest_params, "weight_decay": args.wd},
                 ]
 
                 num_opt_params = 0
                 for pg in params_groups:
                     num_opt_params += sum(p.numel() for p in pg['params'])
 
-                logging.info(f'number of optimizer ({name}) params: {num_opt_params}')
+                logging.info(
+                    f'number of optimizer ({name}) params: {num_opt_params}')
 
                 class EmptyOptimizer:
                     def __init__(self):
                         self.param_groups = []
+
                     def step(self, *args, **kwargs):
                         pass
+
                     def state_dict(self):
                         return dict()
+
                     def load_state_dict(self, *args, **kwargs):
                         pass
+
                     def zero_grad(self):
                         pass
 
@@ -403,8 +442,8 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
                     optimizer_i = EmptyOptimizer()
                 optimizer.append(optimizer_i)
             # scheduler = cosine_lr(optimizer[0:3], args.lr, args.prune_step, num_batches_per_epoch * args.epochs)
-            scheduler = cosine_lr_start_nowarmup(optimizer[0:3], args.lr, num_batches_per_epoch * args.epochs, args.prune_step)
-            
+            scheduler = cosine_lr_start_nowarmup(
+                optimizer[0:3], args.lr, num_batches_per_epoch * args.epochs, args.prune_step)
 
         scheduler(step)
         if scheduler_l0 != None:
@@ -429,10 +468,12 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
             with teacher_autocast():
                 with torch.no_grad():
                     if infer_teacher_image:
-                        teacher_image_features, teacher_image_outputs = infer_chunks(teacher_image_fn, images, 1)
+                        teacher_image_features, teacher_image_outputs = infer_chunks(
+                            teacher_image_fn, images, 1)
                     else:
                         teacher_image_features = teacher_image_outputs = None
-                    teacher_text_features, teacher_text_outputs = infer_chunks(teacher_text_fn, texts, 1)
+                    teacher_text_features, teacher_text_outputs = infer_chunks(
+                        teacher_text_fn, texts, 1)
                     teacher_logit_scale = teacher_model.logit_scale.exp()
 
         else:
@@ -457,9 +498,9 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
         for opt, used in zip(optimizer, [
             infer_student_image and not args.lock_image,
             infer_student_text and not args.lock_text,
-            True, 
+            True,
             use_mask
-            ]):
+        ]):
             if used:
                 used_optimizer.append(opt)
 
@@ -474,17 +515,20 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
             labels=labels,
         )
 
-        total_loss = grad_cache(student_inputs, teacher_outputs=teacher_outputs, total_loss_flag=args.total_loss_flag)
+        total_loss = grad_cache(
+            student_inputs, teacher_outputs=teacher_outputs, total_loss_flag=args.total_loss_flag)
         skip_this_step = False
 
         # check nan loss
         if not torch.isfinite(total_loss):
             NAN_LOSS_CNT += 1
             if NAN_LOSS_CNT > 100:
-                print(f'WARNING: non-finite loss, ending training loss: {total_loss}')
+                print(
+                    f'WARNING: non-finite loss, ending training loss: {total_loss}')
                 return 'non-finite loss'
             skip_this_step = True
-            print(f'WARNING: non-finite loss, skip this step. loss: {total_loss}, nan_loss_cnt: {NAN_LOSS_CNT}')
+            print(
+                f'WARNING: non-finite loss, skip this step. loss: {total_loss}, nan_loss_cnt: {NAN_LOSS_CNT}')
         else:
             NAN_LOSS_CNT = 0
 
@@ -500,8 +544,9 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
 
         # sync found_inf_per_device
         found_inf = sum(
-                sum(v.item() for v in scaler._per_optimizer_states[id(opt)]['found_inf_per_device'].values())
-                for opt in used_optimizer
+            sum(v.item() for v in scaler._per_optimizer_states[id(
+                opt)]['found_inf_per_device'].values())
+            for opt in used_optimizer
         )
         if found_inf > 0:
             for opt in used_optimizer:
@@ -509,7 +554,8 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
                     v.fill_(True)
 
         if args.norm_gradient_clip is not None:
-            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), args.norm_gradient_clip, norm_type=2.0)
+            grad_norm = torch.nn.utils.clip_grad_norm_(
+                model.parameters(), args.norm_gradient_clip, norm_type=2.0)
 
         # evaluate(model, data, epoch, args, tb_writer, step=step, num_feed_images=num_feed_images)
         if not skip_this_step:
@@ -519,12 +565,16 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
 
         if getattr(model.image_encoder_without_ddp, 'l0_module', None) is not None:
             model._image_encoder.module.l0_module.constrain_parameters()
-            metrics['vision_lambda1'].update(model._image_encoder.module.l0_module.lambda_1.detach().item())
-            metrics['vision_lambda2'].update(model._image_encoder.module.l0_module.lambda_2.detach().item())
+            metrics['vision_lambda1'].update(
+                model._image_encoder.module.l0_module.lambda_1.detach().item())
+            metrics['vision_lambda2'].update(
+                model._image_encoder.module.l0_module.lambda_2.detach().item())
         if getattr(model.text_encoder_without_ddp, 'l0_module', None) is not None:
             model._text_encoder.module.l0_module.constrain_parameters()
-            metrics['text_lambda1'].update(model._text_encoder.module.l0_module.lambda_1.detach().item())
-            metrics['text_lambda2'].update(model._text_encoder.module.l0_module.lambda_2.detach().item())
+            metrics['text_lambda1'].update(
+                model._text_encoder.module.l0_module.lambda_1.detach().item())
+            metrics['text_lambda2'].update(
+                model._text_encoder.module.l0_module.lambda_2.detach().item())
 
         loss_scale = scaler.state_dict()["scale"]
         metrics['loss_scale'].update(loss_scale)
@@ -566,7 +616,7 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
             # Save train loss / etc. Using non avg meter values as loggers have their own smoothing
             log_data = {
                 "loss": loss_m.val,
-                "scale":  logit_scale_scalar,
+                "scale": logit_scale_scalar,
                 "lr": optimizer[0].param_groups[0]["lr"],
                 "lr_l0": optimizer[-1].param_groups[0]["lr"]
             }
@@ -579,7 +629,8 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
                     tb_writer.add_scalar(name, val, step)
                 if args.wandb:
                     assert wandb is not None, 'Please install wandb.'
-                    wandb.log({name: val, 'step': step, 'num_feed_images': num_feed_images}, step=step)
+                    wandb.log({name: val, 'step': step,
+                              'num_feed_images': num_feed_images}, step=step)
 
         if i > 2000:
             eval_freq = 500
@@ -589,16 +640,18 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
         if step == 0 and use_mask:
             do_evaluate = True
 
-        if ((i + 1) % eval_freq == 0 or is_last_batch) or step == 0: 
+        if ((i + 1) % eval_freq == 0 or is_last_batch) or step == 0:
             from training.viz import plot
             if args.prune_image:
                 model.eval()
                 layers = model._image_encoder.module.l0_module.num_hidden_layers
                 hidden_size = model._image_encoder.module.l0_module.hidden_size
                 heads = model._image_encoder.module.l0_module.num_attention_heads
-                l0device = model._image_encoder.module.l0_module.z_logas[model._image_encoder.module.l0_module.types[0]].device
+                l0device = model._image_encoder.module.l0_module.z_logas[
+                    model._image_encoder.module.l0_module.types[0]].device
                 zs_img = model._image_encoder.module.l0_module()
-                sparsity_img = model._image_encoder.module.l0_module.calculate_model_size(zs_img)['pruned_sparsity']
+                sparsity_img = model._image_encoder.module.l0_module.calculate_model_size(zs_img)[
+                    'pruned_sparsity']
                 if 'mha_z' not in zs_img.keys():
                     zs_img['mha_z'] = torch.ones([layers]).to(l0device)
                 if 'ffn_z' not in zs_img.keys():
@@ -606,13 +659,19 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
                 if 'hidden_z' not in zs_img.keys():
                     zs_img['hidden_z'] = torch.ones([hidden_size]).to(l0device)
                 if 'heads_z' not in zs_img.keys():
-                    zs_img['heads_z'] = torch.ones([layers, 1, heads, 1, 1]).to(l0device)
+                    zs_img['heads_z'] = torch.ones(
+                        [layers, 1, heads, 1, 1]).to(l0device)
                 if 'intermediate_z' not in zs_img.keys():
-                    zs_img['intermediate_z'] = torch.ones([layers, 1, 1, hidden_size*4]).to(l0device)
-                hidden_img = zs_img['hidden_z'].detach().cpu().squeeze().numpy()
-                heads_img = zs_img['mha_z'].detach().cpu().squeeze().numpy().reshape(-1, 1) * zs_img['heads_z'].detach().cpu().squeeze().numpy()
-                intermediates_img = zs_img['ffn_z'].detach().cpu().squeeze().numpy().reshape(-1, 1) * zs_img['intermediate_z'].detach().cpu().squeeze().numpy()
-                fig_img = plot(heads_img,intermediates_img, f"Sparsity_img: {sparsity_img:.2%}")
+                    zs_img['intermediate_z'] = torch.ones(
+                        [layers, 1, 1, hidden_size * 4]).to(l0device)
+                hidden_img = zs_img['hidden_z'].detach(
+                ).cpu().squeeze().numpy()
+                heads_img = zs_img['mha_z'].detach().cpu().squeeze().numpy(
+                ).reshape(-1, 1) * zs_img['heads_z'].detach().cpu().squeeze().numpy()
+                intermediates_img = zs_img['ffn_z'].detach().cpu().squeeze().numpy(
+                ).reshape(-1, 1) * zs_img['intermediate_z'].detach().cpu().squeeze().numpy()
+                fig_img = plot(heads_img, intermediates_img,
+                               f"Sparsity_img: {sparsity_img:.2%}")
                 if dist.get_rank() == 0 and args.wandb:
                     wandb.log({
                         "test/sparsity_img": sparsity_img,
@@ -625,9 +684,11 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
                 layers = model._text_encoder.module.l0_module.num_hidden_layers
                 hidden_size = model._text_encoder.module.l0_module.hidden_size
                 heads = model._text_encoder.module.l0_module.num_attention_heads
-                l0device = model._text_encoder.module.l0_module.z_logas[model._text_encoder.module.l0_module.types[0]].device
+                l0device = model._text_encoder.module.l0_module.z_logas[
+                    model._text_encoder.module.l0_module.types[0]].device
                 zs_txt = model._text_encoder.module.l0_module()
-                sparsity_txt = model._text_encoder.module.l0_module.calculate_model_size(zs_txt)['pruned_sparsity']
+                sparsity_txt = model._text_encoder.module.l0_module.calculate_model_size(zs_txt)[
+                    'pruned_sparsity']
                 if 'mha_z' not in zs_txt.keys():
                     zs_txt['mha_z'] = torch.ones([layers]).to(l0device)
                 if 'ffn_z' not in zs_txt.keys():
@@ -635,13 +696,19 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
                 if 'hidden_z' not in zs_txt.keys():
                     zs_txt['hidden_z'] = torch.ones([hidden_size]).to(l0device)
                 if 'heads_z' not in zs_txt.keys():
-                    zs_txt['heads_z'] = torch.ones([layers, 1, heads, 1, 1]).to(l0device)
+                    zs_txt['heads_z'] = torch.ones(
+                        [layers, 1, heads, 1, 1]).to(l0device)
                 if 'intermediate_z' not in zs_txt.keys():
-                    zs_txt['intermediate_z'] = torch.ones([layers, 1, 1, hidden_size*4]).to(l0device)
-                hidden_txt = zs_txt['hidden_z'].detach().cpu().squeeze().numpy()
-                heads_txt = zs_txt['mha_z'].detach().cpu().squeeze().numpy().reshape(-1, 1) * zs_txt['heads_z'].detach().cpu().squeeze().numpy()
-                intermediates_txt = zs_txt['ffn_z'].detach().cpu().squeeze().numpy().reshape(-1, 1) * zs_txt['intermediate_z'].detach().cpu().squeeze().numpy()
-                fig_txt = plot(heads_txt,intermediates_txt, f"Sparsity_txt: {sparsity_txt:.2%}")
+                    zs_txt['intermediate_z'] = torch.ones(
+                        [layers, 1, 1, hidden_size * 4]).to(l0device)
+                hidden_txt = zs_txt['hidden_z'].detach(
+                ).cpu().squeeze().numpy()
+                heads_txt = zs_txt['mha_z'].detach().cpu().squeeze().numpy(
+                ).reshape(-1, 1) * zs_txt['heads_z'].detach().cpu().squeeze().numpy()
+                intermediates_txt = zs_txt['ffn_z'].detach().cpu().squeeze().numpy(
+                ).reshape(-1, 1) * zs_txt['intermediate_z'].detach().cpu().squeeze().numpy()
+                fig_txt = plot(heads_txt, intermediates_txt,
+                               f"Sparsity_txt: {sparsity_txt:.2%}")
                 if dist.get_rank() == 0 and args.wandb:
                     wandb.log({
                         "test/sparsity_txt": sparsity_txt,
@@ -651,7 +718,8 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
 
         if do_evaluate:
             if any(v in data for v in ('val', 'imagenet-val', 'imagenet-v2')):
-                evaluate(model, data, epoch, args, tb_writer, step=step, num_feed_images=num_feed_images)
+                evaluate(model, data, epoch, args, tb_writer,
+                         step=step, num_feed_images=num_feed_images)
                 model.train()
 
         if do_save_checkpoint and is_master(args):
@@ -673,10 +741,12 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
                     checkpoint_dict["scaler"] = scaler.state_dict()
                 # Model EMA
                 if hasattr(model_without_ddp, '_model_ema'):
-                    ema_models_state = [get_state_dict(model_ema) for model_ema in model_without_ddp._model_ema]
+                    ema_models_state = [get_state_dict(
+                        model_ema) for model_ema in model_without_ddp._model_ema]
                     checkpoint_dict['model_emas'] = ema_models_state
 
-                checkpoint_fname = os.path.join(args.checkpoint_path, f"epoch_{epoch}_iter_{i}.pt")
+                checkpoint_fname = os.path.join(
+                    args.checkpoint_path, f"epoch_{epoch}_iter_{i}.pt")
                 torch.save(
                     checkpoint_dict,
                     checkpoint_fname,
@@ -686,8 +756,8 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
         if num_feed_images >= all_num_feed_images:
             break
 
-
-    print(f'Feed ALL Data: {num_feed_images}/{num_feed_images_after_epoch}/{all_num_feed_images}')
+    print(
+        f'Feed ALL Data: {num_feed_images}/{num_feed_images_after_epoch}/{all_num_feed_images}')
     return model, optimizer, scaler, scheduler, scheduler_l0, args
     # end for
 
@@ -700,7 +770,8 @@ def evaluate(model, data, epoch, args, tb_writer=None, step=None, num_feed_image
     for name, model_i in zip(names, models):
         model_i.eval()
         zero_shot_metrics = zero_shot_eval(model_i, data, epoch, args)
-        zero_shot_metrics = dict((name + k, v) for k, v in zero_shot_metrics.items())
+        zero_shot_metrics = dict((name + k, v)
+                                 for k, v in zero_shot_metrics.items())
         metrics.update(zero_shot_metrics)
 
     if not metrics:
@@ -739,10 +810,12 @@ def evaluate(model, data, epoch, args, tb_writer=None, step=None, num_feed_image
 
 def get_metrics(image_features, text_features, logit_scale):
     metrics = {}
-    logits_per_image = (logit_scale * image_features @ text_features.t()).detach().cpu()
+    logits_per_image = (logit_scale * image_features @
+                        text_features.t()).detach().cpu()
     logits_per_text = logits_per_image.t().detach().cpu()
 
-    logits = {"image_to_text": logits_per_image, "text_to_image": logits_per_text}
+    logits = {"image_to_text": logits_per_image,
+              "text_to_image": logits_per_text}
     ground_truth = torch.arange(len(text_features)).view(-1, 1)
 
     for name, logit in logits.items():

@@ -44,6 +44,7 @@ from training.params import parse_args
 from training.scheduler import cosine_lr, cosine_lr_start, step_lr, cosine_lr_start_nowarmup
 from training.train import train_one_epoch, evaluate
 
+
 def random_seed(seed=42, rank=0):
     torch.manual_seed(seed + rank)
     np.random.seed(seed + rank)
@@ -75,11 +76,13 @@ def compute_params(model):
         num_params_text += _get_params(
             model.text_encoder_without_ddp.token_embedding)
         num_params_text += _get_params(model.text_encoder_without_ddp.ln_final)
-        num_params_text += (model.text_encoder_without_ddp.positional_embedding.numel() + \
+        num_params_text += (model.text_encoder_without_ddp.positional_embedding.numel() +
                             model.text_encoder_without_ddp.text_projection.numel())
     return n_parameters, (num_params_image, num_buffers_image), num_params_text, num_token_emb
 
+
 DEVICE = 'cpu'
+
 
 def _load_checkpoint(name):
     global DEVICE
@@ -98,6 +101,7 @@ def _load_checkpoint(name):
     elif 'model' in state_dict:
         state_dict = state_dict['model']
     return state_dict
+
 
 def load_pruned_model(model_state_dict, sd):
     for k in model_state_dict:
@@ -314,7 +318,6 @@ def main():
         logging.info(
             f'number of token embedding in text encoder : {num_token_emb / 1e6}')
 
-
     if args.distillation:
         teacher_model = load_model(args.distillation_teacher, device=device)
 
@@ -368,47 +371,57 @@ def main():
     if args.train_data:
         assert not args.trace, 'Cannot train with traced model'
 
-        exclude = lambda n, p: p.ndim < 2 or "bn" in n or "ln" in n or "bias" in n or 'logit_scale' in n
-        include = lambda n, p: not exclude(n, p)
+        def exclude(
+            n, p): return p.ndim < 2 or "bn" in n or "ln" in n or "bias" in n or 'logit_scale' in n
+
+        def include(n, p): return not exclude(n, p)
 
         named_parameters = list(model.named_parameters())
         # we create three optimizer for image encode, text encoder, and jointly part
         model_parts = [
-                list(model_without_ddp.image_named_params()),
-                list(model_without_ddp.text_named_params()),
-                list(model_without_ddp.joint_named_params()),
-                ]
+            list(model_without_ddp.image_named_params()),
+            list(model_without_ddp.text_named_params()),
+            list(model_without_ddp.joint_named_params()),
+        ]
 
         cnt1 = sum(v.numel() for k, v in named_parameters if v.requires_grad)
-        cnt2 = sum(sum(v.numel() for k, v in part if v.requires_grad) for part in model_parts)
+        cnt2 = sum(sum(v.numel() for k, v in part if v.requires_grad)
+                   for part in model_parts)
         assert cnt1 == cnt2, f"cnt1 {cnt1} != cnt2 {cnt2}"
 
         optimizer = []
         part_names = ['image', 'text', 'joint']
         assert len(model_parts) == len(part_names)
         for name, named_parameters in zip(part_names, model_parts):
-            gain_or_bias_params = [p for n, p in named_parameters if exclude(n, p) and p.requires_grad and "l0_module" not in n]
-            rest_params = [p for n, p in named_parameters if include(n, p) and p.requires_grad and "l0_module" not in n]
+            gain_or_bias_params = [p for n, p in named_parameters if exclude(
+                n, p) and p.requires_grad and "l0_module" not in n]
+            rest_params = [p for n, p in named_parameters if include(
+                n, p) and p.requires_grad and "l0_module" not in n]
             params_groups = [
-                    {"params": gain_or_bias_params, "weight_decay": 0.},
-                    {"params": rest_params, "weight_decay": args.wd},
+                {"params": gain_or_bias_params, "weight_decay": 0.},
+                {"params": rest_params, "weight_decay": args.wd},
             ]
 
             num_opt_params = 0
             for pg in params_groups:
                 num_opt_params += sum(p.numel() for p in pg['params'])
 
-            logging.info(f'number of optimizer ({name}) params: {num_opt_params}')
+            logging.info(
+                f'number of optimizer ({name}) params: {num_opt_params}')
 
             class EmptyOptimizer:
                 def __init__(self):
                     self.param_groups = []
+
                 def step(self, *args, **kwargs):
                     pass
+
                 def state_dict(self):
                     return dict()
+
                 def load_state_dict(self, *args, **kwargs):
                     pass
+
                 def zero_grad(self):
                     pass
 
@@ -439,7 +452,7 @@ def main():
                         "params": [p for n, p in model_without_ddp.image_named_params() if p.requires_grad and "lambda" in n and "l0_module" in n],
                         "weight_decay": 0.0,
                         "lr": lr_lamda
-                        }])
+                    }])
             if args.prune_text:
                 l0_params.extend([
                     {
@@ -475,9 +488,10 @@ def main():
             if len(ckpts_list) > 0:
                 ckpts_list.sort(reverse=True)
                 for epoch, it in ckpts_list:
-                    checkpoint_fname = os.path.join(args.checkpoint_path, f"epoch_{epoch}_iter_{it}.pt")
+                    checkpoint_fname = os.path.join(
+                        args.checkpoint_path, f"epoch_{epoch}_iter_{it}.pt")
                     try:
-                        # check valid 
+                        # check valid
                         torch.load(checkpoint_fname, map_location='cpu')
                         checkpoint_fname_list[0] = checkpoint_fname
                         break
@@ -486,7 +500,8 @@ def main():
     torch.distributed.broadcast_object_list(checkpoint_fname_list, src=0)
 
     if checkpoint_fname_list[0] is not None:
-        print(f'overwrite checkpoint path: {checkpoint_fname_list[0]}, the original path is {args.resume}')
+        print(
+            f'overwrite checkpoint path: {checkpoint_fname_list[0]}, the original path is {args.resume}')
         args.resume = checkpoint_fname_list[0]
 
     # determine if this worker should save logs and checkpoints. only do so if it is rank == 0
@@ -683,7 +698,8 @@ def main():
         model.ddpify(ddp_fn)
 
     # initialize datasets
-    data = get_data(args, (preprocess_train, preprocess_val), epoch=start_epoch, tokenizer=get_tokenizer(args.model))
+    data = get_data(args, (preprocess_train, preprocess_val),
+                    epoch=start_epoch, tokenizer=get_tokenizer(args.model))
     print(f"Dataset: {set(data.keys())}")
     assert len(data), 'At least one train or eval dataset must be specified.'
 
@@ -692,7 +708,8 @@ def main():
     if 'train' in data and optimizer is not None:
         total_steps = data["train"].dataloader.num_batches * args.epochs
         if args.prune_image or args.prune_text:
-            scheduler = cosine_lr(optimizer[0:3], args.lr, args.prune_step, total_steps)
+            scheduler = cosine_lr(
+                optimizer[0:3], args.lr, args.prune_step, total_steps)
             scheduler_l0 = step_lr(optimizer[-1], args.prune_step)
         else:
             scheduler = cosine_lr(optimizer, args.lr, args.warmup, total_steps)
@@ -707,7 +724,8 @@ def main():
     for epoch in range(start_epoch, math.ceil(args.epochs)):
         if is_master(args):
             logging.info(f'Start epoch {epoch}')
-        rtn = train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_l0, args, writer, start_iter)
+        rtn = train_one_epoch(model, data, epoch, optimizer, scaler,
+                              scheduler, scheduler_l0, args, writer, start_iter)
         if isinstance(rtn, str) and rtn == 'non-finite loss':
             break
         else:
@@ -730,7 +748,8 @@ def copy_codebase(args):
     current_code_path = os.path.realpath(__file__)
     for _ in range(3):
         current_code_path = os.path.dirname(current_code_path)
-    copytree(current_code_path, new_code_path, ignore=ignore_patterns('log', 'logs', 'wandb'))
+    copytree(current_code_path, new_code_path,
+             ignore=ignore_patterns('log', 'logs', 'wandb'))
     print("Done copying code.")
     return 1
 
