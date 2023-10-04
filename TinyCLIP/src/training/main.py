@@ -37,11 +37,12 @@ except ImportError:
     hvd = None
 
 from open_clip import create_model_and_transforms, trace_model
-from training.data import get_data
+from training.data import get_data, fast_forward_dataloader, reset_dataloader_sampler
 from training.distributed import is_master, init_distributed_device, world_info_from_env
+from training.logger import setup_logging
 from training.params import parse_args
-from training.train import evaluate
-
+from training.scheduler import cosine_lr, cosine_lr_start, step_lr, cosine_lr_start_nowarmup
+from training.train import train_one_epoch, evaluate
 
 def random_seed(seed=42, rank=0):
     torch.manual_seed(seed + rank)
@@ -74,13 +75,11 @@ def compute_params(model):
         num_params_text += _get_params(
             model.text_encoder_without_ddp.token_embedding)
         num_params_text += _get_params(model.text_encoder_without_ddp.ln_final)
-        num_params_text += (model.text_encoder_without_ddp.positional_embedding.numel() +
+        num_params_text += (model.text_encoder_without_ddp.positional_embedding.numel() + \
                             model.text_encoder_without_ddp.text_projection.numel())
     return n_parameters, (num_params_image, num_buffers_image), num_params_text, num_token_emb
 
-
 DEVICE = 'cpu'
-
 
 def _load_checkpoint(name):
     global DEVICE
@@ -233,6 +232,22 @@ def main():
     args.distributed = False
     args.local_rank, args.rank, args.world_size = world_info_from_env()
 
+    args.log_path = None
+    if is_master(args, local=args.log_local):
+        log_base_path = os.path.join(args.logs, args.name)
+        os.makedirs(log_base_path, exist_ok=True)
+        log_filename = f'out-{args.rank}' if args.log_local else 'out.log'
+        args.log_path = os.path.join(log_base_path, log_filename)
+        if False and os.path.exists(args.log_path):
+            print(
+                "Error. Experiment already exists. Use --name {} to specify a new experiment."
+            )
+            return -1
+
+    # Set logger
+    args.log_level = logging.DEBUG if args.debug else logging.INFO
+    setup_logging(args.log_path, args.log_level)
+
     # fully initialize distributed device environment
     device = init_distributed_device(args)
     DEVICE = device
@@ -346,6 +361,133 @@ def main():
 
     model_without_ddp = model
 
+    # create optimizer and scaler
+    optimizer = None
+    scaler = None
+    if args.train_data:
+        assert not args.trace, 'Cannot train with traced model'
+
+        exclude = lambda n, p: p.ndim < 2 or "bn" in n or "ln" in n or "bias" in n or 'logit_scale' in n
+        include = lambda n, p: not exclude(n, p)
+
+        named_parameters = list(model.named_parameters())
+        # we create three optimizer for image encode, text encoder, and jointly part
+        model_parts = [
+                list(model_without_ddp.image_named_params()),
+                list(model_without_ddp.text_named_params()),
+                list(model_without_ddp.joint_named_params()),
+                ]
+
+        cnt1 = sum(v.numel() for k, v in named_parameters if v.requires_grad)
+        cnt2 = sum(sum(v.numel() for k, v in part if v.requires_grad) for part in model_parts)
+        assert cnt1 == cnt2, f"cnt1 {cnt1} != cnt2 {cnt2}"
+
+        optimizer = []
+        part_names = ['image', 'text', 'joint']
+        assert len(model_parts) == len(part_names)
+        for name, named_parameters in zip(part_names, model_parts):
+            gain_or_bias_params = [p for n, p in named_parameters if exclude(n, p) and p.requires_grad and "l0_module" not in n]
+            rest_params = [p for n, p in named_parameters if include(n, p) and p.requires_grad and "l0_module" not in n]
+            params_groups = [
+                    {"params": gain_or_bias_params, "weight_decay": 0.},
+                    {"params": rest_params, "weight_decay": args.wd},
+            ]
+
+            num_opt_params = 0
+            for pg in params_groups:
+                num_opt_params += sum(p.numel() for p in pg['params'])
+
+            logging.info(f'number of optimizer ({name}) params: {num_opt_params}')
+
+            class EmptyOptimizer:
+                def __init__(self):
+                    self.param_groups = []
+                def step(self, *args, **kwargs):
+                    pass
+                def state_dict(self):
+                    return dict()
+                def load_state_dict(self, *args, **kwargs):
+                    pass
+                def zero_grad(self):
+                    pass
+
+            if num_opt_params > 0:
+                optimizer_i = optim.AdamW(
+                    params_groups,
+                    lr=args.lr,
+                    # lr=0,
+                    betas=(args.beta1, args.beta2),
+                    eps=args.eps,
+                )
+            else:
+                optimizer_i = EmptyOptimizer()
+            optimizer.append(optimizer_i)
+
+        if args.prune_image or args.prune_text:
+            lr_l0 = 0.02
+            lr_lamda = args.l0lr
+            l0_params = []
+            # add l0 optimizer
+            if args.prune_image:
+                l0_params.extend([
+                    {
+                        "params": [p for n, p in model_without_ddp.image_named_params() if p.requires_grad and "lambda" not in n and "l0_module" in n],
+                        "weight_decay": 0.0,
+                        "lr": lr_l0
+                    }, {
+                        "params": [p for n, p in model_without_ddp.image_named_params() if p.requires_grad and "lambda" in n and "l0_module" in n],
+                        "weight_decay": 0.0,
+                        "lr": lr_lamda
+                        }])
+            if args.prune_text:
+                l0_params.extend([
+                    {
+                        "params": [p for n, p in model_without_ddp.text_named_params() if p.requires_grad and "lambda" not in n and "l0_module" in n],
+                        "weight_decay": 0.0,
+                        "lr": lr_l0
+                    }, {
+                        "params": [p for n, p in model_without_ddp.text_named_params() if p.requires_grad and "lambda" in n and "l0_module" in n],
+                        "weight_decay": 0.0,
+                        "lr": lr_lamda
+                    }])
+            l0_optimizer = optim.AdamW(l0_params)
+            optimizer.append(l0_optimizer)
+
+        assert not args.horovod
+
+        use_loss_scale = any(map(
+            lambda x: x in ['amp', 'fp16'],
+            [args.precision, args.image_precision, args.text_precision, args.logit_precision]))
+        print(f'Use loss scale: {use_loss_scale}')
+        scaler = GradScaler(enabled=use_loss_scale)
+
+    checkpoint_fname_list = [None]
+    if is_master(args):
+        if os.path.isdir(args.checkpoint_path):
+            ckpts_list = []
+            for name in os.listdir(args.checkpoint_path):
+                if name.startswith('epoch_') and name.endswith('.pt'):
+                    name = os.path.splitext(name)[0]
+                    name = name[len('epoch_'):]
+                    epoch, it = map(int, name.split('_iter_'))
+                    ckpts_list.append((epoch, it))
+            if len(ckpts_list) > 0:
+                ckpts_list.sort(reverse=True)
+                for epoch, it in ckpts_list:
+                    checkpoint_fname = os.path.join(args.checkpoint_path, f"epoch_{epoch}_iter_{it}.pt")
+                    try:
+                        # check valid 
+                        torch.load(checkpoint_fname, map_location='cpu')
+                        checkpoint_fname_list[0] = checkpoint_fname
+                        break
+                    except Exception as e:
+                        print(f'Load Ckpt Fail: {e}')
+    torch.distributed.broadcast_object_list(checkpoint_fname_list, src=0)
+
+    if checkpoint_fname_list[0] is not None:
+        print(f'overwrite checkpoint path: {checkpoint_fname_list[0]}, the original path is {args.resume}')
+        args.resume = checkpoint_fname_list[0]
+
     # determine if this worker should save logs and checkpoints. only do so if it is rank == 0
     start_epoch = 0
     data = get_data(args, (preprocess_train, preprocess_val),
@@ -355,6 +497,28 @@ def main():
     if args.save_logs and args.tensorboard:
         assert tensorboard is not None, "Please install tensorboard."
         writer = tensorboard.SummaryWriter(args.tensorboard_path)
+
+    if args.wandb and is_master(args):
+        assert wandb is not None, 'Please install wandb.'
+        logging.debug('Starting wandb.')
+        args.train_sz = data["train"].dataloader.num_samples
+        if args.val_data is not None:
+            args.val_sz = data["val"].dataloader.num_samples
+        # you will have to configure this for your project!
+        wandb_output_path = args.checkpoint_path
+        wandb.init(
+            project="tinyclip_",
+            entity="yourname",
+            name=args.name,
+            notes=args.wandb_notes,
+            tags=[],
+            config=vars(args),
+            dir=wandb_output_path,
+        )
+        if args.debug:
+            wandb.watch(model, log='all')
+        wandb.save(params_file)
+        logging.debug('Finished loading wandb.')
 
     # optionally resume from a checkpoint
     start_epoch = 0
@@ -427,6 +591,21 @@ def main():
             if 'epoch' in checkpoint and args.load_last_stage is False:
                 # resuming a train checkpoint w/ epoch and optimizer state
                 start_epoch = checkpoint["epoch"]
+
+            if optimizer is not None and 'optimizer' in checkpoint and args.load_last_stage is False:
+                if len(optimizer) == len(checkpoint['optimizer']):
+                    for opt, v in zip(optimizer, checkpoint["optimizer"]):
+                        assert len(opt.param_groups) == len(v['param_groups']), \
+                            f'number of param groups mismatch: {len(opt.param_groups)} vs {len(v["param_groups"])}'
+                        opt.load_state_dict(v)
+                    if scaler is not None and 'scaler' in checkpoint:
+                        scaler.load_state_dict(checkpoint['scaler'])
+                else:
+                    logging.info(f"optimizer load fails, use new one")
+
+            if 'iter_in_epoch' in checkpoint and args.load_last_stage is False:
+                start_iter = checkpoint['iter_in_epoch'] + 1
+                logging.info(f"fast_forward dataloader to iter {start_iter}")
 
         else:
             raise FileNotFoundError(f'=> no checkpoint found at {args.resume}')
@@ -503,11 +682,63 @@ def main():
         # re-ddpify
         model.ddpify(ddp_fn)
 
+    # initialize datasets
+    data = get_data(args, (preprocess_train, preprocess_val), epoch=start_epoch, tokenizer=get_tokenizer(args.model))
+    print(f"Dataset: {set(data.keys())}")
+    assert len(data), 'At least one train or eval dataset must be specified.'
+
+    if 'train' in data and start_iter > 0:
+        fast_forward_dataloader(data['train'].dataloader, start_epoch, start_iter)
+
+    # create scheduler if train
+    # scheduler = None
+    if 'train' in data and optimizer is not None:
+        total_steps = data["train"].dataloader.num_batches * args.epochs
+        if args.prune_image or args.prune_text:
+            scheduler = cosine_lr(optimizer[0:3], args.lr, args.prune_step, total_steps)
+            # scheduler = cosine_lr_start_nowarmup(optimizer[0:3], args.lr, total_steps, args.prune_step)
+            scheduler_l0 = step_lr(optimizer[-1], args.prune_step)
+        else:
+            scheduler = cosine_lr(optimizer, args.lr, args.warmup, total_steps)
+            scheduler_l0 = None
+
     if 'train' not in data or args.eval:
         results = evaluate(model, data, start_epoch, args, writer)
         if is_master(args):
             print(results)
         return
+
+    for epoch in range(start_epoch, math.ceil(args.epochs)):
+        if is_master(args):
+            logging.info(f'Start epoch {epoch}')
+
+        model, optimizer, scaler, scheduler, scheduler_l0, args = train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_l0, args, writer, start_iter)
+        # if rtn == 'non-finite loss':
+        #     break
+        if start_iter > 0:
+            # reset batch sampler
+            reset_dataloader_sampler(data['train'].dataloader)
+        start_iter = 0
+
+    if args.wandb and is_master(args):
+        wandb.finish()
+
+
+def copy_codebase(args):
+    from shutil import copytree, ignore_patterns
+    new_code_path = os.path.join(args.logs, args.name, "code")
+    if False and os.path.exists(new_code_path):
+        print(
+            f"Error. Experiment already exists at {new_code_path}. Use --name to specify a new experiment."
+        )
+        return -1
+    print(f"Copying codebase to {new_code_path}")
+    current_code_path = os.path.realpath(__file__)
+    for _ in range(3):
+        current_code_path = os.path.dirname(current_code_path)
+    copytree(current_code_path, new_code_path, ignore=ignore_patterns('log', 'logs', 'wandb'))
+    print("Done copying code.")
+    return 1
 
 
 if __name__ == "__main__":
