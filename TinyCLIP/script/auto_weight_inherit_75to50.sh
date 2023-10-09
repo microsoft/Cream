@@ -33,5 +33,5 @@ torchrun $DISTRIBUTED_ARGS src/training/main.py \
  --target-sparsity 0.5 \
  --start-sparsity 0.25 \
  --sparsity-warmup 1000 \
- --resume ./checkpoints/TinyCLIP-ViT-63M-32-LAION.pt \
+ --resume ./checkpoints/TinyCLIP-auto-ViT-63M-32-Text-31M-LAION400M.pt \
  --load-last-stage

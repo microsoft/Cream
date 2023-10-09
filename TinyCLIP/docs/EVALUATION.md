@@ -11,98 +11,117 @@ Please change the paths to `imagenet-val` and `resume`.
 ### For manual weight inference checkpoint:
 
 <details>
-<summary>Evaluate TinyCLIP ResNet-30M (LAION-400M) </summary>
+<summary>Evaluate TinyCLIP ViT-39M/16 + Text-19M (YFCC-15M) </summary>
 <pre><code>python -m torch.distributed.launch --use_env --nproc_per_node 8 src/training/main_for_test.py \
 --imagenet-val ./ImageNet \
---model RN50_P75 \
+--model TinyCLIP-ViT-39M-16-Text-19M \
 --eval \
---resume ./checkpoints/TinyCLIP-ResNet-30M_epoch_6.pt
+--resume ./checkpoints/TinyCLIP-ViT-39M-16-Text-19M-YFCC15M.pt
 </code></pre>
 </details>
 
 <details>
-<summary>Evaluate TinyCLIP ResNet-19M (LAION-400M) </summary>
+<summary>Evaluate TinyCLIP ViT-8M/16 + Text-3M (YFCC-15M) </summary>
 <pre><code>python -m torch.distributed.launch --use_env --nproc_per_node 8 src/training/main_for_test.py \
 --imagenet-val ./ImageNet \
---model RN50_P50 \
+--model TinyCLIP-ViT-8M-16-Text-3M \
 --eval \
---resume ./checkpoints/TinyCLIP-ResNet-19M_epoch_12.pt
-</code></pre>
-</details>
-
-
-<details>
-<summary>Evaluate TinyCLIP ViT-61M/32 (LAION-400M) </summary>
-<pre><code>python -m torch.distributed.launch --use_env --nproc_per_node 8 src/training/main_for_test.py \
---imagenet-val ./ImageNet \
---model TinyCLIP-61M \
---eval \
---resume ./checkpoints/TinyCLIP-ViT-61M-32_epoch_6.pt
+--resume ./checkpoints/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M.pt
 </code></pre>
 </details>
 
 <details>
-<summary>Evaluate TinyCLIP ViT-40M/32 (LAION-400M) </summary>
+<summary>Evaluate TinyCLIP ResNet-30M + Text-29M (LAION-400M) </summary>
 <pre><code>python -m torch.distributed.launch --use_env --nproc_per_node 8 src/training/main_for_test.py \
 --imagenet-val ./ImageNet \
---model TinyCLIP-40M \
+--model TinyCLIP-ResNet-30M-Text-29M \
 --eval \
---resume ./checkpoints/TinyCLIP-ViT-40M-32_epoch_16.pt
+--resume ./checkpoints/TinyCLIP-ResNet-30M-Text-29M-LAION400M.pt
+</code></pre>
+</details>
+
+<details>
+<summary>Evaluate TinyCLIP ResNet-19M + Text-19M (LAION-400M) </summary>
+<pre><code>python -m torch.distributed.launch --use_env --nproc_per_node 8 src/training/main_for_test.py \
+--imagenet-val ./ImageNet \
+--model TinyCLIP-ResNet-19M-Text-19M \
+--eval \
+--resume ./checkpoints/TinyCLIP-ResNet-19M-Text-19M-LAION400M.pt
+</code></pre>
+</details>
+
+<details>
+<summary>Evaluate TinyCLIP ViT-61M/32 + Text-29M (LAION-400M) </summary>
+<pre><code>python -m torch.distributed.launch --use_env --nproc_per_node 8 src/training/main_for_test.py \
+--imagenet-val ./ImageNet \
+--model TinyCLIP-ViT-61M-32-Text-29M \
+--eval \
+--resume ./checkpoints/TinyCLIP-ViT-61M-32-Text-29M-LAION400M.pt
+</code></pre>
+</details>
+
+<details>
+<summary>Evaluate TinyCLIP ViT-40M/32 + Text-19M (LAION-400M) </summary>
+<pre><code>python -m torch.distributed.launch --use_env --nproc_per_node 8 src/training/main_for_test.py \
+--imagenet-val ./ImageNet \
+--model TinyCLIP-ViT-40M-32-Text-19M \
+--eval \
+--resume ./checkpoints/TinyCLIP-ViT-40M-32-Text-19M-LAION400M.pt
 </code></pre>
 </details>
 
 ### For auto weight inference checkpoint:
 
 <details>
-<summary>Evaluate TinyCLIP ViT-63M/32 (LAION-400M) </summary>
+<summary>Evaluate TinyCLIP ViT-63M/32 + Text-31M (LAION-400M) </summary>
 <pre><code>python -m torch.distributed.launch --use_env --nproc_per_node 8 src/training/main_for_test.py \
 --imagenet-val ./ImageNet \
 --model ViT-B-32 \
 --prune-image \
 --prune-text \
 --eval \
---resume ./checkpoints/TinyCLIP-ViT-63M-32-LAION.pt
+--resume ./checkpoints/TinyCLIP-auto-ViT-63M-32-Text-31M-LAION400M.pt
 </code></pre>
 </details>
 
 <details>
-<summary>Evaluate TinyCLIP ViT-45M/32 (LAION-400M) </summary>
+<summary>Evaluate TinyCLIP ViT-45M/32 + Text-18M (LAION-400M) </summary>
 <pre><code>python -m torch.distributed.launch --use_env --nproc_per_node 8 src/training/main_for_test.py \
 --imagenet-val ./ImageNet \
 --model ViT-B-32 \
 --prune-image \
 --prune-text \
 --eval \
---resume ./checkpoints/TinyCLIP-ViT-45M-32-LAION.pt
+--resume ./checkpoints/TinyCLIP-auto-ViT-45M-32-Text-18M-LAION400M.pt
 </code></pre>
 </details>
 
 <details>
-<summary>Evaluate TinyCLIP ViT-22M/32 (LAION-400M) </summary>
+<summary>Evaluate TinyCLIP ViT-22M/32 + Text-10M (LAION-400M) </summary>
 <pre><code>python -m torch.distributed.launch --use_env --nproc_per_node 8 src/training/main_for_test.py \
 --imagenet-val ./ImageNet \
 --model ViT-B-32 \
 --prune-image \
 --prune-text \
 --eval \
---resume ./checkpoints/TinyCLIP-ViT-22M-32-LAION.pt
+--resume ./checkpoints/TinyCLIP-auto-ViT-22M-32-Text-10M-LAION400M.pt
 </code></pre>
 </details>
 
 <details>
-<summary>Evaluate TinyCLIP ViT-63M/32 (LAION+YFCC-400M) </summary>
+<summary>Evaluate TinyCLIP ViT-63M/32 + Text-31M (LAION+YFCC-400M) </summary>
 <pre><code>python -m torch.distributed.launch --use_env --nproc_per_node 8 src/training/main_for_test.py \
 --imagenet-val ./ImageNet \
 --model ViT-B-32 \
 --prune-image \
 --prune-text \
 --eval \
---resume ./checkpoints/TinyCLIP-ViT-63M-32-LAION-YFCC.pt
+--resume ./checkpoints/TinyCLIP-auto-ViT-63M-32-Text-31M-LAIONYFCC400M.pt
 </code></pre>
 </details>
 
 <details>
-<summary>Evaluate TinyCLIP ViT-45M/32 (LAION+YFCC-400M)
+<summary>Evaluate TinyCLIP ViT-45M/32 + Text-18M (LAION+YFCC-400M)
 </summary>
 <pre><code>python -m torch.distributed.launch --use_env --nproc_per_node 8 src/training/main_for_test.py \
 --imagenet-val ./ImageNet \
@@ -110,6 +129,6 @@ Please change the paths to `imagenet-val` and `resume`.
 --prune-image \
 --prune-text \
 --eval \
---resume ./checkpoints/TinyCLIP-ViT-45M-32-LAION-YFCC.pt
+--resume ./checkpoints/TinyCLIP-auto-ViT-45M-32-Text-18M-LAIONYFCC400M.pt
 </code></pre>
 </details>
