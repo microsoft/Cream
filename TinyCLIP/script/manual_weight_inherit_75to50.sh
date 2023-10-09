@@ -20,8 +20,8 @@ torchrun $DISTRIBUTED_ARGS src/training/main.py \
  --logs ./outputs/ViT-B-32 \
  --lr 0.0001 \
  --gather-with-grad \
- --pretrained-image-file checkpoints/TinyCLIP-ViT-61M-32_epoch_6.pt \
- --pretrained-text-file checkpoints/TinyCLIP-ViT-61M-32_epoch_6.pt \
+ --pretrained-image-file checkpoints/TinyCLIP-ViT-61M-32-Text-29M-LAION400M.pt \
+ --pretrained-text-file checkpoints/TinyCLIP-ViT-61M-32-Text-29M-LAION400M.pt \
  --distillation-teacher ViT-B-32@laion2b_e16 \
  --logit-scale 50 \
  --norm_gradient_clip 5 \
