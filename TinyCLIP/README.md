@@ -23,7 +23,7 @@
 
 ## Model Zoo
 | Model              | Weight inheritance | Pretrain      | IN-1K Acc@1(%) | MACs(G) | Throughput(pairs/s) | Link |
-|--------------------|--------------------|---------------|-------|-----------------------|---------|---------------------|------|
+|--------------------|--------------------|---------------|----------------|---------|---------------------|------|
 [TinyCLIP ViT-39M/16 Text-19M](./src/open_clip/model_configs/TinyCLIP-ViT-39M-16-Text-19M.json) | manual | YFCC-15M | 63.5  | 9.5 | 1,469 | [Model](https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-ViT-39M-16-Text-19M-YFCC15M.pt)
 [TinyCLIP ViT-8M/16 Text-3M](./src/open_clip/model_configs/TinyCLIP-ViT-8M-16-Text-3M.json) | manual | YFCC-15M | 41.1 | 2.0 | 4,150 | [Model](https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M.pt)
 [TinyCLIP ResNet-30M Text-29M](./src/open_clip/model_configs/TinyCLIP-ResNet-30M-Text-29M.json) | manual | LAION-400M | 59.1  | 6.9 | 1,811 | [Model](https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-ResNet-30M-Text-29M-LAION400M.pt)
