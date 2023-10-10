@@ -357,9 +357,7 @@ def main():
                     sd = {k[len('module.'):]: v for k, v in sd.items()}
                 sd = {k.replace('.module', ''): v for k, v in sd.items()}
                 logging.info('convert pruned model to base')
-                model_ori = model.state_dict()
-                model_state_dict = load_pruned_model(model_ori, sd)
-                model.load_state_dict(model_state_dict)
+                load_pruned_model(model, sd)
 
                 if args.load_last_stage is False:
                     logging.info('=== FUSE MASK IMAGE ===')

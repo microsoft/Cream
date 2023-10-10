@@ -1272,9 +1272,9 @@ def resize_pos_embed(state_dict, model, interpolation: str = 'bicubic', seq_dim=
 
 
 @torch.no_grad()
-def load_pruned_model(model_state_dict, pruned_state_dict, head_dim):
+def load_pruned_model(model, pruned_state_dict):
     '''
-    Copy the pruned weights to the full weights
+    A full model loads the pruned state dict.
 
     Inputs:
         model_state_dict: the full model weights
@@ -1291,6 +1291,8 @@ def load_pruned_model(model_state_dict, pruned_state_dict, head_dim):
             dst[slices].copy_(src)
 
     lambda_init_value = 10.0
+    model_state_dict = model.state_dict()
+    head_dim = model.transformer.head_dim
 
     pruned_state_dict = {k.replace('image_encoder_without_ddp', '_image_encoder').
                          replace('text_encoder_without_ddp', '_text_encoder'): v for k, v in pruned_state_dict.items()}
@@ -1378,4 +1380,4 @@ def load_pruned_model(model_state_dict, pruned_state_dict, head_dim):
                 model_state_dict[f'{ename}.l0_module.intermediate_loga'][d,
                                                                          :].fill_(-lambda_init_value)
 
-    return model_state_dict
+    model.load_state_dict(model_state_dict, strict=True)

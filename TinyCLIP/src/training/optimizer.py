@@ -76,22 +76,22 @@ def build_optimizer(args, model):
         if args.prune_image:
             l0_params.extend([
                 {
-                    "params": [p for n, p in model_without_ddp.image_named_params() if p.requires_grad and "lambda" not in n and "l0_module" in n],
+                    "params": [p for n, p in model.image_named_params() if p.requires_grad and "lambda" not in n and "l0_module" in n],
                     "weight_decay": 0.0,
                     "lr": lr_l0
                 }, {
-                    "params": [p for n, p in model_without_ddp.image_named_params() if p.requires_grad and "lambda" in n and "l0_module" in n],
+                    "params": [p for n, p in model.image_named_params() if p.requires_grad and "lambda" in n and "l0_module" in n],
                     "weight_decay": 0.0,
                     "lr": lr_lamda
                 }])
         if args.prune_text:
             l0_params.extend([
                 {
-                    "params": [p for n, p in model_without_ddp.text_named_params() if p.requires_grad and "lambda" not in n and "l0_module" in n],
+                    "params": [p for n, p in model.text_named_params() if p.requires_grad and "lambda" not in n and "l0_module" in n],
                     "weight_decay": 0.0,
                     "lr": lr_l0
                 }, {
-                    "params": [p for n, p in model_without_ddp.text_named_params() if p.requires_grad and "lambda" in n and "l0_module" in n],
+                    "params": [p for n, p in model.text_named_params() if p.requires_grad and "lambda" in n and "l0_module" in n],
                     "weight_decay": 0.0,
                     "lr": lr_lamda
                 }])
