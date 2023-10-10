@@ -26,6 +26,7 @@ from timm.utils.model import unwrap_model
 from .distributed import is_master
 from .zero_shot import zero_shot_eval
 from .precision import get_autocast
+from training.optimizer import build_optimizer
 from training.scheduler import cosine_lr, cosine_lr_start, step_lr, cosine_lr_start_nowarmup
 import torch.distributed as dist
 from training.my_meter import AverageMeter, reduce_tensor
@@ -384,64 +385,7 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
             args.prune_text = False
             use_mask = False
 
-            def exclude(
-                n, p): return p.ndim < 2 or "bn" in n or "ln" in n or "bias" in n or 'logit_scale' in n
-
-            def include(n, p): return not exclude(n, p)
-            named_parameters = list(model.named_parameters())
-            # we create three optimizer for image encode, text encoder, and jointly part
-            model_parts = [
-                list(model_without_ddp.image_named_params()),
-                list(model_without_ddp.text_named_params()),
-                list(model_without_ddp.joint_named_params()),
-            ]
-            optimizer = []
-            part_names = ['image', 'text', 'joint']
-            assert len(model_parts) == len(part_names)
-            for name, named_parameters in zip(part_names, model_parts):
-                gain_or_bias_params = [p for n, p in named_parameters if exclude(
-                    n, p) and p.requires_grad and "l0_module" not in n]
-                rest_params = [p for n, p in named_parameters if include(
-                    n, p) and p.requires_grad and "l0_module" not in n]
-                params_groups = [
-                    {"params": gain_or_bias_params, "weight_decay": 0.},
-                    {"params": rest_params, "weight_decay": args.wd},
-                ]
-
-                num_opt_params = 0
-                for pg in params_groups:
-                    num_opt_params += sum(p.numel() for p in pg['params'])
-
-                logging.info(
-                    f'number of optimizer ({name}) params: {num_opt_params}')
-
-                class EmptyOptimizer:
-                    def __init__(self):
-                        self.param_groups = []
-
-                    def step(self, *args, **kwargs):
-                        pass
-
-                    def state_dict(self):
-                        return dict()
-
-                    def load_state_dict(self, *args, **kwargs):
-                        pass
-
-                    def zero_grad(self):
-                        pass
-
-                if num_opt_params > 0:
-                    optimizer_i = optim.AdamW(
-                        params_groups,
-                        lr=args.lr,
-                        betas=(args.beta1, args.beta2),
-                        eps=args.eps,
-                    )
-                else:
-                    optimizer_i = EmptyOptimizer()
-                optimizer.append(optimizer_i)
-            # scheduler = cosine_lr(optimizer[0:3], args.lr, args.prune_step, num_batches_per_epoch * args.epochs)
+            optimizer = build_optimizer(args, model)
             scheduler = cosine_lr_start_nowarmup(
                 optimizer[0:3], args.lr, num_batches_per_epoch * args.epochs, args.prune_step)
 

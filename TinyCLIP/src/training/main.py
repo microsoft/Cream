@@ -12,13 +12,15 @@ from torch import optim
 import torch.nn.functional as F
 from torch.cuda.amp import GradScaler
 
-from open_clip.model import convert_to_new_checkpoint
+from open_clip.model import convert_to_new_checkpoint, load_pruned_model
 from open_clip.factory import load_model, get_tokenizer
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="torchvision")
 
 from open_clip.model import convert_to_new_checkpoint
 from open_clip.weight_inherit import weight_inherit_L2
+
+from training.optimizer import build_optimizer
 
 
 try:
@@ -101,104 +103,6 @@ def _load_checkpoint(name):
     elif 'model' in state_dict:
         state_dict = state_dict['model']
     return state_dict
-
-
-def load_pruned_model(model_state_dict, sd):
-    for k in model_state_dict:
-        # auto weight inheritance model weight prefix
-        img_prefix = 'image_encoder_without_ddp'
-        txt_prefix = 'text_encoder_without_ddp'
-        sd_name = k.replace('_image_encoder', img_prefix)
-        sd_name = sd_name.replace('_text_encoder', txt_prefix)
-        if sd_name in sd:
-            if 'attn.in_proj_weight' in sd_name:
-                all_hidden = model_state_dict[k].shape[1]
-                all_head = int(model_state_dict[k].shape[0] / 64 / 3)
-                model_state_dict[k] = torch.zeros_like(
-                    model_state_dict[k]).to(model_state_dict[k].device)
-                head_num = int(sd[sd_name].shape[0] / 64 / 3)
-                hidden_num = sd[sd_name].shape[1]
-                temp = model_state_dict[k].reshape(3, all_head, 64, all_hidden)
-                temp[:, :head_num][..., :hidden_num] = sd[sd_name].reshape(
-                    3, head_num, 64, hidden_num)
-                model_state_dict[k] = temp.reshape(
-                    model_state_dict[k].shape[0], model_state_dict[k].shape[1])
-            elif 'attn.in_proj_bias' in sd_name:
-                all_head = int(model_state_dict[k].shape[0] / 64 / 3)
-                model_state_dict[k] = torch.zeros_like(
-                    model_state_dict[k]).to(model_state_dict[k].device)
-                head_num = int(sd[sd_name].shape[0] / 64 / 3)
-                temp = model_state_dict[k].reshape(3, all_head, 64)
-                temp[:, :head_num] = sd[sd_name].reshape(3, head_num, 64)
-                model_state_dict[k] = temp.reshape(
-                    model_state_dict[k].shape[0])
-            else:
-                model_state_dict[k] = torch.zeros_like(
-                    model_state_dict[k]).to(model_state_dict[k].device)
-                if len(sd[sd_name].shape) > 0:
-                    sl = [slice(0, s) for s in sd[sd_name].shape]
-                    model_state_dict[k][sl] = sd[sd_name]
-                else:
-                    model_state_dict[k] = sd[sd_name]
-        else:
-            if 'transformer.resblocks' in sd_name:
-                model_state_dict[k] = torch.zeros_like(
-                    model_state_dict[k]).to(model_state_dict[k].device)
-    model_state_dict['_logit_scale.logit_scale'] = sd['_logit_scale.logit_scale']
-    hidden_size_img = sd['image_encoder_without_ddp.visual.ln_pre.weight'].shape[0]
-    hidden_size_txt = sd['text_encoder_without_ddp.positional_embedding'].shape[1]
-    model_state_dict['_image_encoder.l0_module.lambda_1'] = torch.tensor(
-        10.00).to(model_state_dict['_image_encoder.l0_module.lambda_1'].device)
-    model_state_dict['_image_encoder.l0_module.lambda_2'] = torch.tensor(
-        10.00).to(model_state_dict['_image_encoder.l0_module.lambda_2'].device)
-    model_state_dict['_text_encoder.l0_module.lambda_1'] = torch.tensor(
-        10.00).to(model_state_dict['_text_encoder.l0_module.lambda_1'].device)
-    model_state_dict['_text_encoder.l0_module.lambda_2'] = torch.tensor(
-        10.00).to(model_state_dict['_text_encoder.l0_module.lambda_2'].device)
-
-    model_state_dict['_image_encoder.l0_module.hidden_loga'][hidden_size_img:] = torch.zeros_like(
-        model_state_dict['_image_encoder.l0_module.hidden_loga'][hidden_size_img:]).to(model_state_dict['_image_encoder.l0_module.hidden_loga'].device) - 10
-    model_state_dict['_text_encoder.l0_module.hidden_loga'][hidden_size_txt:] = torch.zeros_like(
-        model_state_dict['_text_encoder.l0_module.hidden_loga'][hidden_size_txt:]).to(model_state_dict['_text_encoder.l0_module.hidden_loga'].device) - 10
-
-    # TODO: MODEL DEPTH
-    for i in range(12):
-        if 'image_encoder_without_ddp.visual.transformer.resblocks.' + str(i) + '.attn.in_proj_weight' in sd:
-            head_size_img = int(sd[img_prefix + '.visual.transformer.resblocks.' +
-                                str(i) + '.attn.in_proj_weight'].shape[0] / 64 / 3)
-            model_state_dict['_image_encoder.l0_module.heads_loga'][i, head_size_img:] = torch.zeros_like(
-                model_state_dict['_image_encoder.l0_module.heads_loga'][i, head_size_img:]).to(model_state_dict['_image_encoder.l0_module.heads_loga'].device) - 10
-        else:
-            model_state_dict['_image_encoder.l0_module.heads_loga'][i, :] = torch.zeros_like(
-                model_state_dict['_image_encoder.l0_module.heads_loga'][i, :]).to(model_state_dict['_image_encoder.l0_module.heads_loga'].device) - 10
-
-        if 'image_encoder_without_ddp.visual.transformer.resblocks.' + str(i) + '.mlp.c_fc.weight' in sd:
-            inter_size_img = sd[img_prefix + '.visual.transformer.resblocks.' +
-                                str(i) + '.mlp.c_fc.weight'].shape[0]
-            model_state_dict['_image_encoder.l0_module.intermediate_loga'][i, inter_size_img:] = torch.zeros_like(
-                model_state_dict['_image_encoder.l0_module.intermediate_loga'][i, inter_size_img:]).to(model_state_dict['_image_encoder.l0_module.intermediate_loga'].device) - 10
-        else:
-            model_state_dict['_image_encoder.l0_module.intermediate_loga'][i, :] = torch.zeros_like(
-                model_state_dict['_image_encoder.l0_module.intermediate_loga'][i, :]).to(model_state_dict['_image_encoder.l0_module.intermediate_loga'].device) - 10
-
-        if 'text_encoder_without_ddp.transformer.resblocks.' + str(i) + '.attn.in_proj_weight' in sd:
-            head_size_txt = int(sd[txt_prefix + '.transformer.resblocks.' +
-                                str(i) + '.attn.in_proj_weight'].shape[0] / 64 / 3)
-            model_state_dict['_text_encoder.l0_module.heads_loga'][i, head_size_txt:] = torch.zeros_like(
-                model_state_dict['_text_encoder.l0_module.heads_loga'][i, head_size_txt:]).to(model_state_dict['_text_encoder.l0_module.heads_loga'].device) - 10
-        else:
-            model_state_dict['_text_encoder.l0_module.heads_loga'][i, :] = torch.zeros_like(
-                model_state_dict['_text_encoder.l0_module.heads_loga'][i, :]).to(model_state_dict['_text_encoder.l0_module.heads_loga'].device) - 10
-
-        if 'text_encoder_without_ddp.transformer.resblocks.' + str(i) + '.mlp.c_fc.weight' in sd:
-            inter_size_txt = sd[txt_prefix + '.transformer.resblocks.' +
-                                str(i) + '.mlp.c_fc.weight'].shape[0]
-            model_state_dict['_text_encoder.l0_module.intermediate_loga'][i, inter_size_txt:] = torch.zeros_like(
-                model_state_dict['_text_encoder.l0_module.intermediate_loga'][i, inter_size_txt:]).to(model_state_dict['_text_encoder.l0_module.intermediate_loga'].device) - 10
-        else:
-            model_state_dict['_text_encoder.l0_module.intermediate_loga'][i, :] = torch.zeros_like(
-                model_state_dict['_text_encoder.l0_module.intermediate_loga'][i, :]).to(model_state_dict['_text_encoder.l0_module.intermediate_loga'].device) - 10
-    return model_state_dict
 
 
 def main():
@@ -371,102 +275,7 @@ def main():
     if args.train_data:
         assert not args.trace, 'Cannot train with traced model'
 
-        def exclude(
-            n, p): return p.ndim < 2 or "bn" in n or "ln" in n or "bias" in n or 'logit_scale' in n
-
-        def include(n, p): return not exclude(n, p)
-
-        named_parameters = list(model.named_parameters())
-        # we create three optimizer for image encode, text encoder, and jointly part
-        model_parts = [
-            list(model_without_ddp.image_named_params()),
-            list(model_without_ddp.text_named_params()),
-            list(model_without_ddp.joint_named_params()),
-        ]
-
-        cnt1 = sum(v.numel() for k, v in named_parameters if v.requires_grad)
-        cnt2 = sum(sum(v.numel() for k, v in part if v.requires_grad)
-                   for part in model_parts)
-        assert cnt1 == cnt2, f"cnt1 {cnt1} != cnt2 {cnt2}"
-
-        optimizer = []
-        part_names = ['image', 'text', 'joint']
-        assert len(model_parts) == len(part_names)
-        for name, named_parameters in zip(part_names, model_parts):
-            gain_or_bias_params = [p for n, p in named_parameters if exclude(
-                n, p) and p.requires_grad and "l0_module" not in n]
-            rest_params = [p for n, p in named_parameters if include(
-                n, p) and p.requires_grad and "l0_module" not in n]
-            params_groups = [
-                {"params": gain_or_bias_params, "weight_decay": 0.},
-                {"params": rest_params, "weight_decay": args.wd},
-            ]
-
-            num_opt_params = 0
-            for pg in params_groups:
-                num_opt_params += sum(p.numel() for p in pg['params'])
-
-            logging.info(
-                f'number of optimizer ({name}) params: {num_opt_params}')
-
-            class EmptyOptimizer:
-                def __init__(self):
-                    self.param_groups = []
-
-                def step(self, *args, **kwargs):
-                    pass
-
-                def state_dict(self):
-                    return dict()
-
-                def load_state_dict(self, *args, **kwargs):
-                    pass
-
-                def zero_grad(self):
-                    pass
-
-            if num_opt_params > 0:
-                optimizer_i = optim.AdamW(
-                    params_groups,
-                    lr=args.lr,
-                    # lr=0,
-                    betas=(args.beta1, args.beta2),
-                    eps=args.eps,
-                )
-            else:
-                optimizer_i = EmptyOptimizer()
-            optimizer.append(optimizer_i)
-
-        if args.prune_image or args.prune_text:
-            lr_l0 = 0.02
-            lr_lamda = args.l0lr
-            l0_params = []
-            # add l0 optimizer
-            if args.prune_image:
-                l0_params.extend([
-                    {
-                        "params": [p for n, p in model_without_ddp.image_named_params() if p.requires_grad and "lambda" not in n and "l0_module" in n],
-                        "weight_decay": 0.0,
-                        "lr": lr_l0
-                    }, {
-                        "params": [p for n, p in model_without_ddp.image_named_params() if p.requires_grad and "lambda" in n and "l0_module" in n],
-                        "weight_decay": 0.0,
-                        "lr": lr_lamda
-                    }])
-            if args.prune_text:
-                l0_params.extend([
-                    {
-                        "params": [p for n, p in model_without_ddp.text_named_params() if p.requires_grad and "lambda" not in n and "l0_module" in n],
-                        "weight_decay": 0.0,
-                        "lr": lr_l0
-                    }, {
-                        "params": [p for n, p in model_without_ddp.text_named_params() if p.requires_grad and "lambda" in n and "l0_module" in n],
-                        "weight_decay": 0.0,
-                        "lr": lr_lamda
-                    }])
-            l0_optimizer = optim.AdamW(l0_params)
-            optimizer.append(l0_optimizer)
-
+        optimizer = build_optimizer(args, model)
         assert not args.horovod
 
         use_loss_scale = any(map(
@@ -548,9 +357,7 @@ def main():
                     sd = {k[len('module.'):]: v for k, v in sd.items()}
                 sd = {k.replace('.module', ''): v for k, v in sd.items()}
                 logging.info('convert pruned model to base')
-                model_ori = model.state_dict()
-                model_state_dict = load_pruned_model(model_ori, sd)
-                model.load_state_dict(model_state_dict)
+                load_pruned_model(model, sd)
 
                 if args.load_last_stage is False:
                     logging.info('=== FUSE MASK IMAGE ===')
