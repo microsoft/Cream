@@ -12,7 +12,7 @@ from torch import optim
 import torch.nn.functional as F
 from torch.cuda.amp import GradScaler
 
-from open_clip.model import convert_to_new_checkpoint
+from open_clip.model import convert_to_new_checkpoint, load_pruned_model
 from open_clip.factory import load_model, get_tokenizer
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="torchvision")
@@ -101,104 +101,6 @@ def _load_checkpoint(name):
     elif 'model' in state_dict:
         state_dict = state_dict['model']
     return state_dict
-
-
-def load_pruned_model(model_state_dict, sd):
-    for k in model_state_dict:
-        # auto weight inheritance model weight prefix
-        img_prefix = 'image_encoder_without_ddp'
-        txt_prefix = 'text_encoder_without_ddp'
-        sd_name = k.replace('_image_encoder', img_prefix)
-        sd_name = sd_name.replace('_text_encoder', txt_prefix)
-        if sd_name in sd:
-            if 'attn.in_proj_weight' in sd_name:
-                all_hidden = model_state_dict[k].shape[1]
-                all_head = int(model_state_dict[k].shape[0] / 64 / 3)
-                model_state_dict[k] = torch.zeros_like(
-                    model_state_dict[k]).to(model_state_dict[k].device)
-                head_num = int(sd[sd_name].shape[0] / 64 / 3)
-                hidden_num = sd[sd_name].shape[1]
-                temp = model_state_dict[k].reshape(3, all_head, 64, all_hidden)
-                temp[:, :head_num][..., :hidden_num] = sd[sd_name].reshape(
-                    3, head_num, 64, hidden_num)
-                model_state_dict[k] = temp.reshape(
-                    model_state_dict[k].shape[0], model_state_dict[k].shape[1])
-            elif 'attn.in_proj_bias' in sd_name:
-                all_head = int(model_state_dict[k].shape[0] / 64 / 3)
-                model_state_dict[k] = torch.zeros_like(
-                    model_state_dict[k]).to(model_state_dict[k].device)
-                head_num = int(sd[sd_name].shape[0] / 64 / 3)
-                temp = model_state_dict[k].reshape(3, all_head, 64)
-                temp[:, :head_num] = sd[sd_name].reshape(3, head_num, 64)
-                model_state_dict[k] = temp.reshape(
-                    model_state_dict[k].shape[0])
-            else:
-                model_state_dict[k] = torch.zeros_like(
-                    model_state_dict[k]).to(model_state_dict[k].device)
-                if len(sd[sd_name].shape) > 0:
-                    sl = [slice(0, s) for s in sd[sd_name].shape]
-                    model_state_dict[k][sl] = sd[sd_name]
-                else:
-                    model_state_dict[k] = sd[sd_name]
-        else:
-            if 'transformer.resblocks' in sd_name:
-                model_state_dict[k] = torch.zeros_like(
-                    model_state_dict[k]).to(model_state_dict[k].device)
-    model_state_dict['_logit_scale.logit_scale'] = sd['_logit_scale.logit_scale']
-    hidden_size_img = sd['image_encoder_without_ddp.visual.ln_pre.weight'].shape[0]
-    hidden_size_txt = sd['text_encoder_without_ddp.positional_embedding'].shape[1]
-    model_state_dict['_image_encoder.l0_module.lambda_1'] = torch.tensor(
-        10.00).to(model_state_dict['_image_encoder.l0_module.lambda_1'].device)
-    model_state_dict['_image_encoder.l0_module.lambda_2'] = torch.tensor(
-        10.00).to(model_state_dict['_image_encoder.l0_module.lambda_2'].device)
-    model_state_dict['_text_encoder.l0_module.lambda_1'] = torch.tensor(
-        10.00).to(model_state_dict['_text_encoder.l0_module.lambda_1'].device)
-    model_state_dict['_text_encoder.l0_module.lambda_2'] = torch.tensor(
-        10.00).to(model_state_dict['_text_encoder.l0_module.lambda_2'].device)
-
-    model_state_dict['_image_encoder.l0_module.hidden_loga'][hidden_size_img:] = torch.zeros_like(
-        model_state_dict['_image_encoder.l0_module.hidden_loga'][hidden_size_img:]).to(model_state_dict['_image_encoder.l0_module.hidden_loga'].device) - 10
-    model_state_dict['_text_encoder.l0_module.hidden_loga'][hidden_size_txt:] = torch.zeros_like(
-        model_state_dict['_text_encoder.l0_module.hidden_loga'][hidden_size_txt:]).to(model_state_dict['_text_encoder.l0_module.hidden_loga'].device) - 10
-
-    # TODO: MODEL DEPTH
-    for i in range(12):
-        if 'image_encoder_without_ddp.visual.transformer.resblocks.' + str(i) + '.attn.in_proj_weight' in sd:
-            head_size_img = int(sd[img_prefix + '.visual.transformer.resblocks.' +
-                                str(i) + '.attn.in_proj_weight'].shape[0] / 64 / 3)
-            model_state_dict['_image_encoder.l0_module.heads_loga'][i, head_size_img:] = torch.zeros_like(
-                model_state_dict['_image_encoder.l0_module.heads_loga'][i, head_size_img:]).to(model_state_dict['_image_encoder.l0_module.heads_loga'].device) - 10
-        else:
-            model_state_dict['_image_encoder.l0_module.heads_loga'][i, :] = torch.zeros_like(
-                model_state_dict['_image_encoder.l0_module.heads_loga'][i, :]).to(model_state_dict['_image_encoder.l0_module.heads_loga'].device) - 10
-
-        if 'image_encoder_without_ddp.visual.transformer.resblocks.' + str(i) + '.mlp.c_fc.weight' in sd:
-            inter_size_img = sd[img_prefix + '.visual.transformer.resblocks.' +
-                                str(i) + '.mlp.c_fc.weight'].shape[0]
-            model_state_dict['_image_encoder.l0_module.intermediate_loga'][i, inter_size_img:] = torch.zeros_like(
-                model_state_dict['_image_encoder.l0_module.intermediate_loga'][i, inter_size_img:]).to(model_state_dict['_image_encoder.l0_module.intermediate_loga'].device) - 10
-        else:
-            model_state_dict['_image_encoder.l0_module.intermediate_loga'][i, :] = torch.zeros_like(
-                model_state_dict['_image_encoder.l0_module.intermediate_loga'][i, :]).to(model_state_dict['_image_encoder.l0_module.intermediate_loga'].device) - 10
-
-        if 'text_encoder_without_ddp.transformer.resblocks.' + str(i) + '.attn.in_proj_weight' in sd:
-            head_size_txt = int(sd[txt_prefix + '.transformer.resblocks.' +
-                                str(i) + '.attn.in_proj_weight'].shape[0] / 64 / 3)
-            model_state_dict['_text_encoder.l0_module.heads_loga'][i, head_size_txt:] = torch.zeros_like(
-                model_state_dict['_text_encoder.l0_module.heads_loga'][i, head_size_txt:]).to(model_state_dict['_text_encoder.l0_module.heads_loga'].device) - 10
-        else:
-            model_state_dict['_text_encoder.l0_module.heads_loga'][i, :] = torch.zeros_like(
-                model_state_dict['_text_encoder.l0_module.heads_loga'][i, :]).to(model_state_dict['_text_encoder.l0_module.heads_loga'].device) - 10
-
-        if 'text_encoder_without_ddp.transformer.resblocks.' + str(i) + '.mlp.c_fc.weight' in sd:
-            inter_size_txt = sd[txt_prefix + '.transformer.resblocks.' +
-                                str(i) + '.mlp.c_fc.weight'].shape[0]
-            model_state_dict['_text_encoder.l0_module.intermediate_loga'][i, inter_size_txt:] = torch.zeros_like(
-                model_state_dict['_text_encoder.l0_module.intermediate_loga'][i, inter_size_txt:]).to(model_state_dict['_text_encoder.l0_module.intermediate_loga'].device) - 10
-        else:
-            model_state_dict['_text_encoder.l0_module.intermediate_loga'][i, :] = torch.zeros_like(
-                model_state_dict['_text_encoder.l0_module.intermediate_loga'][i, :]).to(model_state_dict['_text_encoder.l0_module.intermediate_loga'].device) - 10
-    return model_state_dict
 
 
 def main():

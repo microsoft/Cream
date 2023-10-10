@@ -12,7 +12,7 @@ from torch import optim
 import torch.nn.functional as F
 from torch.cuda.amp import GradScaler
 
-from open_clip.model import convert_to_new_checkpoint
+from open_clip.model import convert_to_new_checkpoint, load_pruned_model
 from open_clip.factory import load_model, get_tokenizer
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="torchvision")
@@ -99,107 +99,6 @@ def _load_checkpoint(name):
     elif 'model' in state_dict:
         state_dict = state_dict['model']
     return state_dict
-
-
-@torch.no_grad()
-def load_pruned_model(model_state_dict, pruned_state_dict, head_dim):
-    '''
-    Copy the pruned weights to the full weights
-
-    Inputs:
-        model_state_dict: the full model weights
-        pruned_state_dict: the pruned model weights
-    '''
-    def _copy_to_full_weight(dst, src):
-        assert dst.ndim == src.ndim, (dst.ndim, src.ndim)
-        dst.zero_()
-        dims = src.shape
-        if len(dims) == 0:
-            dst.copy_(src)
-        else:
-            slices = [slice(0, d) for d in dims]
-            dst[slices].copy_(src)
-
-    lambda_init_value = 10.0
-
-    pruned_state_dict = {k.replace('_image_encoder', 'image_encoder_without_ddp').\
-            replace('_text_encoder', 'text_encoder_without_ddp')
-            : v for k, v in pruned_state_dict.items()}
-
-    for k, dst in model_state_dict.items():
-        # auto weight inheritance model weight prefix
-        dst = model_state_dict[k]
-        dst_shape = dst.shape
-
-        # copy weights
-        if pruned_state_dict_name in sd:
-            src = pruned_state_dict[sd_name]
-            if 'attn.in_proj_weight' in pruned_state_dict_name:
-                # reshape: (3 * num_heads * head_dim, embed_dim) -> (3, num_heads, head_dim, embed_dim)
-                assert len(src.shape) == 2
-                _copy_to_full_weight(dst.view(3, -1, head_dim, dst_shape[-1]),
-                                     src.view(3, -1, head_dim, v.shape[-1]))
-            elif 'attn.in_proj_bias' in pruned_state_dict_name:
-                # reshape: (3 * num_heads * head_dim,) -> (3, num_heads, head_dim)
-                assert len(src.shape) == 1
-                _copy_to_full_weight(dst.view(3, -1, head_dim),
-                                     src.view(3, -1, head_dim))
-            else:
-                _copy_to_full_weight(dst, src)
-        else:
-            # the layer has been pruned.
-            dst.zero_()
-
-    model_state_dict['_logit_scale.logit_scale'] = pruned_state_dict['_logit_scale.logit_scale']
-
-    # prune hidden dimensions
-    encoder_names = ['_image_encoder', '_text_encoder']
-    hidden_size_img = pruned_state_dict[f'_image_encoder.visual.ln_pre.weight'].shape[0]
-    hidden_size_txt = pruned_state_dict[f'_text_encoder.positional_embedding'].shape[1]
-    hidden_sizes = [hidden_size_img, hidden_size_txt]
-
-    for ename, hidden_size in zip(encoder_names, [hidden_sizes]):
-        # reset lambda in l0 module
-        model_state_dict[f'{ename}.l0_module.lambda_1'].fill_(lambda_init_value)
-        model_state_dict[f'{ename}.l0_module.lambda_2'].fill_(lambda_init_value)
-        # prune the last dimensions
-        model_state_dict[f'{ename}.l0_module.hidden_loga'][hidden_size:].fill_(-lambda_init_value)
-
-    def _get_layer_id(name):
-        return int(name.split('resblocks.')[1].split('.')[0])
-
-    for ename in encoder_names:
-        # get the depth of the encoder
-        encoder_keys = list(k for k in model_state_dict.keys() if ename in k)
-        encoder_depth = max(_get_layer_id(k) for k in encoder_keys if and 'resblocks' in k)
-        in_proj_weight_shapes = [None for _ in range(depth)]
-        mlp_c_fc_shapes = [None for _ in range(depth)]
-        for k in encoder_keys:
-            if 'in_proj_weight' in k:
-                d = _get_layer_id(k)
-                in_proj_weight_shapes[d] = pruned_state_dict[k].shape
-            elif 'mlp.c_fc.weight' in k:
-                d = _get_layer_id(k)
-                mlp_c_fc_shapes[d] = pruned_state_dict[k].shape
-
-        for d in range(encoder_depth):
-            # set heads_loga
-            if in_proj_weight_shapes[d] is not None:
-                num_heads = in_proj_weight_shapes[d][0] // head_dim // 3
-                model_state_dict[f'{ename}.l0_module.heads_loga'][d, num_heads].fill_(-lambda_init_value)
-            else:
-                # all heads have been pruned
-                model_state_dict[f'{ename}.l0_module.heads_loga'][d, :].fill_(-lambda_init_value)
-
-            # set intermediate_loga
-            if mlp_c_fc_shapes[d] is not None:
-                inter_size = mlp_c_fc_shapes[d][0]
-                model_state_dict[f'{ename}.l0_module.intermediate_loga'][d, inter_size:].fill_(-lambda_init_value)
-            else:
-                # all intermediate dimensions have been pruned
-                model_state_dict[f'{ename}.l0_module.intermediate_loga'][d, :].fill_(-lambda_init_value)
-
-    return model_state_dict
 
 
 def main():
