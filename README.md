@@ -3,7 +3,7 @@
 
 ***This is a collection of our NAS and Vision Transformer work***
 
-> [**TinyCLIP**](./main/TinyCLIP) (```@ICCV'23```): **TinyCLIP: CLIP Distillation via Affinity Mimicking and Weight Inheritance**
+> [**TinyCLIP**](./TinyCLIP) (```@ICCV'23```): **TinyCLIP: CLIP Distillation via Affinity Mimicking and Weight Inheritance**
 
 > [**EfficientViT**](./EfficientViT) (```@CVPR'23```): **EfficientViT: Memory Efficient Vision Transformer with Cascaded Group Attention**
 
