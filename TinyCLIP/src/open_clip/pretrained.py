@@ -145,6 +145,43 @@ _VITg14 = dict(
     laion2b_s12b_b42k=_pcfg(hf_hub='laion/CLIP-ViT-g-14-laion2B-s12B-b42K/'),
 )
 
+# TinyCLIP
+_TINYCLIP_VIT_39M_16_TEXT_19M = {
+    "YFCC15M": _pcfg(
+        "https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-ViT-39M-16-Text-19M-YFCC15M.pt",
+    ),
+}
+
+_TINYCLIP_VIT_8M_16_TEXT_3M = {
+    "YFCC15M": _pcfg(
+        "https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M.pt",
+    ),
+}
+
+_TINYCLIP_RESNET_30M_TEXT_29M = {
+    "LAION400M": _pcfg(
+        "https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-ResNet-30M-Text-29M-LAION400M.pt",
+    ),
+}
+
+_TINYCLIP_RESNET_19M_TEXT_19M = {
+    "LAION400M": _pcfg(
+        "https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-ResNet-19M-Text-19M-LAION400M.pt",
+    ),
+}
+
+_TINYCLIP_VIT_61M_32_TEXT_29M = {
+    "LAION400M": _pcfg(
+        "https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-ViT-61M-32-Text-29M-LAION400M.pt",
+    ),
+}
+
+_TINYCLIP_VIT_40M_32_TEXT_19M = {
+    "LAION400M": _pcfg(
+        "https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-ViT-40M-32-Text-19M-LAION400M.pt",
+    ),
+}
+
 _PRETRAINED = {
     "RN50": _RN50,
     "RN50-quickgelu": _RN50_quickgelu,
@@ -161,6 +198,13 @@ _PRETRAINED = {
     "ViT-L-14-336": _VITL14_336,
     "ViT-H-14": _VITH14,
     "ViT-g-14": _VITg14,
+
+    "TinyCLIP-ViT-39M-16-Text-19M": _TINYCLIP_VIT_39M_16_TEXT_19M,
+    "TinyCLIP-ViT-8M-16-Text-3M": _TINYCLIP_VIT_8M_16_TEXT_3M,
+    "TinyCLIP-ResNet-30M-Text-29M": _TINYCLIP_RESNET_30M_TEXT_29M,
+    "TinyCLIP-ResNet-19M-Text-19M": _TINYCLIP_RESNET_19M_TEXT_19M,
+    "TinyCLIP-ViT-61M-32-Text-29M": _TINYCLIP_VIT_61M_32_TEXT_29M,
+    "TinyCLIP-ViT-40M-32-Text-19M": _TINYCLIP_VIT_40M_32_TEXT_19M,
 }
 
 
@@ -198,6 +242,8 @@ def get_pretrained_cfg(model: str, tag: str):
     if model not in _PRETRAINED:
         return {}
     model_pretrained = _PRETRAINED[model]
+    if tag in model_pretrained:
+        return model_pretrained[tag]
     return model_pretrained.get(tag.lower(), {})
 
 
