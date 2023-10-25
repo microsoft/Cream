@@ -23,7 +23,7 @@ model, _, preprocess = open_clip.create_model_and_transforms(arch, pretrained='L
 
 tokenizer = open_clip.get_tokenizer(arch)
 
-image_fname = './figure/cat.jpg'
+image_fname = './figure/TinyCLIP.jpg'
 image = preprocess(Image.open(image_fname)).unsqueeze(0)
 text = tokenizer(["a diagram", "a dog", "a cat"])
 
