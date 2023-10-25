@@ -44,10 +44,13 @@ Note: The configs of models with auto inheritance are generated automatically.
 ### Install dependencies and prepare dataset
 - [Preparation](./docs/PREPARATION.md)
 
-### Evaluate it !
+### Evaluate it
 - [Evaluation](./docs/EVALUATION.md)
 
-### Pretrain it !
+### An example for inference
+- [Inference](./inference.py)
+
+### Pretrain it
 - [Pretraining](./docs/PRETRAINING.md)
 
 ## Citation
