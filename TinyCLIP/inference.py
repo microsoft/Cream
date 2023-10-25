@@ -35,4 +35,4 @@ with torch.no_grad(), torch.cuda.amp.autocast():
 
     text_probs = (100.0 * image_features @ text_features.T).softmax(dim=-1)
 
-print("Label probs:", text_probs)  # prints: [[1., 0., 0.]]
+print("Label probs:", text_probs)
