@@ -79,7 +79,7 @@ def compute_params(model):
     return n_parameters, (num_params_image, num_buffers_image), num_params_text, num_token_emb
 
 
-DEVICE = 'cpu'
+DEVICE = torch.device('cpu')
 
 
 def _load_checkpoint(name):
@@ -87,7 +87,7 @@ def _load_checkpoint(name):
     if '@' in name:
         teacher_model_name, teacher_pretrained = name.split('@')
         _model, _, _ = create_model_and_transforms(
-            teacher_model_name, pretrained=teacher_pretrained)
+            teacher_model_name, pretrained=teacher_pretrained, device=DEVICE)
         return _model.state_dict()
     json_fname = os.path.join('exps', name + '.json')
     if os.path.exists(json_fname):
