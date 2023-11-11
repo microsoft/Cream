@@ -18,7 +18,7 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="torchvision")
 
 from open_clip.model import convert_to_new_checkpoint
-from open_clip.weight_inherit import weight_inherit_L2
+from open_clip.weight_inherit import weight_inherit
 
 from training.optimizer import build_optimizer
 
@@ -83,7 +83,7 @@ def compute_params(model):
     return n_parameters, (num_params_image, num_buffers_image), num_params_text, num_token_emb
 
 
-DEVICE = 'cpu'
+DEVICE = torch.device('cpu')
 
 
 def _load_checkpoint(name):
@@ -91,7 +91,7 @@ def _load_checkpoint(name):
     if '@' in name:
         teacher_model_name, teacher_pretrained = name.split('@')
         _model, _, _ = create_model_and_transforms(
-            teacher_model_name, pretrained=teacher_pretrained)
+            teacher_model_name, pretrained=teacher_pretrained, device=DEVICE)
         return _model.state_dict()
     json_fname = os.path.join('exps', name + '.json')
     if os.path.exists(json_fname):
@@ -454,7 +454,7 @@ def main():
             teacher_fs = _filter_prefix(teacher_state, encoder_prefix)
             logging.info(
                 f'  student: {len(student_fs)}, teacher: {len(teacher_fs)}')
-            weight_inherit_L2(student_fs, teacher_fs, head_dim)
+            weight_inherit(student_fs, teacher_fs, head_dim)
             num = 0
             for k, v in student_fs.items():
                 num += v.numel()
@@ -469,7 +469,7 @@ def main():
             image_checkpoint = remove_prefix_module(
                 _load_checkpoint(args.pretrained_image_file))
             num_inherit = encoder_weight_inherit(
-                state_dict, image_checkpoint, '_image_encoder.visual', head_dim=model.visual.transformer.head_dim)
+                state_dict, image_checkpoint, '_image_encoder.visual', head_dim=model.visual.head_dim)
             # format: _image_encoder.xxxx
             model_load_checkpoint(model, state_dict)
             assert num_inherit == num_params_image + \

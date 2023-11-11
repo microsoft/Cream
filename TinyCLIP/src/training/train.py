@@ -210,8 +210,6 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
             image_features=image_features,
             text_features=text_features,
             logit_scale=logit_scale,
-            image_outputs=model.visual.transformer.outputs,
-            text_outputs=model.transformer.outputs,
         )
         return loss_fn(student_outputs, teacher_outputs)
 
@@ -248,14 +246,10 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
         with autocast():
 
             # clean outputs first to avoid the error when using MXS
-            model.visual.transformer.outputs = None
-            model.transformer.outputs = None
             outputs_no_grad = [None, None, None]
             student_outputs = forward_backward_fn(
                 model, images, texts, outputs_no_grad)
             del images, texts, student_inputs
-            model.visual.transformer.outputs = None
-            model.transformer.outputs = None
 
             loss = grad_cache_loss_fn(student_outputs, teacher_outputs)
 
@@ -395,9 +389,14 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
 
         if len(batch) == 2:
             images, texts = batch
+            images = images.to(device, non_blocking=True)
+            texts = texts.to(device, non_blocking=True)
             labels = None
         else:
             images, texts, labels = batch
+            images = images.to(device, non_blocking=True)
+            texts = texts.to(device, non_blocking=True)
+            labels = labels.to(device, non_blocking=True)
 
         metrics['data_time'].update(time.time() - end)
         for opt in optimizer:

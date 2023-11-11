@@ -467,6 +467,7 @@ class VisualTransformer(nn.Module):
 
         self.transformer = Transformer(
             width, layers, heads, mlp_ratio, act_layer=act_layer)
+        self.head_dim = width // heads
 
         self.ln_post = LayerNorm(width)
         # image proj
