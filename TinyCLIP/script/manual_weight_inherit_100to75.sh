@@ -12,7 +12,7 @@ torchrun $DISTRIBUTED_ARGS src/training/main.py \
  --batch-size 1024 \
  --epochs 6 \
  --workers 8 \
- --model TinyCLIP-61M \
+ --model TinyCLIP-ViT-61M-32-Text-29M \
  --name exp_name \
  --seed 0 \
  --local-loss \
