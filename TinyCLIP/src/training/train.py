@@ -248,14 +248,18 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
         with autocast():
 
             # clean outputs first to avoid the error when using MXS
-            model.visual.transformer.outputs = None
-            model.transformer.outputs = None
+            if hasattr(model.visual, 'transformer'):
+                model.visual.transformer.outputs = None
+            if hasattr(model, 'transformer'):
+                model.transformer.outputs = None
             outputs_no_grad = [None, None, None]
             student_outputs = forward_backward_fn(
                 model, images, texts, outputs_no_grad)
             del images, texts, student_inputs
-            model.visual.transformer.outputs = None
-            model.transformer.outputs = None
+            if hasattr(model.visual, 'transformer'):
+                model.visual.transformer.outputs = None
+            if hasattr(model, 'transformer'):
+                model.transformer.outputs = None
 
             loss = grad_cache_loss_fn(student_outputs, teacher_outputs)
 
