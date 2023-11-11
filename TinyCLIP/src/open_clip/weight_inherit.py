@@ -8,6 +8,8 @@ BLOCKS_PATTERNS = [
     (re.compile(r"visual.blocks\.(\d+)\.(\d+)\.(.*?)$"), 'visual.blocks.{}.{}.{}'),
     # TinyViT
     (re.compile(r"layers.(\d+)\.blocks\.(\d+)\.(.*?)$"), 'layers.{}.blocks.{}.{}'),
+    # ResNet
+    (re.compile(r'visual.layer(\d+).(\d+).(.*?)$'), 'visual.layer{}.{}.{}'),
 ]
 
 TRANS_PATTENS = [
@@ -74,7 +76,7 @@ def weight_inherit(student_state_dict, teacher_state_dict, head_dim):
     assert len(student_depth_state) == len(teacher_depth_state)
     # remap depth
     vised = set()
-    for si in range(len(student_depth_state)):
+    for si in sorted(student_depth_state.keys()):
         student_depth = len(student_depth_state[si])
         teacher_depth = len(teacher_depth_state[si])
         # interval_front
@@ -248,8 +250,24 @@ if __name__ == '__main__':
         # load inherited weights
         student_model.load_state_dict(student_state_dict)
 
+    def weight_inherit_for_open_clip_resnet():
+        from open_clip.model import ImageEncoder, CLIPVisionCfg
+        # layers to identify ResNet
+        student_cfg = CLIPVisionCfg(image_size=224, layers=[
+                                    1, 1, 1, 1], width=64, patch_size=None)
+        teacher_cfg = CLIPVisionCfg(image_size=224, layers=[
+                                    2, 2, 6, 2], width=64, patch_size=None)
+        student_model = ImageEncoder(64, student_cfg, quick_gelu=False)
+        teacher_model = ImageEncoder(64, teacher_cfg, quick_gelu=False)
+
+        student_state_dict = student_model.state_dict()
+        teacher_state_dict = teacher_model.state_dict()
+
+        weight_inherit(student_state_dict, teacher_state_dict, head_dim=64)
+
     # weight_inherit_for_tinyvit()
     weight_inherit_for_open_clip_transformer()
     weight_inherit_for_open_clip_vision()
+    weight_inherit_for_open_clip_resnet()
 
     print("OVER")
