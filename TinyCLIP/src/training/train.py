@@ -395,9 +395,14 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, scheduler_
 
         if len(batch) == 2:
             images, texts = batch
+            images = images.to(device, non_blocking=True)
+            texts = texts.to(device, non_blocking=True)
             labels = None
         else:
             images, texts, labels = batch
+            images = images.to(device, non_blocking=True)
+            texts = texts.to(device, non_blocking=True)
+            labels = labels.to(device, non_blocking=True)
 
         metrics['data_time'].update(time.time() - end)
         for opt in optimizer:
