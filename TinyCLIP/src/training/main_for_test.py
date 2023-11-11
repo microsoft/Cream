@@ -18,7 +18,7 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="torchvision")
 
 from open_clip.model import convert_to_new_checkpoint
-from open_clip.weight_inherit import weight_inherit_L2
+from open_clip.weight_inherit import weight_inherit
 
 
 try:
@@ -354,7 +354,7 @@ def main():
             teacher_fs = _filter_prefix(teacher_state, encoder_prefix)
             logging.info(
                 f'  student: {len(student_fs)}, teacher: {len(teacher_fs)}')
-            weight_inherit_L2(student_fs, teacher_fs, head_dim)
+            weight_inherit(student_fs, teacher_fs, head_dim)
             num = 0
             for k, v in student_fs.items():
                 num += v.numel()
