@@ -164,7 +164,8 @@ def get_imagenet(args, preprocess_fns, split):
         idxs = idxs.astype('int')
         sampler = SubsetRandomSampler(np.where(idxs)[0])
     else:
-        sampler = None
+        indices = np.arange(args.rank, len(dataset), args.world_size)
+        sampler = SubsetRandomSampler(indices)
 
     dataloader = torch.utils.data.DataLoader(
         dataset,
