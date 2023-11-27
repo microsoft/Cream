@@ -315,34 +315,6 @@ def main():
 
     # determine if this worker should save logs and checkpoints. only do so if it is rank == 0
     start_epoch = 0
-    data = get_data(args, (preprocess_train, preprocess_val),
-                    epoch=start_epoch)
-    args.save_logs = args.logs and args.logs.lower() != 'none' and is_master(args)
-    writer = None
-    if args.save_logs and args.tensorboard:
-        assert tensorboard is not None, "Please install tensorboard."
-        writer = tensorboard.SummaryWriter(args.tensorboard_path)
-
-    if args.wandb and is_master(args):
-        assert wandb is not None, 'Please install wandb.'
-        logging.debug('Starting wandb.')
-        args.train_sz = data["train"].dataloader.num_samples
-        if args.val_data is not None:
-            args.val_sz = data["val"].dataloader.num_samples
-        # you will have to configure this for your project!
-        wandb_output_path = args.checkpoint_path
-        wandb.init(
-            project="tinyclip",
-            name=args.name,
-            notes=args.wandb_notes,
-            tags=[],
-            config=vars(args),
-            dir=wandb_output_path,
-        )
-        if args.debug:
-            wandb.watch(model, log='all')
-        wandb.save(params_file)
-        logging.debug('Finished loading wandb.')
 
     # optionally resume from a checkpoint
     start_epoch = 0
@@ -509,6 +481,33 @@ def main():
                     epoch=start_epoch, tokenizer=get_tokenizer(args.model))
     print(f"Dataset: {set(data.keys())}")
     assert len(data), 'At least one train or eval dataset must be specified.'
+
+    args.save_logs = args.logs and args.logs.lower() != 'none' and is_master(args)
+    writer = None
+    if args.save_logs and args.tensorboard:
+        assert tensorboard is not None, "Please install tensorboard."
+        writer = tensorboard.SummaryWriter(args.tensorboard_path)
+
+    if args.wandb and is_master(args):
+        assert wandb is not None, 'Please install wandb.'
+        logging.debug('Starting wandb.')
+        args.train_sz = data["train"].dataloader.num_samples
+        if args.val_data is not None:
+            args.val_sz = data["val"].dataloader.num_samples
+        # you will have to configure this for your project!
+        wandb_output_path = args.checkpoint_path
+        wandb.init(
+            project="tinyclip",
+            name=args.name,
+            notes=args.wandb_notes,
+            tags=[],
+            config=vars(args),
+            dir=wandb_output_path,
+        )
+        if args.debug:
+            wandb.watch(model, log='all')
+        wandb.save(params_file)
+        logging.debug('Finished loading wandb.')
 
     # create scheduler if train
     scheduler = None
