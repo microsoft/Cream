@@ -172,6 +172,7 @@ def get_imagenet(args, preprocess_fns, split):
         batch_size=args.batch_size,
         num_workers=args.workers,
         sampler=sampler,
+        drop_last=is_train,
     )
 
     return DataInfo(dataloader=dataloader, sampler=sampler)
