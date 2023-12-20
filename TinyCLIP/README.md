@@ -39,7 +39,7 @@ TinyCLIP ViT-45M/32 Text-18M | auto | LAION+YFCC-400M | 62.7  | 1.9 | 3,685 | [M
 
 Note: The configs of models with auto inheritance are generated automatically.
 
-## Getting Started
+## Getting started
 :beginner: Here is the setup tutorial, evaluation and pretraining scripts.
 
 ### Install dependencies and prepare dataset
@@ -48,7 +48,7 @@ Note: The configs of models with auto inheritance are generated automatically.
 ### Evaluate it
 - [Evaluation](./docs/EVALUATION.md)
 
-### An example for inference
+### Model inference
 - [Inference](./inference.py)
 - [Use with 🤗Hugging Face Transformers](https://huggingface.co/collections/wkcn/tinyclip-model-zoo-6581aa105311fe07be88cb0d)
 
