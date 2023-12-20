@@ -18,6 +18,7 @@
 * TinyCLIP ResNet-19M reduces the parameters by **50\%** while getting **$2\times$** inference speedup, and obtains **56.4\%** accuracy on ImageNet.
 
 ## News
+* *Dec.2023* TinyCLIP models have been integrated into [🤗Hugging Face Model Hub](https://huggingface.co/collections/wkcn/tinyclip-model-zoo-6581aa105311fe07be88cb0d).
 * *Oct.2023* Training code is released.
 * *Sep.2023* This is preliminary released code, including inference code and checkpoints.
 
@@ -49,6 +50,7 @@ Note: The configs of models with auto inheritance are generated automatically.
 
 ### An example for inference
 - [Inference](./inference.py)
+- [Use with 🤗Hugging Face Transformers](https://huggingface.co/collections/wkcn/tinyclip-model-zoo-6581aa105311fe07be88cb0d)
 
 ### Pretrain it
 - [Pretraining](./docs/PRETRAINING.md)
