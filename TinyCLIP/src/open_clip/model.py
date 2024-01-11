@@ -4,6 +4,7 @@ Adapted from https://github.com/openai/CLIP. Originally MIT License, Copyright (
 """
 
 import functools
+import inspect
 from copy import deepcopy
 import os
 import random
@@ -12,6 +13,7 @@ from contextlib import nullcontext
 from argparse import Namespace
 
 from dataclasses import dataclass
+import functools
 import logging
 import math
 from typing import Tuple, Union, Callable, Optional
@@ -21,11 +23,13 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 from torch.utils.checkpoint import checkpoint
+# apply the non-reentrant variant of checkpoint
+if 'use_reentrant' in inspect.signature(checkpoint).parameters:
+    checkpoint = functools.partial(checkpoint, use_reentrant=False)
 
 from .timm_model import TimmModel
 from .utils import freeze_batch_norm_2d, to_2tuple
 from .resnet import ModifiedResNet
-from .weight_inherit import weight_inherit
 from .l0module import L0Module
 
 
@@ -900,6 +904,26 @@ class CLIPBase(nn.Module):
         assert self.used_ddp is False
         self._image_encoder = encoder
         self._without_ddp[0] = self._image_encoder
+
+    @property
+    def text_encoder_without_ddp(self):
+        return self._without_ddp[1]
+
+    @text_encoder_without_ddp.setter
+    def text_encoder_without_ddp(self, encoder):
+        assert self.used_ddp is False
+        self._text_encoder = encoder
+        self._without_ddp[1] = self._text_encoder
+
+    @property
+    def logit_scale_without_ddp(self):
+        return self._without_ddp[2]
+
+    @logit_scale_without_ddp.setter
+    def logit_scale_without_ddp(self, logit_scale):
+        assert self.used_ddp is False
+        self._logit_scale = logit_scale
+        self._without_ddp[2] = self._logit_scale
 
     @property
     def visual(self):
