@@ -902,6 +902,26 @@ class CLIPBase(nn.Module):
         self._without_ddp[0] = self._image_encoder
 
     @property
+    def text_encoder_without_ddp(self):
+        return self._without_ddp[1]
+
+    @text_encoder_without_ddp.setter
+    def text_encoder_without_ddp(self, encoder):
+        assert self.used_ddp is False
+        self._text_encoder = encoder
+        self._without_ddp[1] = self._text_encoder
+
+    @property
+    def logit_scale_without_ddp(self):
+        return self._without_ddp[2]
+
+    @logit_scale_without_ddp.setter
+    def logit_scale_without_ddp(self, logit_scale):
+        assert self.used_ddp is False
+        self._logit_scale = logit_scale
+        self._without_ddp[2] = self._logit_scale
+
+    @property
     def visual(self):
         return self.image_encoder_without_ddp.visual
 
