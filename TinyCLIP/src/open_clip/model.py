@@ -12,6 +12,7 @@ from contextlib import nullcontext
 from argparse import Namespace
 
 from dataclasses import dataclass
+import functools
 import logging
 import math
 from typing import Tuple, Union, Callable, Optional
@@ -21,6 +22,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 from torch.utils.checkpoint import checkpoint
+checkpoint = functools.partial(checkpoint, use_reentrant=False)
 
 from .timm_model import TimmModel
 from .utils import freeze_batch_norm_2d, to_2tuple
