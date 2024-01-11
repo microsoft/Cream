@@ -4,6 +4,7 @@ Adapted from https://github.com/openai/CLIP. Originally MIT License, Copyright (
 """
 
 import functools
+import inspect
 from copy import deepcopy
 import os
 import random
@@ -22,12 +23,13 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 from torch.utils.checkpoint import checkpoint
-checkpoint = functools.partial(checkpoint, use_reentrant=False)
+# enable the non-reentrant variant of checkpoint
+if 'use_reentrant' in inspect.signature(checkpoint).parameters:
+    checkpoint = functools.partial(checkpoint, use_reentrant=False)
 
 from .timm_model import TimmModel
 from .utils import freeze_batch_norm_2d, to_2tuple
 from .resnet import ModifiedResNet
-from .weight_inherit import weight_inherit
 from .l0module import L0Module
 
 
