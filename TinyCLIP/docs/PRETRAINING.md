@@ -2,6 +2,8 @@
 
 In this document, we introduce ***auto weight inheritance*** and ***manual weight inheritance method*** to train a TinyCLIP model with the proposed ***cross-modalities distillation***. 
 
+:star: **[Notice]** Please replace the training data loader with the one loading LAION-400M or YFCC-15M.
+
 ###  Auto weight inheritance training
 In this part, we compress OpenCLIP ViT-B/32 to 25% of origin size using three stages, where the model is compressed from 100% to 75%, from 75% to 50% and from 50% to 25% in the three stages, respectively.
 
