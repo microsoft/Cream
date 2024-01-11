@@ -23,7 +23,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 from torch.utils.checkpoint import checkpoint
-# enable the non-reentrant variant of checkpoint
+# apply the non-reentrant variant of checkpoint
 if 'use_reentrant' in inspect.signature(checkpoint).parameters:
     checkpoint = functools.partial(checkpoint, use_reentrant=False)
 
