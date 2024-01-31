@@ -35,8 +35,7 @@ import open_clip
 # model, _, preprocess = open_clip.create_model_and_transforms(arch, pretrained='LAIONYFCC400M')
 
 arch = 'TinyCLIP-auto-ViT-45M-32-Text-18M'
-model, _, preprocess = open_clip.create_model_and_transforms(
-    arch, pretrained='LAIONYFCC400M')
+model, _, preprocess = open_clip.create_model_and_transforms(arch, pretrained='LAIONYFCC400M')
 
 tokenizer = open_clip.get_tokenizer(arch)
 
