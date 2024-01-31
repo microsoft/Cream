@@ -1297,7 +1297,7 @@ def resize_pos_embed(state_dict, model, interpolation: str = 'bicubic', seq_dim=
 
 
 @torch.no_grad()
-def load_pruned_model(model, pruned_state_dict):
+def load_pruned_model(model, pruned_state_dict, strict=True):
     '''
     A full model loads the pruned state dict.
 
@@ -1314,6 +1314,10 @@ def load_pruned_model(model, pruned_state_dict):
         else:
             slices = [slice(0, d) for d in dims]
             dst[slices].copy_(src)
+
+    for _ in range(2):
+        pruned_state_dict = {
+            k.replace('module.', ''): v for k, v in pruned_state_dict.items()}
 
     lambda_init_value = 10.0
     model_state_dict = model.state_dict()
@@ -1405,4 +1409,30 @@ def load_pruned_model(model, pruned_state_dict):
                 model_state_dict[f'{ename}.l0_module.intermediate_loga'][d,
                                                                          :].fill_(-lambda_init_value)
 
-    model.load_state_dict(model_state_dict, strict=True)
+    return model.load_state_dict(model_state_dict, strict=strict)
+
+
+def prune_model(model):
+    device = next(model.parameters()).device
+
+    with torch.no_grad():
+        model.image_encoder_without_ddp.eval()
+        image_size = (1, 3) + model.image_encoder_without_ddp.visual.image_size
+        image = torch.randn(image_size, device=device)
+        model.image_encoder_without_ddp(image)
+        model.image_encoder_without_ddp = model.image_encoder_without_ddp.prune()
+
+    assert hasattr(model.image_encoder_without_ddp, 'l0_module')
+    model.image_encoder_without_ddp.l0_module = None
+
+    with torch.no_grad():
+        model.text_encoder_without_ddp.eval()
+        context_length = model.text_encoder_without_ddp.context_length
+        text = torch.zeros((1, context_length), dtype=torch.long, device=device)
+        model.text_encoder_without_ddp(text)
+        model.text_encoder_without_ddp = model.text_encoder_without_ddp.prune()
+
+    assert hasattr(model.text_encoder_without_ddp, 'l0_module')
+    model.text_encoder_without_ddp.l0_module = None
+
+    return model

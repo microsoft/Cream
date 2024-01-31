@@ -11,6 +11,7 @@ import torch
 
 from .constants import OPENAI_DATASET_MEAN, OPENAI_DATASET_STD
 from .model import CLIP, convert_weights_to_fp16, resize_pos_embed
+from .model import load_pruned_model, prune_model
 from .openai import load_openai_model
 from .pretrained import get_pretrained_cfg, download_pretrained
 from .transform import image_transform
@@ -86,6 +87,13 @@ def load_checkpoint(model, checkpoint_path, strict=True):
     return incompatible_keys
 
 
+def load_pruned_checkpoint(model, checkpoint_path, strict=True):
+    state_dict = load_state_dict(checkpoint_path)
+    resize_pos_embed(state_dict, model)
+    incompatible_keys = load_pruned_model(model, state_dict, strict=strict)
+    return incompatible_keys
+
+
 def create_model(
         model_name: str,
         pretrained: str = '',
@@ -138,6 +146,9 @@ def create_model(
                 f'model sparsity varies from {model_cfg["start_sparsity"]} to {model_cfg["sparsity"]}, sparsity warmup steps: {model_cfg["sparsity_warmup"]}')
 
         logging.info(str(model_cfg))
+        auto_weight_inheritance = model_cfg.get('mask_image', False) or \
+            model_cfg.get('mask_text', False)
+
         model = CLIP(**model_cfg)
 
         pretrained_cfg = {}
@@ -153,7 +164,11 @@ def create_model(
             if checkpoint_path:
                 logging.info(
                     f'Loading pretrained {model_name} weights ({pretrained}).')
-                load_checkpoint(model, checkpoint_path)
+                if not auto_weight_inheritance:
+                    load_checkpoint(model, checkpoint_path)
+                else:
+                    load_pruned_checkpoint(model, checkpoint_path)
+                    model = prune_model(model)
             else:
                 logging.warning(
                     f'Pretrained weights ({pretrained}) not found for model {model_name}.')

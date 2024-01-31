@@ -31,11 +31,11 @@
 [TinyCLIP ResNet-19M Text-19M](./src/open_clip/model_configs/TinyCLIP-ResNet-19M-Text-19M.json) | manual | LAION-400M | 56.4  | 4.4 | 3,024| [Model](https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-ResNet-19M-Text-19M-LAION400M.pt)
 [TinyCLIP ViT-61M/32 Text-29M](./src/open_clip/model_configs/TinyCLIP-ViT-61M-32-Text-29M.json) | manual | LAION-400M | 62.4  | 5.3 | 3,191|[Model](https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-ViT-61M-32-Text-29M-LAION400M.pt)
 [TinyCLIP ViT-40M/32 Text-19M](./src/open_clip/model_configs/TinyCLIP-ViT-40M-32-Text-19M.json) | manual | LAION-400M | 59.8  | 3.5 | 4,641|[Model](https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-ViT-40M-32-Text-19M-LAION400M.pt)
-TinyCLIP ViT-63M/32 Text-31M | auto | LAION-400M | 63.9  | 5.6 | 2,905|[Model](https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-auto-ViT-63M-32-Text-31M-LAION400M.pt)
-TinyCLIP ViT-45M/32 Text-18M | auto | LAION-400M | 61.4  | 3.7 | 3,682|[Model](https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-auto-ViT-45M-32-Text-18M-LAION400M.pt)
-TinyCLIP ViT-22M/32 Text-10M | auto | LAION-400M | 53.7  | 1.9 | 5,504|[Model](https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-auto-ViT-22M-32-Text-10M-LAION400M.pt)
-TinyCLIP ViT-63M/32 Text-31M | auto | LAION+YFCC-400M | 64.5 | 5.6| 2,909 | [Model](https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-auto-ViT-63M-32-Text-31M-LAIONYFCC400M.pt)
-TinyCLIP ViT-45M/32 Text-18M | auto | LAION+YFCC-400M | 62.7  | 1.9 | 3,685 | [Model](https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-auto-ViT-45M-32-Text-18M-LAIONYFCC400M.pt)
+[TinyCLIP ViT-63M/32 Text-31M](./src/open_clip/model_configs/TinyCLIP-auto-ViT-63M-32-Text-31M.json) | auto | LAION-400M | 63.9  | 5.6 | 2,905|[Model](https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-auto-ViT-63M-32-Text-31M-LAION400M.pt)
+[TinyCLIP ViT-45M/32 Text-18M](./src/open_clip/model_configs/TinyCLIP-auto-ViT-45M-32-Text-18M.json) | auto | LAION-400M | 61.4  | 3.7 | 3,682|[Model](https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-auto-ViT-45M-32-Text-18M-LAION400M.pt)
+[TinyCLIP ViT-22M/32 Text-10M](./src/open_clip/model_configs/TinyCLIP-auto-ViT-22M-32-Text-10M.json) | auto | LAION-400M | 53.7  | 1.9 | 5,504|[Model](https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-auto-ViT-22M-32-Text-10M-LAION400M.pt)
+[TinyCLIP ViT-63M/32 Text-31M](./src/open_clip/model_configs/TinyCLIP-auto-ViT-63M-32-Text-31M.json) | auto | LAION+YFCC-400M | 64.5 | 5.6| 2,909 | [Model](https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-auto-ViT-63M-32-Text-31M-LAIONYFCC400M.pt)
+[TinyCLIP ViT-45M/32 Text-18M](./src/open_clip/model_configs/TinyCLIP-auto-ViT-45M-32-Text-18M.json) | auto | LAION+YFCC-400M | 62.7  | 1.9 | 3,685 | [Model](https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-auto-ViT-45M-32-Text-18M-LAIONYFCC400M.pt)
 
 Note: The configs of models with auto inheritance are generated automatically.
 
