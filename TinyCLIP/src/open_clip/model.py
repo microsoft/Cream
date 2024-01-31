@@ -1422,8 +1422,7 @@ def prune_model(model):
         model.image_encoder_without_ddp(image)
         model.image_encoder_without_ddp = model.image_encoder_without_ddp.prune()
 
-    assert hasattr(
-        model.image_encoder_without_ddp, 'l0_module')
+    assert hasattr(model.image_encoder_without_ddp, 'l0_module')
     model.image_encoder_without_ddp.l0_module = None
 
     with torch.no_grad():
@@ -1432,8 +1431,8 @@ def prune_model(model):
         text = torch.zeros((1, context_length), dtype=torch.long, device=device)
         model.text_encoder_without_ddp(text)
         model.text_encoder_without_ddp = model.text_encoder_without_ddp.prune()
-    assert hasattr(model.text_encoder_without_ddp, 'l0_module')
 
+    assert hasattr(model.text_encoder_without_ddp, 'l0_module')
     model.text_encoder_without_ddp.l0_module = None
 
     return model
