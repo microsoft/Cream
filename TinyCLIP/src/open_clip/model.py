@@ -1297,7 +1297,7 @@ def resize_pos_embed(state_dict, model, interpolation: str = 'bicubic', seq_dim=
 
 
 @torch.no_grad()
-def load_pruned_model(model, pruned_state_dict):
+def load_pruned_model(model, pruned_state_dict, strict=True):
     '''
     A full model loads the pruned state dict.
 
@@ -1409,7 +1409,7 @@ def load_pruned_model(model, pruned_state_dict):
                 model_state_dict[f'{ename}.l0_module.intermediate_loga'][d,
                                                                          :].fill_(-lambda_init_value)
 
-    model.load_state_dict(model_state_dict, strict=True)
+    return model.load_state_dict(model_state_dict, strict=strict)
 
 
 def prune_model(model):

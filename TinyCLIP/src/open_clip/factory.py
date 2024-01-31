@@ -90,8 +90,7 @@ def load_checkpoint(model, checkpoint_path, strict=True):
 def load_pruned_checkpoint(model, checkpoint_path, strict=True):
     state_dict = load_state_dict(checkpoint_path)
     resize_pos_embed(state_dict, model)
-    load_pruned_model(model, state_dict)
-    incompatible_keys = dict()
+    incompatible_keys = load_pruned_model(model, state_dict, strict=strict)
     return incompatible_keys
 
 
