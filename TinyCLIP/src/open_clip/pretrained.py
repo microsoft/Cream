@@ -147,7 +147,7 @@ _VITg14 = dict(
 
 # TinyCLIP
 
-## manual weight inheritance
+# manual weight inheritance
 
 _TINYCLIP_VIT_39M_16_TEXT_19M = {
     "YFCC15M": _pcfg(
@@ -185,11 +185,29 @@ _TINYCLIP_VIT_40M_32_TEXT_19M = {
     ),
 }
 
-## auto weight inheritance
+# auto weight inheritance
 
 _TINYCLIP_AUTO_VIT_63M_32_TEXT_31M = {
     "LAION400M": _pcfg(
         "https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-auto-ViT-63M-32-Text-31M-LAION400M.pt",
+    ),
+    "LAIONYFCC400M": _pcfg(
+        "https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-auto-ViT-63M-32-Text-31M-LAIONYFCC400M.pt",
+    ),
+}
+
+_TINYCLIP_AUTO_VIT_45M_32_TEXT_18M = {
+    "LAION400M": _pcfg(
+        "https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-auto-ViT-45M-32-Text-18M-LAION400M.pt",
+    ),
+    "LAIONYFCC400M": _pcfg(
+        "https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-auto-ViT-45M-32-Text-18M-LAIONYFCC400M.pt",
+    ),
+}
+
+_TINYCLIP_AUTO_VIT_22M_32_TEXT_10M = {
+    "LAION400M": _pcfg(
+        "https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-auto-ViT-22M-32-Text-10M-LAION400M.pt",
     ),
 }
 
@@ -218,6 +236,8 @@ _PRETRAINED = {
     "TinyCLIP-ViT-40M-32-Text-19M": _TINYCLIP_VIT_40M_32_TEXT_19M,
 
     "TinyCLIP-auto-ViT-63M-32-Text-31M": _TINYCLIP_AUTO_VIT_63M_32_TEXT_31M,
+    "TinyCLIP-auto-ViT-45M-32-Text-18M": _TINYCLIP_AUTO_VIT_45M_32_TEXT_18M,
+    "TinyCLIP-auto-ViT-22M-32-Text-10M": _TINYCLIP_AUTO_VIT_22M_32_TEXT_10M,
 }
 
 
