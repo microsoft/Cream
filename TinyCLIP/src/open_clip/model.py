@@ -1315,6 +1315,9 @@ def load_pruned_model(model, pruned_state_dict):
             slices = [slice(0, d) for d in dims]
             dst[slices].copy_(src)
 
+    for _ in range(2):
+        pruned_state_dict = {k.replace('module.', ''): v for k, v in pruned_state_dict.items()}
+
     lambda_init_value = 10.0
     model_state_dict = model.state_dict()
     head_dim = model.transformer.head_dim
@@ -1406,3 +1409,28 @@ def load_pruned_model(model, pruned_state_dict):
                                                                          :].fill_(-lambda_init_value)
 
     model.load_state_dict(model_state_dict, strict=True)
+
+
+def prune_model(model):
+    device = next(model.parameters()).device
+
+    with torch.no_grad():
+        model.image_encoder_without_ddp.eval()
+        image = torch.randn((1, 3, 224, 224), device=device)
+        model.image_encoder_without_ddp(image)
+        model.image_encoder_without_ddp = model.image_encoder_without_ddp.prune()
+
+    assert hasattr(
+        model.image_encoder_without_ddp, 'l0_module')
+    model.image_encoder_without_ddp.l0_module = None
+
+    with torch.no_grad():
+        model.text_encoder_without_ddp.eval()
+        text = torch.randint(0, 100, (1, 77), device=device)
+        model.text_encoder_without_ddp(text)
+        model.text_encoder_without_ddp = model.text_encoder_without_ddp.prune()
+    assert hasattr(model.text_encoder_without_ddp, 'l0_module')
+
+    model.text_encoder_without_ddp.l0_module = None
+
+    return model

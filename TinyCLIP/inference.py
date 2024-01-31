@@ -18,7 +18,11 @@ import open_clip
 # arch = 'TinyCLIP-ViT-61M-32-Text-29M'
 # model, _, preprocess = open_clip.create_model_and_transforms(arch, pretrained='LAION400M')
 
-arch = 'TinyCLIP-ViT-40M-32-Text-19M'
+# arch = 'TinyCLIP-ViT-40M-32-Text-19M'
+# model, _, preprocess = open_clip.create_model_and_transforms(arch, pretrained='LAION400M')
+
+# auto inheritance
+arch = 'TinyCLIP-auto-ViT-63M-32-Text-31M'
 model, _, preprocess = open_clip.create_model_and_transforms(arch, pretrained='LAION400M')
 
 tokenizer = open_clip.get_tokenizer(arch)
